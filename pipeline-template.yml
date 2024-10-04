@@ -1,0 +1,38 @@
+name: Update Task
+run-name: update_task
+on:
+  push:
+    branches:
+      - pipe-test
+
+env:
+  GH_TOKEN: ${{ secrets.SA_TOKEN }}
+  DEST_BRANCH: test-merge
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEST_BRANCH }}
+          token: ${{ env.GH_TOKEN }}
+      - name: Update values
+        run: |
+          AUTHOR=$(gh pr list -B pipe-test --state merged --json author,mergedAt,mergedBy,headRefName,number | jq '.[0].author.login')
+          if [[ "$AUTHOR" == 'null' ]]; then
+            echo "No user found"
+            exit 1
+          fi
+          git config --global user.name 'BotMan'
+          git config --global user.email 'r-casula@users.noreply.github.com'
+
+          git fetch origin pipe-test:pipe-test --force
+          git show pipe-test:argo/task.json > argo/task.json
+
+          cat argo/task.json | jq ".spec.user |= .+ {\"username\": $AUTHOR}" > temp.json
+          mv temp.json argo/task.json
+          git add argo/task.json
+          git commit -am "Added user info"
+          git push

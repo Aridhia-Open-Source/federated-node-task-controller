@@ -1,7 +1,5 @@
 #!/usr/bin/env sh
 
-
-
 pem=$( cat "$KEY_FILE" ) # file path of the private key as second argument
 
 now=$(date +%s)

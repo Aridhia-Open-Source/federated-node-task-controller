@@ -24,7 +24,7 @@ gh repo clone "${GH_ORGANIZATION}/${GH_REPO}" "${REPO_FOLDER}"
 (
     cd "${REPO_FOLDER}" || exit
     git remote remove origin
-    git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/Aridhia-Open-Source/Federated-Node-Example-App.git
+    git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/"${GH_ORGANIZATION}"/"${GH_REPO}".git
     git fetch
     BRANCH="${TASK_ID}-results"
 

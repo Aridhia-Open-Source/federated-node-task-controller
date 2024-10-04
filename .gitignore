@@ -1,0 +1,5 @@
+send_mini.sh
+.vscode/
+*.yaml
+!k8s/*.yaml
+*.pem

@@ -1,0 +1,105 @@
+"""
+Both kubernetes and keycloak standard operations
+- for k8s we just set the configuration
+- keycloak will have different functions in a way
+    to not tamper the __main__ with API calls and the
+    status_code checks
+"""
+
+import os
+import logging
+import requests
+
+from controller.excpetions import KeycloakException
+from controller.helpers.kubernetes_helpers import get_secret
+
+
+logger = logging.getLogger('keycloak')
+logger.setLevel(logging.INFO)
+
+
+KEYCLOAK_SECRET = get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
+ADMIN_PSW = get_secret('kc-secrets', 'KEYCLOAK_ADMIN_PASSWORD')
+ADMIN_USER = "admin"
+KEYCLOAK_CLIENT = "global"
+REALM = "FederatedNode"
+KC_HOST = os.getenv("KC_HOST")
+
+
+def get_admin_token() -> str:
+    """
+    Simply send a request to Keycloak to get the admin token
+    based on the password fetched from the k8s secret itself
+    """
+    admin_resp = requests.post(
+        f"{KC_HOST}/realms/{REALM}/protocol/openid-connect/token",
+        data={
+            'client_id': KEYCLOAK_CLIENT,
+            'client_secret': KEYCLOAK_SECRET,
+            'grant_type': 'password',
+            'username': ADMIN_USER,
+            'password': ADMIN_PSW
+        },
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        verify=False,
+        timeout=60
+    )
+    if not admin_resp.ok:
+        raise KeycloakException("Failed to login")
+    return admin_resp.json()["access_token"]
+
+
+def get_user(email:str=None, username:str=None) -> dict:
+    """
+    Method to return a dictionary representing a Keycloak user
+    """
+    if email:
+        user_response = requests.get(
+            f"{KC_HOST}/admin/realms/{REALM}/users?email={email}&exact=true",
+            verify=False,
+            headers={"Authorization": f"Bearer {get_admin_token()}"}
+        )
+    elif username:
+        user_response = requests.get(
+            f"{KC_HOST}/admin/realms/{REALM}/users?username={username}&exact=true",
+            verify=False,
+            headers={"Authorization": f"Bearer {get_admin_token()}"}
+        )
+    else:
+        raise KeycloakException("Either email or username are needed")
+    if not user_response.ok:
+        raise KeycloakException(user_response.content.decode())
+    if len(user_response.json()):
+        return user_response.json()[0]
+
+    raise KeycloakException(f"User {email} not found")
+
+
+def impersonate_user(user_id:str) -> str:
+    """
+    Given a user id, it will return a refresh_token for it
+    through the admin-level user
+    """
+    payload = {
+        'client_secret': KEYCLOAK_SECRET, # Target client
+        'client_id': KEYCLOAK_CLIENT, #Target client
+        'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+        'requested_token_type': 'urn:ietf:params:oauth:token-type:refresh_token',
+        'subject_token': get_admin_token(),
+        'requested_subject': user_id,
+        'audience': KEYCLOAK_CLIENT
+    }
+    exchange_resp = requests.post(
+        f"{KC_HOST}/realms/{REALM}/protocol/openid-connect/token",
+        data=payload,
+        verify=False,
+        headers={
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        timeout=60
+    )
+    if not exchange_resp.ok:
+        raise KeycloakException(exchange_resp.content.decode())
+    return exchange_resp.json()["refresh_token"]

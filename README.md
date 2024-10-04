@@ -25,3 +25,14 @@ This will then cause the controller to start its active work.
 
 ### Future dev
 - Aiming to have the automatic push from the controller (either via a separate job or within its process) of the results to an agreed destination. At the moment, we're trying GitHub itself.
+
+
+## Deploy
+Needs a github apps private key as a secret. Make sure the `.pem` file is named `key.pem`, and run the following to create a secret. Instead of `ghpk` it should be something more intuitive.
+```bash
+kubectl create secret generic ghpk -n controller --from-file scripts/key.pem
+```
+Very straightforward
+```bash
+kubectl apply k8s/
+```

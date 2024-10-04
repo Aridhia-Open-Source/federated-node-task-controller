@@ -9,9 +9,9 @@ from kubernetes import client, watch
 from kubernetes.client.exceptions import ApiException
 import urllib3
 
-from .const import DOMAIN, NAMESPACE
+from .const import DOMAIN, TASK_NAMESPACE
 from .excpetions import FederatedNodeException, KeycloakException
-from controller.helpers.kubernetes_helpers import k8s_config, patch_crd_annotations
+from controller.helpers.kubernetes_helpers import k8s_config, patch_crd_annotations, create_job_push_results
 from controller.helpers.task_helpers import check_status, create_task, get_results, get_user_token
 
 logger = logging.getLogger('controller')
@@ -29,7 +29,7 @@ for crds in watcher.stream(
     v1_custom_objects.list_namespaced_custom_object,
     DOMAIN,
     "v1",
-    NAMESPACE,
+    TASK_NAMESPACE,
     "analytics",
     resource_version='',
     watch=True
@@ -39,6 +39,9 @@ for crds in watcher.stream(
         user = crds["object"]["spec"].get("user", {})
         image = crds["object"]["spec"].get("image")
         proj_name = crds["object"]["spec"].get("project")
+
+        if crds["type"] == "DELETED" or crds["object"]["metadata"].get("deletionTimestamp"):
+            continue
 
         if crds["type"] == "ADDED" and not annotations.get(f"{DOMAIN}/done"):
             user_token = get_user_token(user)
@@ -56,19 +59,21 @@ for crds in watcher.stream(
             print("Task created")
 
             annotations[f"{DOMAIN}/done"] = "true"
-            annotations[f"{DOMAIN}/task_id"] = task_resp["id"]
+            if "task_id" in task_resp:
+                annotations[f"{DOMAIN}/task_id"] = task_resp["task_id"]
             patch_crd_annotations(crds["object"]["metadata"]["name"], annotations)
             print("CRD patched")
 
         elif annotations.get(f"{DOMAIN}/done") and not annotations.get(f"{DOMAIN}/results"):
             # If we have already triggered a task, check if the pod has completed
             user_token = get_user_token(user)
-            status_check = check_status(annotations[f"{DOMAIN}/task_id"], user_token)
+            task_id = annotations[f"{DOMAIN}/task_id"]
+            status_check = check_status(task_id, user_token)
 
             if "terminated" in status_check:
-                res_resp = get_results(annotations[f"{DOMAIN}/task_id"], user_token)
+                res_resp = get_results(task_id, user_token)
                 # Send results somewhere else
-
+                create_job_push_results(name="test-results", task_id=task_id)
 
                 # Add results annotation to let the controller know
                 # we already handled results

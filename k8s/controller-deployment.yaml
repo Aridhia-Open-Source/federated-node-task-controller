@@ -32,7 +32,7 @@ spec:
       - name: analytics-operator
         image: custom_controller:0.0.1
         env:
-          - name: NAMESPACE
+          - name: TASK_NAMESPACE
             value: analytics
           - name: BACKEND_HOST
             value: http://backend.default.svc.cluster.local:5000

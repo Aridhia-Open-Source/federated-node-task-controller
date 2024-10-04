@@ -3,8 +3,8 @@ Collection of functions to assist in performing FN-task-related operations
 """
 import requests
 
-from .const import BACKEND_HOST
-from .excpetions import FederatedNodeException
+from controller.const import BACKEND_HOST, GIT_HOME
+from controller.excpetions import FederatedNodeException
 from .keycloak_helper import get_user, impersonate_user
 
 
@@ -69,7 +69,7 @@ def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:s
         },
         timeout=60
     )
-    if not task_resp.ok:
+    if not task_resp.ok and task_resp.status_code != 409:
         raise FederatedNodeException(task_resp.json())
     return task_resp.json()
 
@@ -103,4 +103,6 @@ def get_results(task_id:str, token:str):
     )
     if not res_resp.ok:
         raise FederatedNodeException(res_resp.json())
+    with open(f"{GIT_HOME}/results.tar.gz", "wb") as f:
+        f.write(res_resp.content)
 

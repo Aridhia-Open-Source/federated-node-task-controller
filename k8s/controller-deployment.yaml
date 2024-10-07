@@ -40,10 +40,14 @@ spec:
             value: http://keycloak.identities.svc.cluster.local
           - name: GIT_HOME
             value: /data/git
+          - name: MOUNT_PATH
+            value: /data/controller
+          - name: PULL-POLICY
+            value: Never
         resources:
           limits:
             cpu: 2000m
             memory: 1Gi
         volumeMounts:
-            - name: git
-              mountPath: /data/git
+          - name: git
+            mountPath: /data/git

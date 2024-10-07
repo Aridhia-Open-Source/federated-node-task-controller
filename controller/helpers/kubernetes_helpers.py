@@ -7,11 +7,15 @@ K8s helpers functions
 import os
 import base64
 import logging
+
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
+from uuid import uuid4
 
 from controller.excpetions import KubernetesException
-from controller.const import DOMAIN, NAMESPACE
+from controller.const import (
+    DOMAIN, NAMESPACE, TASK_NAMESPACE, MOUNT_PATH, PULL_POLICY
+)
 
 def k8s_config():
     """
@@ -50,49 +54,55 @@ def patch_crd_annotations(name:str, annotations:dict):
     # Patch for the client library which somehow doesn't do it itself for the patch
     v1_custom_objects.api_client.set_default_header('Content-Type', 'application/json-patch+json')
     v1_custom_objects.patch_namespaced_custom_object(
-        DOMAIN, "v1", NAMESPACE, "analytics", name,
+        DOMAIN, "v1", TASK_NAMESPACE, "analytics", name,
         [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
     )
 
 
-def setup_pv(name:str):
-    pv_spec = client.V1PersistentVolumeSpec(
-        access_modes=['ReadWriteMany'],
-        capacity={"storage": "100Mi"},
-        storage_class_name="shared-results",
-        host_path=client.V1HostPathVolumeSource(
-            path="/data/controller"
+def setup_pvc(name:str) -> str:
+    """
+    Create a pvc and returns the name
+    """
+    pv_name = f"{name}-pv"
+    pv = client.V1PersistentVolume(
+            api_version='v1',
+            kind='PersistentVolume',
+            metadata=client.V1ObjectMeta(name=pv_name, namespace=NAMESPACE),
+            spec=client.V1PersistentVolumeSpec(
+                access_modes=['ReadWriteMany'],
+                capacity={"storage": "100Mi"},
+                storage_class_name="controller-results",
+                host_path=client.V1HostPathVolumeSource(path=MOUNT_PATH),
+                persistent_volume_reclaim_policy="Delete"
+            )
         )
-    )
-    # pv = client.V1PersistentVolume(
-    #     api_version='v1',
-    #     kind='PersistentVolume',
-    #     metadata=client.V1ObjectMeta(name=name, namespace=NAMESPACE),
-    #     spec=pv_spec
-    # )
-    # try:
-    #     v1.create_persistent_volume(body=pv)
-    # except ApiException as kexc:
-    #     if kexc.status != 409:
-    #         raise KubernetesException(kexc.body)
 
+    volclaim_name = f"{name}-volclaim"
     pvc = client.V1PersistentVolumeClaim(
         api_version='v1',
         kind='PersistentVolumeClaim',
-        metadata=client.V1ObjectMeta(name=f"{name}-volclaim", namespace=NAMESPACE),
+        metadata=client.V1ObjectMeta(
+            name=volclaim_name, namespace=NAMESPACE,
+            annotations={"kubernetes.io/pvc.recyclePolicy": "Delete"}
+        ),
         spec=client.V1PersistentVolumeClaimSpec(
             access_modes=['ReadWriteMany'],
-            volume_name="controller-pv",
-            storage_class_name="shared-results",
+            volume_name=pv_name,
+            storage_class_name="controller-results",
             resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"})
         )
     )
+    try:
+        v1.create_persistent_volume(body=pv)
+    except ApiException as kexc:
+        if kexc.status != 409:
+            raise KubernetesException(kexc.body)
     try:
         v1.create_namespaced_persistent_volume_claim(body=pvc, namespace=NAMESPACE)
     except ApiException as kexc:
         if kexc.status != 409:
             raise KubernetesException(kexc.body)
-
+    return volclaim_name
 
 def create_job_push_results(
         name:str, task_id:str,
@@ -103,11 +113,12 @@ def create_job_push_results(
     Creates the job template and submits it to the cluster in the
     same namespace as the controller's
     """
-    setup_pv(name)
+    volclaim_name = setup_pvc(name)
+    name += f"-{uuid4()}"
     volumes = [
         client.V1Volume(
             name="results",
-            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=f"{name}-volclaim")
+            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=volclaim_name)
         ),
         client.V1Volume(
             name="key",
@@ -129,6 +140,7 @@ def create_job_push_results(
     ]
     container = client.V1Container(
         name=name,
+        image_pull_policy=PULL_POLICY,
         image="custom_controller:0.0.1",
         volume_mounts=vol_mounts,
         command=["/bin/sh", "/app/scripts/push_to_github.sh"],
@@ -150,7 +162,7 @@ def create_job_push_results(
     )
     specs = client.V1PodSpec(
         containers=[container],
-        restart_policy="Never",
+        restart_policy=PULL_POLICY,
         volumes=volumes
     )
     template = client.V1JobTemplateSpec(

@@ -35,6 +35,7 @@ for crds in watcher.stream(
     watch=True
     ):
     try:
+        crd_name = crds["object"]["metadata"]["name"]
         annotations = crds["object"]["metadata"]["annotations"]
         user = crds["object"]["spec"].get("user", {})
         image = crds["object"]["spec"].get("image")
@@ -50,7 +51,7 @@ for crds in watcher.stream(
 
             task_resp = create_task(
                 image,
-                crds["object"]["metadata"]["name"],
+                crd_name,
                 proj_name,
                 crds["object"]["spec"].get("dataset"),
                 user_token
@@ -60,8 +61,8 @@ for crds in watcher.stream(
 
             annotations[f"{DOMAIN}/done"] = "true"
             if "task_id" in task_resp:
-                annotations[f"{DOMAIN}/task_id"] = task_resp["task_id"]
-            patch_crd_annotations(crds["object"]["metadata"]["name"], annotations)
+                annotations[f"{DOMAIN}/task_id"] = str(task_resp["task_id"])
+            patch_crd_annotations(crd_name, annotations)
             print("CRD patched")
 
         elif annotations.get(f"{DOMAIN}/done") and not annotations.get(f"{DOMAIN}/results"):
@@ -73,13 +74,13 @@ for crds in watcher.stream(
             if "terminated" in status_check:
                 res_resp = get_results(task_id, user_token)
                 # Send results somewhere else
-                create_job_push_results(name="test-results", task_id=task_id)
+                create_job_push_results(name=f"task-{task_id}-results", task_id=task_id)
 
                 # Add results annotation to let the controller know
                 # we already handled results
                 annotations[f"{DOMAIN}/results"] = "true"
 
-                patch_crd_annotations(crds["object"]["metadata"]["name"], annotations)
+                patch_crd_annotations(crd_name, annotations)
                 print("CRD patched")
 
     except urllib3.exceptions.MaxRetryError as mre:

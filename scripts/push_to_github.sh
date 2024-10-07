@@ -38,7 +38,6 @@ gh repo clone "${GH_ORGANIZATION}/${GH_REPO}" "${REPO_FOLDER}"
         git checkout -b "${BRANCH}"
     fi
 
-    openssl rand -base64 15 > test.txt
     mkdir -p "results/${TASK_ID}"
     mv ../*.tar.gz "results/${TASK_ID}/${TASK_ID}.tar.gz"
 

@@ -157,7 +157,7 @@ def create_job_push_results(
             client.V1EnvVar(name="TASK_ID", value=task_id),
             client.V1EnvVar(name="GH_REPO", value=repository),
             client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
-            client.V1EnvVar(name="GH_CLIENT_ID", value_from= client.V1EnvVarSource(
+            client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(
                     name=f"{secret_name}",
                     key="GH_CLIENT_ID"

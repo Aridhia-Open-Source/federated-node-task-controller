@@ -28,6 +28,12 @@ spec:
                   type: string
                 dataset:
                   type: integer
+                branch:
+                  type: string
+                organization:
+                  type: string
+                repository:
+                  type: string
   scope: Namespaced
   names:
     plural: analytics

@@ -1,0 +1,11 @@
+{
+    "name": "ArgoCD trigger branch update",
+    "description": "From the original PR, will update the template that ArgoCD is monitoring, creating a new analytics task.",
+    "iconName": "example-icon",
+    "categories": [
+        "Python"
+    ],
+    "filePatterns": [
+        "*.json$"
+    ]
+}

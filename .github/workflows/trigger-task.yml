@@ -6,19 +6,19 @@ on:
       DEST_BRANCH:
         required: true
         type: string
-      GH_TOKEN:
-        required: true
-        type: string
       TEMPLATE_PATH:
         required: true
         type: string
+    secrets:
+      SA_TOKEN:
+        required: true
 
   # push:
   #   branches:
   #     - pipe-test
 
-# env:
-#   GH_TOKEN: ${{ secrets.SA_TOKEN }}
+env:
+  GH_TOKEN: ${{ secrets.SA_TOKEN }}
 #   DEST_BRANCH: argo-monitor
 #   TEMPLATE_PATH: argo/task.json
 
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.DEST_BRANCH }}
-          token: ${{ inputs.GH_TOKEN }}
+          token: ${{ env.GH_TOKEN }}
       - name: Update values
         env:
           TEMPL_CONTENTS: ${{ steps.save-template.outputs.TEMPL_CONTENTS }}

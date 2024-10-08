@@ -17,3 +17,5 @@ jobs:
         BUILD_PATH: .
         HASH_SUFFIX: false
         DOCKER_ACR: ${{ vars.DOCKER_ACR }}
+    secrets:
+        DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}

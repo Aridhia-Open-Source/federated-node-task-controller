@@ -10,7 +10,7 @@ on:
 env:
   TAG: ${{ vars.VERSION }}
   IMAGE: custom_controller
-  PATH: .
+  BUILD_PATH: .
 
 jobs:
   build:
@@ -45,7 +45,7 @@ jobs:
       - name: Build and push ${{ env.IMAGE }} image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.PATH }}
-          file: ${{ env.PATH }}/Dockerfile
+          context: ${{ env.BUILD_PATH }}
+          file: ${{ env.BUILD_PATH }}/Dockerfile
           tags: ${{ vars.DOCKER_ACR }}/${{ env.OWNER_LC }}/${{ env.IMAGE }}:${{ env.TAG }}
           push: true

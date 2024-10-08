@@ -5,6 +5,7 @@ K8s helpers functions
 """
 
 import os
+import re
 import base64
 import logging
 
@@ -57,6 +58,7 @@ def patch_crd_annotations(name:str, annotations:dict):
         DOMAIN, "v1", TASK_NAMESPACE, "analytics", name,
         [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
     )
+    print("CRD patched")
 
 
 def setup_pvc(name:str) -> str:
@@ -104,9 +106,14 @@ def setup_pvc(name:str) -> str:
             raise KubernetesException(kexc.body)
     return volclaim_name
 
+def repo_secret_name(repository:str):
+    """
+    Standardization for a secret name from a org/repo string
+    """
+    return re.sub(r'[\W_]+', '-', repository.lower())
+
 def create_job_push_results(
         name:str, task_id:str,
-        organization="Aridhia-Open-Source",
         repository="Federated-Node-Example-App"
     ):
     """
@@ -114,6 +121,7 @@ def create_job_push_results(
     same namespace as the controller's
     """
     volclaim_name = setup_pvc(name)
+    secret_name=repo_secret_name(repository)
     name += f"-{uuid4()}"
     volumes = [
         client.V1Volume(
@@ -123,7 +131,7 @@ def create_job_push_results(
         client.V1Volume(
             name="key",
             secret=client.V1SecretVolumeSource(
-                secret_name="ghpk",
+                secret_name=secret_name,
                 items=[client.V1KeyToPath(key="key.pem", path="key.pem")]
             )
         )
@@ -141,18 +149,20 @@ def create_job_push_results(
     container = client.V1Container(
         name=name,
         image_pull_policy=PULL_POLICY,
-        image="custom_controller:0.0.1",
+        image="ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev",
         volume_mounts=vol_mounts,
         command=["/bin/sh", "/app/scripts/push_to_github.sh"],
         env=[
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="TASK_ID", value=task_id),
-            client.V1EnvVar(name="GH_ORGANIZATION", value=organization),
             client.V1EnvVar(name="GH_REPO", value=repository),
             client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
-        ],
-        env_from=[
-            client.V1EnvFromSource(secret_ref=client.V1SecretEnvSource(name="gh-client-id"))
+            client.V1EnvVar(name="GH_CLIENT_ID", value_from= client.V1EnvFromSource(
+                secret_ref=client.V1SecretKeySelector(
+                    name=f"{secret_name}",
+                    key="GH_CLIENT_ID"
+                )
+            ))
         ]
     )
 
@@ -162,8 +172,9 @@ def create_job_push_results(
     )
     specs = client.V1PodSpec(
         containers=[container],
-        restart_policy=PULL_POLICY,
-        volumes=volumes
+        restart_policy="OnFailure",
+        volumes=volumes,
+        image_pull_secrets=[client.V1LocalObjectReference("regcred")]
     )
     template = client.V1JobTemplateSpec(
         metadata=metadata,

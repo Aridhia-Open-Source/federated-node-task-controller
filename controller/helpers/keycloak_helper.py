@@ -8,8 +8,8 @@ Both kubernetes and keycloak standard operations
 
 import os
 import logging
-import requests
 
+from .request_helper import client as requests
 from controller.excpetions import KeycloakException
 from controller.helpers.kubernetes_helpers import get_secret
 
@@ -42,9 +42,7 @@ def get_admin_token() -> str:
         },
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        verify=False,
-        timeout=60
+        }
     )
     if not admin_resp.ok:
         raise KeycloakException("Failed to login")
@@ -58,13 +56,11 @@ def get_user(email:str=None, username:str=None) -> dict:
     if email:
         user_response = requests.get(
             f"{KC_HOST}/admin/realms/{REALM}/users?email={email}&exact=true",
-            verify=False,
             headers={"Authorization": f"Bearer {get_admin_token()}"}
         )
     elif username:
         user_response = requests.get(
             f"{KC_HOST}/admin/realms/{REALM}/users?username={username}&exact=true",
-            verify=False,
             headers={"Authorization": f"Bearer {get_admin_token()}"}
         )
     else:
@@ -94,11 +90,9 @@ def impersonate_user(user_id:str) -> str:
     exchange_resp = requests.post(
         f"{KC_HOST}/realms/{REALM}/protocol/openid-connect/token",
         data=payload,
-        verify=False,
         headers={
             'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        timeout=60
+        }
     )
     if not exchange_resp.ok:
         raise KeycloakException(exchange_resp.content.decode())

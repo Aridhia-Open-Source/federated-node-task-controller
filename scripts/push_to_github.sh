@@ -22,11 +22,11 @@ if [ -d "repo " ]; then
     rm -r repo
 fi
 echo "Cloning repo"
-gh repo clone "${GH_ORGANIZATION}/${GH_REPO}" "${REPO_FOLDER}"
+gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
 (
     cd "${REPO_FOLDER}" || exit
     git remote remove origin
-    git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/"${GH_ORGANIZATION}"/"${GH_REPO}".git
+    git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/"${GH_REPO}".git
     git fetch
     BRANCH="${TASK_ID}-results"
 

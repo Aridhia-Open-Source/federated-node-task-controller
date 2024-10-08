@@ -24,13 +24,15 @@ spec:
         app: analytics-operator
     spec:
       serviceAccountName: analytics-operator
+      imagePullSecrets:
+        - name: regcred
       volumes:
         - name: git
           persistentVolumeClaim:
             claimName: controller-pv-volclaim
       containers:
       - name: analytics-operator
-        image: custom_controller:0.0.1
+        image: ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev
         env:
           - name: TASK_NAMESPACE
             value: analytics
@@ -43,7 +45,7 @@ spec:
           - name: MOUNT_PATH
             value: /data/controller
           - name: PULL-POLICY
-            value: Never
+            value: IfNotPresent
         resources:
           limits:
             cpu: 2000m

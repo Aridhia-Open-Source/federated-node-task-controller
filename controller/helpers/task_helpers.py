@@ -1,12 +1,10 @@
 """
 Collection of functions to assist in performing FN-task-related operations
 """
-import requests
-
 from controller.const import BACKEND_HOST, GIT_HOME
 from controller.excpetions import FederatedNodeException
 from .keycloak_helper import get_user, impersonate_user
-
+from .request_helper import client as requests
 
 def create_task_body(image:str, user:str, project:str, dataset: int):
     """
@@ -63,14 +61,13 @@ def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:s
             proj_name,
             dataset_id
         ),
-        verify=False,
         headers={
             "Authorization": f"Bearer {user_token}"
-        },
-        timeout=60
+        }
     )
     if not task_resp.ok and task_resp.status_code != 409:
         raise FederatedNodeException(task_resp.json())
+    print("Task created")
     return task_resp.json()
 
 
@@ -78,9 +75,9 @@ def check_status(task_id:str, token:str) -> dict:
     """
     Get the task status
     """
+    print(f"Checking task {task_id} status")
     status_check = requests.get(
         f"{BACKEND_HOST}/tasks/{task_id}",
-        verify=False,
         headers={
             "Authorization": f"Bearer {token}"
         }
@@ -94,9 +91,9 @@ def get_results(task_id:str, token:str):
     Gets the tar file with the results, raises an exception
     if the request fails
     """
+    print(f"Getting task {task_id} results")
     res_resp = requests.get(
         f"{BACKEND_HOST}/tasks/{task_id}/results",
-        verify=False,
         headers={
             "Authorization": f"Bearer {token}"
         }

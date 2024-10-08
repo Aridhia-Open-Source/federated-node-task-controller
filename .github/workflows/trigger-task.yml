@@ -12,15 +12,10 @@ on:
     secrets:
       SA_TOKEN:
         required: true
-
-  # push:
-  #   branches:
-  #     - pipe-test
+        description: A service account token used to access the codebase
 
 env:
   GH_TOKEN: ${{ secrets.SA_TOKEN }}
-#   DEST_BRANCH: argo-monitor
-#   TEMPLATE_PATH: argo/task.json
 
 jobs:
   update:

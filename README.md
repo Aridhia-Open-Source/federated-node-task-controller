@@ -25,3 +25,23 @@ This will then cause the controller to start its active work.
 
 ### Future dev
 - Aiming to have the automatic push from the controller (either via a separate job or within its process) of the results to an agreed destination. At the moment, we're trying GitHub itself.
+
+
+## Deploy
+Needs a github apps private key as a secret. Make sure the `.pem` file is named `key.pem`, and run the following to create a secret. Instead of `ghpk` it should be the a lowercase string with the format `organization`-`repository`.
+
+You can use this snippet to format it:
+```bash
+python -c "import re; repository=input('Enter repo name:\n');print(re.sub(r'[\W_]+','-', repository.lower()))"
+```
+
+You will also need the client id from the github app so you can apply it as environment variable
+
+```bash
+CLIENT_ID="githubAppClientId"
+kubectl create secret generic ghpk -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
+```
+Very straightforward
+```bash
+kubectl apply k8s/
+```

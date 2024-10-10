@@ -13,3 +13,6 @@ class KeycloakException(BaseControllerException):
 
 class FederatedNodeException(BaseControllerException):
     pass
+
+class KubernetesException(BaseControllerException):
+    pass

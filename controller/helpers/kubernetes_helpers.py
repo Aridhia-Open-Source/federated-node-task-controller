@@ -5,10 +5,18 @@ K8s helpers functions
 """
 
 import os
+import re
 import base64
 import logging
+
 from kubernetes import client, config
-from controller.const import DOMAIN, NAMESPACE
+from kubernetes.client.exceptions import ApiException
+from uuid import uuid4
+
+from controller.excpetions import KubernetesException
+from controller.const import (
+    DOMAIN, NAMESPACE, TASK_NAMESPACE, MOUNT_PATH, PULL_POLICY
+)
 
 def k8s_config():
     """
@@ -27,6 +35,8 @@ logger.setLevel(logging.INFO)
 k8s_config()
 
 v1 = client.CoreV1Api()
+v1_batch = client.BatchV1Api()
+
 
 def get_secret(name:str, key:str, namespace:str="default") -> str:
     """
@@ -34,6 +44,7 @@ def get_secret(name:str, key:str, namespace:str="default") -> str:
     """
     secret = v1.read_namespaced_secret(name, namespace)
     return base64.b64decode(secret.data[key].encode()).decode()
+
 
 def patch_crd_annotations(name:str, annotations:dict):
     """
@@ -44,6 +55,145 @@ def patch_crd_annotations(name:str, annotations:dict):
     # Patch for the client library which somehow doesn't do it itself for the patch
     v1_custom_objects.api_client.set_default_header('Content-Type', 'application/json-patch+json')
     v1_custom_objects.patch_namespaced_custom_object(
-        DOMAIN, "v1", NAMESPACE, "analytics", name,
+        DOMAIN, "v1", TASK_NAMESPACE, "analytics", name,
         [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
     )
+    print("CRD patched")
+
+
+def setup_pvc(name:str) -> str:
+    """
+    Create a pvc and returns the name
+    """
+    pv_name = f"{name}-pv"
+    pv = client.V1PersistentVolume(
+            api_version='v1',
+            kind='PersistentVolume',
+            metadata=client.V1ObjectMeta(name=pv_name, namespace=NAMESPACE),
+            spec=client.V1PersistentVolumeSpec(
+                access_modes=['ReadWriteMany'],
+                capacity={"storage": "100Mi"},
+                storage_class_name="controller-results",
+                host_path=client.V1HostPathVolumeSource(path=MOUNT_PATH),
+                persistent_volume_reclaim_policy="Delete"
+            )
+        )
+
+    volclaim_name = f"{name}-volclaim"
+    pvc = client.V1PersistentVolumeClaim(
+        api_version='v1',
+        kind='PersistentVolumeClaim',
+        metadata=client.V1ObjectMeta(
+            name=volclaim_name, namespace=NAMESPACE,
+            annotations={"kubernetes.io/pvc.recyclePolicy": "Delete"}
+        ),
+        spec=client.V1PersistentVolumeClaimSpec(
+            access_modes=['ReadWriteMany'],
+            volume_name=pv_name,
+            storage_class_name="controller-results",
+            resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"})
+        )
+    )
+    try:
+        v1.create_persistent_volume(body=pv)
+    except ApiException as kexc:
+        if kexc.status != 409:
+            raise KubernetesException(kexc.body)
+    try:
+        v1.create_namespaced_persistent_volume_claim(body=pvc, namespace=NAMESPACE)
+    except ApiException as kexc:
+        if kexc.status != 409:
+            raise KubernetesException(kexc.body)
+    return volclaim_name
+
+def repo_secret_name(repository:str):
+    """
+    Standardization for a secret name from a org/repo string
+    """
+    return re.sub(r'[\W_]+', '-', repository.lower())
+
+def create_job_push_results(
+        name:str, task_id:str,
+        repository="Federated-Node-Example-App"
+    ):
+    """
+    Creates the job template and submits it to the cluster in the
+    same namespace as the controller's
+    """
+    volclaim_name = setup_pvc(name)
+    secret_name=repo_secret_name(repository)
+    name += f"-{uuid4()}"
+    volumes = [
+        client.V1Volume(
+            name="results",
+            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=volclaim_name)
+        ),
+        client.V1Volume(
+            name="key",
+            secret=client.V1SecretVolumeSource(
+                secret_name=secret_name,
+                items=[client.V1KeyToPath(key="key.pem", path="key.pem")]
+            )
+        )
+    ]
+    vol_mounts = [
+        client.V1VolumeMount(
+            mount_path="/mnt/results/",
+            name="results"
+        ),
+        client.V1VolumeMount(
+            mount_path="/mnt/key/",
+            name="key"
+        )
+    ]
+    container = client.V1Container(
+        name=name,
+        image_pull_policy=PULL_POLICY,
+        image="ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev",
+        volume_mounts=vol_mounts,
+        command=["/bin/sh", "/app/scripts/push_to_github.sh"],
+        env=[
+            client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
+            client.V1EnvVar(name="TASK_ID", value=task_id),
+            client.V1EnvVar(name="GH_REPO", value=repository),
+            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
+            client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
+                secret_key_ref=client.V1SecretKeySelector(
+                    name=f"{secret_name}",
+                    key="GH_CLIENT_ID"
+                )
+            ))
+        ]
+    )
+
+    metadata = client.V1ObjectMeta(
+        name=name,
+        namespace=NAMESPACE
+    )
+    specs = client.V1PodSpec(
+        containers=[container],
+        restart_policy="OnFailure",
+        volumes=volumes,
+        image_pull_secrets=[client.V1LocalObjectReference("regcred")]
+    )
+    template = client.V1JobTemplateSpec(
+        metadata=metadata,
+        spec=specs
+    )
+    specs = client.V1JobSpec(
+        template=template,
+        ttl_seconds_after_finished=5
+    )
+    try:
+        v1_batch.create_namespaced_job(
+            namespace=NAMESPACE,
+            body=client.V1Job(
+                api_version='batch/v1',
+                kind='Job',
+                metadata=metadata,
+                spec=specs
+            ),
+            pretty=True
+        )
+    except ApiException as e:
+        raise KubernetesException(e.body)

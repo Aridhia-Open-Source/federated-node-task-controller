@@ -1,9 +1,39 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: controller-results
+provisioner: Local
+volumeBindingMode: WaitForFirstConsumer
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: controller-pv
 spec:
-  storageClassName: shared-results
+  storageClassName: controller-results
+  accessModes:
+    - ReadWriteMany
+    - ReadOnlyMany
+  capacity:
+    storage: 100Mi
+  # This should be changed to some more reliable destination
+  local:
+    path: /data/controller
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: results-pusher-pv
+spec:
+  storageClassName: controller-results
   accessModes:
     - ReadWriteMany
     - ReadOnlyMany
@@ -27,7 +57,7 @@ metadata:
   name: controller-pv-volclaim
   namespace: controller
 spec:
-  storageClassName: shared-results
+  storageClassName: controller-results
   volumeName: controller-pv
   resources:
     requests:

@@ -24,15 +24,17 @@ spec:
         app: analytics-operator
     spec:
       serviceAccountName: analytics-operator
+      imagePullSecrets:
+        - name: regcred
       volumes:
         - name: git
           persistentVolumeClaim:
             claimName: controller-pv-volclaim
       containers:
       - name: analytics-operator
-        image: custom_controller:0.0.1
+        image: ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev
         env:
-          - name: NAMESPACE
+          - name: TASK_NAMESPACE
             value: analytics
           - name: BACKEND_HOST
             value: http://backend.default.svc.cluster.local:5000
@@ -40,10 +42,14 @@ spec:
             value: http://keycloak.identities.svc.cluster.local
           - name: GIT_HOME
             value: /data/git
+          - name: MOUNT_PATH
+            value: /data/controller
+          - name: PULL-POLICY
+            value: IfNotPresent
         resources:
           limits:
             cpu: 2000m
             memory: 1Gi
         volumeMounts:
-            - name: git
-              mountPath: /data/git
+          - name: git
+            mountPath: /data/git

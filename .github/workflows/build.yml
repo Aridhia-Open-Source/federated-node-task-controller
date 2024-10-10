@@ -12,10 +12,10 @@ jobs:
   update:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
-        TAG: ${{ vars.VERSION }}
-        IMAGE: custom_controller
-        BUILD_PATH: .
-        HASH_SUFFIX: false
-        DOCKER_ACR: ${{ vars.DOCKER_ACR }}
+      TAG: ${{ vars.VERSION }}
+      IMAGE: custom_controller
+      BUILD_PATH: .
+      HASH_SUFFIX: false
+      DOCKER_ACR: ${{ vars.DOCKER_ACR }}
     secrets:
-        DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}

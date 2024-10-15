@@ -14,7 +14,7 @@ from controller.excpetions import KeycloakException
 from controller.helpers.kubernetes_helpers import get_secret
 
 
-logger = logging.getLogger('keycloak')
+logger = logging.getLogger('keycloak_helper')
 logger.setLevel(logging.INFO)
 
 

@@ -30,7 +30,7 @@ def k8s_config():
     else:
         config.load_kube_config()
 
-logger = logging.getLogger('helpers')
+logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
 
 k8s_config()
@@ -58,7 +58,7 @@ def patch_crd_annotations(name:str, annotations:dict):
         DOMAIN, "v1", TASK_NAMESPACE, "analytics", name,
         [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
     )
-    print("CRD patched")
+    logger.info("CRD patched")
 
 
 def setup_pvc(name:str) -> str:

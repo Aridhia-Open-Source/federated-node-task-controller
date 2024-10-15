@@ -13,9 +13,10 @@ from kubernetes.client.exceptions import ApiException
 
 from .const import DOMAIN, TASK_NAMESPACE, NAMESPACE
 from .excpetions import FederatedNodeException, KeycloakException
-from controller.helpers.kubernetes_helpers import v1, v1_custom_objects, k8s_config, patch_crd_annotations, create_job_push_results
-from controller.helpers.task_helpers import create_task, get_results, get_user_token
+from controller.helpers.kubernetes_helper import v1, v1_custom_objects, k8s_config, patch_crd_annotations, create_job_push_results
+from controller.helpers.task_helper import create_task, get_results, get_user_token
 
+logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 
@@ -38,7 +39,6 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
         watch=True
         ):
             logger.info("Found pod! %s", pod["object"].metadata.name)
-            print("Found pod! " + pod["object"].metadata.name)
             if pod["object"].status.phase == "Succeeded":
                 get_results(task_id, user_token)
                 create_job_push_results(
@@ -51,7 +51,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
                 patch_crd_annotations(crd_name, annotations)
                 break
             else:
-                print("Pod still running. Status:" + pod["object"].status.phase)
+                logger.info("Pod still running. Status: %s",  pod["object"].status.phase)
     logger.info(f"Stopping task {task_id} pod watcher")
     pod_watcher.stop()
 
@@ -70,14 +70,13 @@ def watch_user_pod(crd_name:str, user:str, labels:dict, annotations:dict):
         watch=True
         ):
             logger.info("Found pod! %s", pod["object"].metadata.name)
-            print("Found pod! " + pod["object"].metadata.name)
             if pod["object"].status.phase == "Succeeded":
                 # Add results annotation to let the controller know
                 # we already handled the user
                 patch_crd_annotations(crd_name, annotations)
                 break
             else:
-                print("Pod still running. Status:" + pod["object"].status.phase)
+                logger.info("Pod still running. Status: %s", pod["object"].status.phase)
     logger.info(f"Stopping {" ".join(user.values())} pod watcher")
     pod_watcher.stop()
 
@@ -123,7 +122,6 @@ for crds in watcher.stream(
         elif annotations.get(f"{DOMAIN}/user") and not annotations.get(f"{DOMAIN}/done"):
             user_token = get_user_token(user)
             logger.info("Creating task with image %s", image)
-            print(f"Creating task with image {image}")
 
             task_resp = create_task(
                 image,

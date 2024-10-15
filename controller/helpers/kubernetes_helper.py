@@ -9,9 +9,9 @@ import re
 import base64
 import logging
 
+from uuid import uuid4
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
-from uuid import uuid4
 
 from controller.excpetions import KubernetesException
 from controller.const import (
@@ -66,7 +66,7 @@ def setup_pvc(name:str) -> str:
     Create a pvc and returns the name
     """
     pv_name = f"{name}-pv"
-    pv = client.V1PersistentVolume(
+    pers_vol = client.V1PersistentVolume(
             api_version='v1',
             kind='PersistentVolume',
             metadata=client.V1ObjectMeta(name=pv_name, namespace=NAMESPACE),
@@ -95,15 +95,15 @@ def setup_pvc(name:str) -> str:
         )
     )
     try:
-        v1.create_persistent_volume(body=pv)
+        v1.create_persistent_volume(body=pers_vol)
     except ApiException as kexc:
         if kexc.status != 409:
-            raise KubernetesException(kexc.body)
+            raise KubernetesException(kexc.body) from kexc
     try:
         v1.create_namespaced_persistent_volume_claim(body=pvc, namespace=NAMESPACE)
     except ApiException as kexc:
         if kexc.status != 409:
-            raise KubernetesException(kexc.body)
+            raise KubernetesException(kexc.body) from kexc
     return volclaim_name
 
 def repo_secret_name(repository:str):
@@ -166,7 +166,9 @@ def create_job_push_results(
         volumes.append(
             client.V1Volume(
                 name="results",
-                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=volclaim_name)
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                    claim_name=volclaim_name
+                )
             )
         )
         vol_mounts.append(
@@ -214,5 +216,5 @@ def create_job_push_results(
             ),
             pretty=True
         )
-    except ApiException as e:
-        raise KubernetesException(e.body)
+    except ApiException as exc:
+        raise KubernetesException(exc.body) from exc

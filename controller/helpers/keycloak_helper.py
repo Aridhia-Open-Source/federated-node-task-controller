@@ -9,9 +9,9 @@ Both kubernetes and keycloak standard operations
 import os
 import logging
 
-from .request_helper import client as requests
 from controller.excpetions import KeycloakException
-from controller.helpers.kubernetes_helpers import get_secret
+from controller.helpers.kubernetes_helper import get_secret
+from .request_helper import client as requests
 
 
 logger = logging.getLogger('keycloak_helper')

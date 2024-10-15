@@ -49,7 +49,7 @@ spec:
         image: ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev
         envFrom:
           - configMapRef:
-            name: controller-config
+              name: controller-config
         env:
           - name: KEYCLOAK_ADMIN_PASSWORD
             valueFrom:

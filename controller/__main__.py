@@ -101,7 +101,7 @@ for crds in watcher.stream(
         if crds["type"] == "DELETED" or crds["object"]["metadata"].get("deletionTimestamp"):
             continue
 
-        if crds["type"] == "ADDED" and not annotations.get(f"{DOMAIN}/done"):
+        if crds["type"] == "ADDED" and not annotations.get(f"{DOMAIN}/user"):
             labels = deepcopy(crds["object"]["spec"])
             labels["dataset"] = str(labels["dataset"])
             labels.update(labels.pop("user"))

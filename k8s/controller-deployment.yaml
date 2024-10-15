@@ -6,7 +6,7 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: controlelr-config
+  name: controller-config
   namespace: controller
 data:
   TASK_NAMESPACE: analytics

@@ -37,19 +37,24 @@ signature=$(
 # Create JWT
 JWT="${header_payload}"."${signature}"
 
+echo "Getting app info"
 RESP=$(curl --request GET \
     --url "https://api.github.com/app/installations" \
     --header "Accept: application/vnd.github+json" \
     --header "Authorization: Bearer ${JWT}" \
-    --header "X-GitHub-Api-Version: 2022-11-28" | jq)
+    --header "X-GitHub-Api-Version: 2022-11-28" | jq
+)
+
 APP_ID=$(echo "$RESP" | jq -r '.[0].app_id')
 INST_ID=$(echo "$RESP" | jq -r '.[0].id')
 echo "AppID: $APP_ID"
 echo "INST_ID: $INST_ID"
-URL="https://api.github.com/app/installations/$INST_ID/access_tokens"
+
+echo "exchanging PAT for a JWT"
 GH_TOKEN=$(curl --request POST \
-    --url "$URL" \
+    --url "https://api.github.com/app/installations/$INST_ID/access_tokens" \
     --header "Accept: application/vnd.github+json" \
     --header "Authorization: Bearer ${JWT}" \
-    --header "X-GitHub-Api-Version: 2022-11-28" | jq -r '.token')
+    --header "X-GitHub-Api-Version: 2022-11-28" | jq -r '.token'
+)
 export GH_TOKEN

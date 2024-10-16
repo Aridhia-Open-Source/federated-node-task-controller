@@ -9,13 +9,14 @@ import re
 import base64
 import logging
 
+from uuid import uuid4
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
-from uuid import uuid4
 
 from controller.excpetions import KubernetesException
 from controller.const import (
-    DOMAIN, NAMESPACE, TASK_NAMESPACE, MOUNT_PATH, PULL_POLICY
+    DOMAIN, NAMESPACE, TASK_NAMESPACE, MOUNT_PATH, PULL_POLICY,
+    KC_URL, KC_USER
 )
 
 def k8s_config():
@@ -29,14 +30,14 @@ def k8s_config():
     else:
         config.load_kube_config()
 
-logger = logging.getLogger('helpers')
+logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
 
 k8s_config()
 
 v1 = client.CoreV1Api()
 v1_batch = client.BatchV1Api()
-
+v1_custom_objects = client.CustomObjectsApi()
 
 def get_secret(name:str, key:str, namespace:str="default") -> str:
     """
@@ -51,14 +52,13 @@ def patch_crd_annotations(name:str, annotations:dict):
     Since it's too verbose, and has to get a "patch" dedicated to it
     the annotation update is done here.
     """
-    v1_custom_objects = client.CustomObjectsApi()
     # Patch for the client library which somehow doesn't do it itself for the patch
     v1_custom_objects.api_client.set_default_header('Content-Type', 'application/json-patch+json')
     v1_custom_objects.patch_namespaced_custom_object(
         DOMAIN, "v1", TASK_NAMESPACE, "analytics", name,
         [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
     )
-    print("CRD patched")
+    logger.info("CRD patched")
 
 
 def setup_pvc(name:str) -> str:
@@ -66,7 +66,7 @@ def setup_pvc(name:str) -> str:
     Create a pvc and returns the name
     """
     pv_name = f"{name}-pv"
-    pv = client.V1PersistentVolume(
+    pers_vol = client.V1PersistentVolume(
             api_version='v1',
             kind='PersistentVolume',
             metadata=client.V1ObjectMeta(name=pv_name, namespace=NAMESPACE),
@@ -95,15 +95,15 @@ def setup_pvc(name:str) -> str:
         )
     )
     try:
-        v1.create_persistent_volume(body=pv)
+        v1.create_persistent_volume(body=pers_vol)
     except ApiException as kexc:
         if kexc.status != 409:
-            raise KubernetesException(kexc.body)
+            raise KubernetesException(kexc.body) from kexc
     try:
         v1.create_namespaced_persistent_volume_claim(body=pvc, namespace=NAMESPACE)
     except ApiException as kexc:
         if kexc.status != 409:
-            raise KubernetesException(kexc.body)
+            raise KubernetesException(kexc.body) from kexc
     return volclaim_name
 
 def repo_secret_name(repository:str):
@@ -113,8 +113,10 @@ def repo_secret_name(repository:str):
     return re.sub(r'[\W_]+', '-', repository.lower())
 
 def create_job_push_results(
-        name:str, task_id:str,
-        repository="Federated-Node-Example-App"
+        name:str, task_id:str=None,
+        repository="Federated-Node-Example-App",
+        create_volumes:bool=True,
+        script:str="push_to_github.sh", labels:dict={}
     ):
     """
     Creates the job template and submits it to the cluster in the
@@ -125,10 +127,6 @@ def create_job_push_results(
     name += f"-{uuid4()}"
     volumes = [
         client.V1Volume(
-            name="results",
-            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=volclaim_name)
-        ),
-        client.V1Volume(
             name="key",
             secret=client.V1SecretVolumeSource(
                 secret_name=secret_name,
@@ -138,37 +136,60 @@ def create_job_push_results(
     ]
     vol_mounts = [
         client.V1VolumeMount(
-            mount_path="/mnt/results/",
-            name="results"
-        ),
-        client.V1VolumeMount(
             mount_path="/mnt/key/",
             name="key"
         )
     ]
+    env = [
+        client.V1EnvVar(name="KC_URL", value=KC_URL),
+        client.V1EnvVar(name="KC_USER", value=KC_USER),
+        client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
+        client.V1EnvVar(name="GH_REPO", value=repository),
+        client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
+        client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
+            secret_key_ref=client.V1SecretKeySelector(
+                name=f"{secret_name}",
+                key="GH_CLIENT_ID"
+            )
+        )),
+        client.V1EnvVar(name="KC_PASS", value_from=client.V1EnvVarSource(
+            secret_key_ref=client.V1SecretKeySelector(
+                name="kc-secrets",
+                key="KEYCLOAK_ADMIN_PASSWORD"
+            )
+        ))
+    ]
+    if task_id:
+        env.append(client.V1EnvVar(name="TASK_ID", value=task_id),)
+
+    if create_volumes:
+        volumes.append(
+            client.V1Volume(
+                name="results",
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                    claim_name=volclaim_name
+                )
+            )
+        )
+        vol_mounts.append(
+            client.V1VolumeMount(
+                mount_path="/mnt/results/",
+                name="results"
+            )
+)
     container = client.V1Container(
         name=name,
         image_pull_policy=PULL_POLICY,
         image="ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev",
         volume_mounts=vol_mounts,
-        command=["/bin/sh", "/app/scripts/push_to_github.sh"],
-        env=[
-            client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
-            client.V1EnvVar(name="TASK_ID", value=task_id),
-            client.V1EnvVar(name="GH_REPO", value=repository),
-            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
-            client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
-                secret_key_ref=client.V1SecretKeySelector(
-                    name=f"{secret_name}",
-                    key="GH_CLIENT_ID"
-                )
-            ))
-        ]
+        command=["/bin/sh", f"/app/scripts/{script}"],
+        env=env
     )
 
     metadata = client.V1ObjectMeta(
         name=name,
-        namespace=NAMESPACE
+        namespace=NAMESPACE,
+        labels=labels
     )
     specs = client.V1PodSpec(
         containers=[container],
@@ -195,5 +216,5 @@ def create_job_push_results(
             ),
             pretty=True
         )
-    except ApiException as e:
-        raise KubernetesException(e.body)
+    except ApiException as exc:
+        raise KubernetesException(exc.body) from exc

@@ -1,8 +1,7 @@
 FROM python:3.12.2-alpine
 
 COPY controller /app/controller
-COPY --chmod=755 scripts/jwt.sh /app/scripts/
-COPY --chmod=755 scripts/push_to_github.sh /app/scripts/
+COPY --chmod=755 scripts/*.sh /app/scripts/
 COPY Pipfile* /app
 
 WORKDIR /app

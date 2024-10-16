@@ -3,7 +3,21 @@ kind: Namespace
 metadata:
   name: controller
 ---
-
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-config
+  namespace: controller
+data:
+  TASK_NAMESPACE: analytics
+  BACKEND_HOST: http://backend.default.svc.cluster.local:5000
+  KC_HOST: http://keycloak.identities.svc.cluster.local
+  GIT_HOME: /data/git
+  MOUNT_PATH: /data/controller
+  PULL-POLICY: IfNotPresent
+  KC_URL: http://keycloak.identities.svc.cluster.local
+  KC_USER: admin
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,19 +47,15 @@ spec:
       containers:
       - name: analytics-operator
         image: ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev
+        envFrom:
+          - configMapRef:
+              name: controller-config
         env:
-          - name: TASK_NAMESPACE
-            value: analytics
-          - name: BACKEND_HOST
-            value: http://backend.default.svc.cluster.local:5000
-          - name: KC_HOST
-            value: http://keycloak.identities.svc.cluster.local
-          - name: GIT_HOME
-            value: /data/git
-          - name: MOUNT_PATH
-            value: /data/controller
-          - name: PULL-POLICY
-            value: IfNotPresent
+          - name: KEYCLOAK_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kc-secrets
+                key: KEYCLOAK_ADMIN_PASSWORD
         resources:
           limits:
             cpu: 2000m

@@ -15,8 +15,8 @@ from kubernetes.client.exceptions import ApiException
 
 from controller.excpetions import KubernetesException
 from controller.const import (
-    DOMAIN, NAMESPACE, TASK_NAMESPACE, MOUNT_PATH, PULL_POLICY,
-    KC_URL, KC_USER
+    DOMAIN, NAMESPACE, TASK_NAMESPACE,
+    MOUNT_PATH, PULL_POLICY, TAG, KC_URL, KC_USER
 )
 
 def k8s_config():
@@ -180,7 +180,7 @@ def create_job_push_results(
     container = client.V1Container(
         name=name,
         image_pull_policy=PULL_POLICY,
-        image="ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev",
+        image=f"ghcr.io/aridhia-open-source/custom_controller:{TAG}",
         volume_mounts=vol_mounts,
         command=["/bin/sh", f"/app/scripts/{script}"],
         env=env

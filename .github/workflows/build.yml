@@ -17,10 +17,11 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ vars.VERSION }}
-      IMAGE: custom_controller
+      IMAGE: fn_task_controller
       BUILD_PATH: .
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_ACR }}
+      PATH_BUILD: k8s/fn-task-controller
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   helm:

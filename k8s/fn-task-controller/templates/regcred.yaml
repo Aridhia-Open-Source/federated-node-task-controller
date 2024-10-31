@@ -1,36 +1,30 @@
 ## This assumes the federated node being already deployed
 # Basically duplicates the regcred and kc-secret to the controller's
 # namespace
-{{ $regcred := lookup "v1" "Secret" $.Release.Namespace "regcred" | default dict }}
+{{- range list "regcred" "kc-secrets" }}
+{{ $regcred := lookup "v1" "Secret" $.Release.Namespace . | default dict }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: regcred
-  namespace: {{ .Values.namespace.controller }}
+  name: {{ . }}
+  namespace: {{ $.Values.namespace.controller }}
 data:
 {{- with $regcred.data  }}
 {{ toYaml . | indent 2 }}
 {{- end }}
-type: kubernetes.io/dockerconfigjson
+type: {{ $regcred.type}}
 ---
-{{ $kcsec := lookup "v1" "Secret" $.Release.Namespace "kc-secrets" | default dict }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kc-secrets
-  namespace: {{ .Values.namespace.controller }}
-data:
-{{- with $kcsec.data  }}
-{{ toYaml . | indent 2 }}
 {{- end }}
----
-{{ $kccm := lookup "v1" "ConfigMap" $.Release.Namespace "keycloak-config" | default dict }}
+{{- range list "keycloak-config" }}
+{{ $kccm := lookup "v1" "ConfigMap" $.Release.Namespace . | default dict }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: keycloak-config
-  namespace: {{ .Values.namespace.controller }}
+  name: {{ . }}
+  namespace: {{ $.Values.namespace.controller }}
 data:
 {{- with $kccm.data  }}
 {{ toYaml . | indent 2 }}
+{{- end }}
+---
 {{- end }}

@@ -19,6 +19,10 @@ from controller.const import (
     MOUNT_PATH, PULL_POLICY, TAG, KC_URL, KC_USER
 )
 
+base_label = {
+    f"{DOMAIN}": "fn-controller"
+}
+
 def k8s_config():
     """
     Configure the k8s client, if KUBERNETES_PORT
@@ -69,7 +73,10 @@ def setup_pvc(name:str) -> str:
     pers_vol = client.V1PersistentVolume(
             api_version='v1',
             kind='PersistentVolume',
-            metadata=client.V1ObjectMeta(name=pv_name, namespace=NAMESPACE),
+            metadata=client.V1ObjectMeta(
+                name=pv_name, namespace=NAMESPACE,
+                labels=base_label
+            ),
             spec=client.V1PersistentVolumeSpec(
                 access_modes=['ReadWriteMany'],
                 capacity={"storage": "100Mi"},
@@ -85,6 +92,7 @@ def setup_pvc(name:str) -> str:
         kind='PersistentVolumeClaim',
         metadata=client.V1ObjectMeta(
             name=volclaim_name, namespace=NAMESPACE,
+            labels=base_label,
             annotations={"kubernetes.io/pvc.recyclePolicy": "Delete"}
         ),
         spec=client.V1PersistentVolumeClaimSpec(
@@ -125,6 +133,8 @@ def create_job_push_results(
     volclaim_name = setup_pvc(name)
     secret_name=repo_secret_name(repository)
     name += f"-{uuid4()}"
+    labels.update(base_label)
+
     volumes = [
         client.V1Volume(
             name="key",
@@ -176,7 +186,7 @@ def create_job_push_results(
                 mount_path="/mnt/results/",
                 name="results"
             )
-)
+        )
     container = client.V1Container(
         name=name,
         image_pull_policy=PULL_POLICY,

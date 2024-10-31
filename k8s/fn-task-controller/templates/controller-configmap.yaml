@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-config
+  namespace: {{ .Values.namespace.controller }}
+data:
+  TASK_NAMESPACE: analytics
+  BACKEND_HOST: http://backend.{{ .Release.Namespace }}.svc.cluster.local:5000
+  KC_HOST: http://keycloak.{{ .Values.namespace.keycloak }}.svc.cluster.local
+  GIT_HOME: {{ template "fn-task-controller.gitpath" . }}
+  MOUNT_PATH: {{ .Values.storage.local.path }}
+  PULL-POLICY: IfNotPresent
+  TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
+  IMAGE: {{ template "fn-task-controller.image" . }}

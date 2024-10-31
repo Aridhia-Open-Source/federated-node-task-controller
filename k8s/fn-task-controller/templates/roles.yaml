@@ -1,0 +1,36 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: analytics-operator
+rules:
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["create"]
+- apiGroups: ["tasks.federatednode.com"]
+  resources: ["analytics"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: analytics-operator
+subjects:
+- kind: ServiceAccount
+  name: analytics-operator
+  namespace: default
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: analytics-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-operator
+  namespace: {{ .Values.namespace.controller }}

@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: controller-results
+{{ if .Values.storage.local }}
+provisioner: Local
+volumeBindingMode: WaitForFirstConsumer
+{{- else if .Values.storage.azure -}}
+provisioner: disk.csi.azure.com
+parameters:
+  skuname: Premium_LRS
+volumeBindingMode: WaitForFirstConsumer
+{{- else if .Values.storage.nfs -}}
+provisioner: {{ .Values.storage.nfs.provisioner -}}
+parameters:
+  server: {{ .Values.storage.nfs.url -}}
+  path: {{ .Values.storage.nfs.path -}}
+  readOnly: "false"
+{{- end -}}

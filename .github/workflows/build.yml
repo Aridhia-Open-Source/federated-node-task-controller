@@ -25,6 +25,7 @@ jobs:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
+    needs: update
     with:
       VERSION: ${{ vars.VERSION }}
       HELM_REPO: ${{ vars.HELM_REPO }}

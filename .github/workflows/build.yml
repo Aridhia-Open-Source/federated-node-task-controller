@@ -21,7 +21,6 @@ jobs:
       BUILD_PATH: .
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_ACR }}
-      PATH_BUILD: k8s/fn-task-controller
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   helm:
@@ -30,5 +29,6 @@ jobs:
       VERSION: ${{ vars.VERSION }}
       HELM_REPO: ${{ vars.HELM_REPO }}
       USER_HELM: ${{ vars.USER_HELM }}
+      PATH_BUILD: k8s/fn-task-controller
     secrets:
       HELM_TOKEN: ${{ secrets.HELM_TOKEN }}

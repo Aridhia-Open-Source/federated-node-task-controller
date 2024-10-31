@@ -20,3 +20,11 @@ jobs:
       DOCKER_ACR: ${{ vars.DOCKER_ACR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  helm:
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
+    with:
+      VERSION: ${{ vars.VERSION }}
+      HELM_REPO: ${{ vars.HELM_REPO }}
+      USER_HELM: ${{ vars.USER_HELM }}
+    secrets:
+      HELM_TOKEN: ${{ secrets.HELM_TOKEN }}

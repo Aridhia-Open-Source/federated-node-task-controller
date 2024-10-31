@@ -15,8 +15,8 @@ from kubernetes.client.exceptions import ApiException
 
 from controller.excpetions import KubernetesException
 from controller.const import (
-    DOMAIN, NAMESPACE, TASK_NAMESPACE,
-    MOUNT_PATH, PULL_POLICY, TAG, KC_URL, KC_USER
+    DOMAIN, NAMESPACE, TASK_NAMESPACE, IMAGE,
+    MOUNT_PATH, PULL_POLICY, TAG, KC_HOST, KC_USER
 )
 
 base_label = {
@@ -151,7 +151,7 @@ def create_job_push_results(
         )
     ]
     env = [
-        client.V1EnvVar(name="KC_URL", value=KC_URL),
+        client.V1EnvVar(name="KC_HOST", value=KC_HOST),
         client.V1EnvVar(name="KC_USER", value=KC_USER),
         client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
         client.V1EnvVar(name="GH_REPO", value=repository),
@@ -190,7 +190,7 @@ def create_job_push_results(
     container = client.V1Container(
         name=name,
         image_pull_policy=PULL_POLICY,
-        image=f"ghcr.io/aridhia-open-source/custom_controller:{TAG}",
+        image=f"{IMAGE}:{TAG}",
         volume_mounts=vol_mounts,
         command=["/bin/sh", f"/app/scripts/{script}"],
         env=env

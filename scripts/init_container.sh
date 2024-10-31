@@ -19,7 +19,7 @@ EMAILS=$(gh pr list -B "${BRANCH}" --state merged --json author,commits | jq -r 
 
 echo "Logging in Keycloak"
 # shellcheck disable=SC2086
-ADMIN_TOKEN=$(curl ${CURL_PARAMS} --fail-with-body "${KC_URL}/realms/FederatedNode/protocol/openid-connect/token" \
+ADMIN_TOKEN=$(curl ${CURL_PARAMS} --fail-with-body "${KC_HOST}/realms/FederatedNode/protocol/openid-connect/token" \
     --header 'Content-Type: application/x-www-form-urlencoded' \
     --data-urlencode 'grant_type=password' \
     --data-urlencode "username=${KC_USER}" \
@@ -29,12 +29,12 @@ ADMIN_TOKEN=$(curl ${CURL_PARAMS} --fail-with-body "${KC_URL}/realms/FederatedNo
 for em in ${EMAILS}
 do
     # shellcheck disable=SC2086
-    KC_USER_ID=$(curl ${CURL_PARAMS} "${KC_URL}/admin/realms/FederatedNode/users?email=${em}" \
+    KC_USER_ID=$(curl ${CURL_PARAMS} "${KC_HOST}/admin/realms/FederatedNode/users?email=${em}" \
         --header "Authorization: Bearer ${ADMIN_TOKEN}" | jq -r '.[].id')
 
     if [ -n "${KC_USER_ID}" ]; then
         # shellcheck disable=SC2086
-        curl ${CURL_PARAMS} "${KC_URL}/admin/realms/FederatedNode/users/${KC_USER_ID}/federated-identity/github" \
+        curl ${CURL_PARAMS} "${KC_HOST}/admin/realms/FederatedNode/users/${KC_USER_ID}/federated-identity/github" \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${ADMIN_TOKEN}" \
             --data "{

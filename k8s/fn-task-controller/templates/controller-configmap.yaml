@@ -4,7 +4,8 @@ metadata:
   name: controller-config
   namespace: {{ .Values.namespace.controller }}
 data:
-  TASK_NAMESPACE: analytics
+  TASK_NAMESPACE: {{ .Values.namespace.tasks }}
+  NAMESPACE: {{ .Values.namespace.controller }}
   BACKEND_HOST: http://backend.{{ .Release.Namespace }}.svc.cluster.local:5000
   KC_HOST: http://keycloak.{{ .Values.namespace.keycloak }}.svc.cluster.local
   GIT_HOME: {{ template "fn-task-controller.gitpath" . }}

@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-IMAGE ?= ghcr.io/aridhia-open-source/custom_controller:0.0.1-dev
+IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:0.0.1-dev
 
 build:
 	docker build . -t "${IMAGE}"

@@ -33,4 +33,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: analytics-operator
-  namespace: controller
+  namespace: {{ .Values.namespace.controller }}

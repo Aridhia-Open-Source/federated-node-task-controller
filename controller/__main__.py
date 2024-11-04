@@ -80,6 +80,19 @@ def watch_user_pod(crd_name:str, user:str, labels:dict, annotations:dict):
     logger.info(f"Stopping {" ".join(user.values())} pod watcher")
     pod_watcher.stop()
 
+def create_labels(crds:dict) -> dict:
+    """
+    Given the crd spec dictionary, creates a dictionary
+    to be used as a labels set. Trims each field to
+    64 chars as that's k8s limit
+    """
+    labels = deepcopy(crds)
+    labels["dataset"] = str(labels["dataset"])[:63]
+    labels.update(labels.pop("user"))
+    labels["repository"] = labels["repository"].replace("/", "-")[:63]
+    labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
+    return labels
+
 for crds in watcher.stream(
     v1_custom_objects.list_namespaced_custom_object,
     DOMAIN,
@@ -101,11 +114,7 @@ for crds in watcher.stream(
             continue
 
         if crds["type"] == "ADDED" and not annotations.get(f"{DOMAIN}/user"):
-            labels = deepcopy(crds["object"]["spec"])
-            labels["dataset"] = str(labels["dataset"])
-            labels.update(labels.pop("user"))
-            labels["repository"] = labels["repository"].replace("/", "-")
-            labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])
+            labels = create_labels(crds["object"]["spec"])
 
             # should trigger the user check
             create_job_push_results(

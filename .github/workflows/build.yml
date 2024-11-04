@@ -9,14 +9,28 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   update:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ vars.VERSION }}
-      IMAGE: custom_controller
+      IMAGE: fn_task_controller
       BUILD_PATH: .
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_ACR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  helm:
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
+    needs: update
+    with:
+      VERSION: ${{ vars.VERSION }}
+      HELM_REPO: ${{ vars.HELM_REPO }}
+      USER_HELM: ${{ vars.USER_HELM }}
+      PATH_BUILD: k8s/fn-task-controller
+      CHART_NAME: fn-task-controller
+    secrets:
+      HELM_TOKEN: ${{ secrets.HELM_TOKEN }}

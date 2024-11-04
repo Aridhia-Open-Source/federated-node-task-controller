@@ -49,11 +49,16 @@ def get_admin_token() -> str:
     return admin_resp.json()["access_token"]
 
 
-def get_user(email:str=None, username:str=None) -> dict:
+def get_user(email:str=None, username:str=None, idpId:str=None) -> dict:
     """
     Method to return a dictionary representing a Keycloak user
     """
-    if email:
+    if idpId:
+        user_response = requests.get(
+            f"{KC_HOST}/admin/realms/{REALM}/users?idpUserId={idpId}",
+            headers={"Authorization": f"Bearer {get_admin_token()}"}
+        )
+    elif email:
         user_response = requests.get(
             f"{KC_HOST}/admin/realms/{REALM}/users?email={email}&exact=true",
             headers={"Authorization": f"Bearer {get_admin_token()}"}

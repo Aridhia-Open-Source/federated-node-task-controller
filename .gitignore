@@ -1,6 +1,7 @@
 send_mini.sh
 .vscode/
 *.yaml
-!k8s/*.yaml
+!k8s/**/*.yaml
 *.pem
 local/
+k8s/fn-task-controller/*.values.yaml

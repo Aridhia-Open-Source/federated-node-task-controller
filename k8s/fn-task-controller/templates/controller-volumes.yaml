@@ -1,10 +1,3 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: controller-results
-provisioner: Local
-volumeBindingMode: WaitForFirstConsumer
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -15,10 +8,10 @@ spec:
     - ReadWriteMany
     - ReadOnlyMany
   capacity:
-    storage: 100Mi
-  # This should be changed to some more reliable destination
+    storage: {{ .Values.storage.size }}
+  {{ if .Values.storage.local }}
   local:
-    path: /data/controller
+    path: {{ .Values.storage.local.path }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -27,6 +20,13 @@ spec:
           operator: In
           values:
           - linux
+  {{ else if .Values.storage.azure }}
+  azureFile:
+    shareName: {{ .Values.storage.azure.shareName }}/results
+    readOnly: false
+    secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+  {{ else if .Values.storage.nfs }}
+  {{ end }}
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -38,10 +38,10 @@ spec:
     - ReadWriteMany
     - ReadOnlyMany
   capacity:
-    storage: 100Mi
-  # This should be changed to some more reliable destination
+    storage: {{ .Values.storage.size }}
+  {{ if .Values.storage.local }}
   local:
-    path: /data/controller
+    path: {{ .Values.storage.local.path }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -50,17 +50,24 @@ spec:
           operator: In
           values:
           - linux
+  {{ else if .Values.storage.azure }}
+  azureFile:
+    shareName: {{ .Values.storage.azure.shareName }}/results
+    readOnly: false
+    secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+  {{ else if .Values.storage.nfs }}
+  {{ end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: controller-pv-volclaim
-  namespace: controller
+  namespace: {{ .Values.namespace.controller }}
 spec:
   storageClassName: controller-results
   volumeName: controller-pv
   resources:
     requests:
-      storage: 100Mi
+      storage: {{ .Values.storage.size }}
   accessModes:
     - ReadOnlyMany

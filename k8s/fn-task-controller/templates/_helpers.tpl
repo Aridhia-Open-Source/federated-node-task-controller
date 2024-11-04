@@ -66,3 +66,6 @@ Create the name of the service account to use
 {{- define "fn-task-controller.gitpath" -}}
 {{- print "/data/git" -}}
 {{- end }}
+{{- define "rollMe" -}}
+{{ randAlphaNum 5 | quote }}
+{{- end -}}

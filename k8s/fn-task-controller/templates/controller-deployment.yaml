@@ -10,6 +10,8 @@ metadata:
   namespace: {{ .Values.namespace.controller }}
   labels:
     app: analytics-operator
+  annotations:
+    rollme: {{ template "rollMe" . }}
 spec:
   replicas: 1
   strategy:

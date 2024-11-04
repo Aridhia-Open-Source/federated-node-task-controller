@@ -70,8 +70,10 @@ def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:s
             proj_name,
             dataset_id
         ),
+        verify=False,
         headers={
-            "Authorization": f"Bearer {user_token}"
+            "Authorization": f"Bearer {user_token}",
+            "project-name": proj_name
         }
     )
     if not task_resp.ok and task_resp.status_code != 409:

@@ -24,6 +24,8 @@ spec:
                       type: string
                     email:
                       type: string
+                    idpId:
+                      type: string
                 project:
                   type: string
                 dataset:

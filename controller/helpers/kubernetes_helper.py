@@ -133,6 +133,7 @@ def create_job_push_results(
     volclaim_name = setup_pvc(name)
     secret_name=repo_secret_name(repository)
     name += f"-{uuid4()}"
+    name = name[:62]
     labels.update(base_label)
 
     volumes = [
@@ -151,7 +152,7 @@ def create_job_push_results(
         )
     ]
     env = [
-        client.V1EnvVar(name="KC_HOST", value=KC_HOST),
+        client.V1EnvVar(name="KC_HOST", value="http://keycloak.identities.svc.cluster.local"),
         client.V1EnvVar(name="KC_USER", value=KC_USER),
         client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
         client.V1EnvVar(name="GH_REPO", value=repository),

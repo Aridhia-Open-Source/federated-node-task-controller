@@ -38,8 +38,8 @@ python -c "import re; repository=input('Enter repo name:\n');print(re.sub(r'[\W_
 You will also need the client id from the github app so you can apply it as environment variable
 
 ```bash
-CLIENT_ID="Iv23lis6Qfwf5bXS9iaU"
-kubectl create secret generic aridhia-open-source-federated-node-example-app -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
+CLIENT_ID="githubAppClientId"
+kubectl create secret generic ghpk -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
 ```
 Very straightforward
 ```bash

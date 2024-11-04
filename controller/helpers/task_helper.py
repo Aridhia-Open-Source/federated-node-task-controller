@@ -26,6 +26,7 @@ def create_task_body(image:str, user:str, project:str, dataset: int):
                 "env": {}
             }
         ],
+        "dataset_id": dataset,
         "tags": {
             "dataset_id": dataset,
             "test_tag": "some content"

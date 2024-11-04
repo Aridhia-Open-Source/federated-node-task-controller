@@ -18,3 +18,9 @@ storage:
   local:
   azure:
   nfs:
+
+idp:
+  github:
+    secret_name:
+    secret_key:
+    clientid_key:

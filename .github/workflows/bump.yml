@@ -21,8 +21,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Bump Chart.yaml
         run: |
+          git checkout -b version-${{ inputs.new_version }}
           sed -i "s/version: .*/version: ${{ inputs.new_version }}/" k8s/fn-task-controller/Chart.yaml
           git config --global user.name 'BotMan'
           git config --global user.email 'r-casula@users.noreply.github.com'
           git commit -am "Version bumped to ${{ inputs.new_version }}"
-          git push --force
+          git push
+          gh pr create \
+            --title "Version bump to ${{ inputs.new_version }}" \
+            --body "Automated version bump to ${{ inputs.new_version }}" \
+            --reviewer Aridhia-Open-Source/reviewers

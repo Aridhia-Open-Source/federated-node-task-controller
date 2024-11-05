@@ -23,9 +23,6 @@ The researcher would then open a PR that aims to modify the CRD template, or add
 
 This will then cause the controller to start its active work.
 
-### Future dev
-- Aiming to have the automatic push from the controller (either via a separate job or within its process) of the results to an agreed destination. At the moment, we're trying GitHub itself.
-
 
 ## Deploy
 In order to have it working, GitHub should be added as an Identity Provider on Keycloak.

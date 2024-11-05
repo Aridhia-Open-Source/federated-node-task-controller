@@ -41,7 +41,19 @@ You will also need the client id from the github app so you can apply it as envi
 CLIENT_ID="githubAppClientId"
 kubectl create secret generic ghpk -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
 ```
+
 Very straightforward
 ```bash
-kubectl apply k8s/
+cd k8s/fn-task-controller
+helm install fncontroller . -f dev.values.yaml
+```
+or though the helm repo:
+```sh
+# Stable version
+helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/stable
+# Dev version
+helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/develop
+
+# Install
+helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
 ```

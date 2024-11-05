@@ -28,21 +28,28 @@ This will then cause the controller to start its active work.
 
 
 ## Deploy
-Needs a github apps private key as a secret. Make sure the `.pem` file is named `key.pem`, and run the following to create a secret. Instead of `ghpk` it should be the a lowercase string with the format `organization`-`repository`.
+In order to have it working, GitHub should be added as an Identity Provider on Keycloak.
 
-You can use this snippet to format it:
-```bash
-python -c "import re; repository=input('Enter repo name:\n');print(re.sub(r'[\W_]+','-', repository.lower()))"
+Luckily there is an automation in place to take care of this. The only pre-requisite is a secret with the github app secret and client id. It can be created following the template below:
+```sh
+GH_SECRET=""
+GH_CLIENT_ID=""
+kubectl create secret generic github-app -n fn-controller --from-literal "GH_SECRET=$GH_SECRET" --from-literal "GH_CLIENT_ID=$GH_CLIENT_ID"
 ```
+Just make sure the `fn-controller` namespace matches the one in your values file under `namespace.controller`.
+If none is specified `fn-controller` is the default value.
 
-You will also need the client id from the github app so you can apply it as environment variable
-
-```bash
-CLIENT_ID="githubAppClientId"
-kubectl create secret generic ghpk -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
+Once the secret has been created set in the values file as follows:
+```yaml
+idp:
+  github:
+    secret_name: github-app
+    secret_key: GH_SECRET
+    clientid_key: GH_CLIENT_ID
 ```
+Of course, use the secret name and key names used in the bash command above.
 
-Very straightforward
+Then deploy as follows:
 ```bash
 cd k8s/fn-task-controller
 helm install fncontroller . -f dev.values.yaml
@@ -57,3 +64,23 @@ helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffe
 # Install
 helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
 ```
+
+## Usage
+There are 2 things to setup:
+- ArgoCD monitoring the repository/branch where the CRD is stored (and subjected to the PR-pipeline process)
+- Let the controller know where to find credentials details for the repo on where to push the results (can be some other than the previous step)
+
+A github apps private key as a secret is required. Make sure the `.pem` file is named `key.pem`, and run the following to create a secret. Instead of `ghpk` it should be the a lowercase string with the format `organization`-`repository`.
+
+You can use this snippet to format it:
+```bash
+python -c "import re; repository=input('Enter repo name:\n');print(re.sub(r'[\W_]+','-', repository.lower()))"
+```
+
+You will also need the client id from the github app so you can apply it as environment variable
+
+```bash
+CLIENT_ID="githubAppClientId"
+kubectl create secret generic ghpk -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
+```
+This allows the controller to be able to checkout the repository where the results should be pushed to.

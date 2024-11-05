@@ -33,5 +33,4 @@ jobs:
           git push --set-upstream origin version-${{ inputs.new_version }}
           gh pr create \
             --title "Version bump to ${{ inputs.new_version }}" \
-            --body "Automated version bump to ${{ inputs.new_version }}" \
-            --reviewer Aridhia-Open-Source/reviewers
+            --body "Automated version bump to ${{ inputs.new_version }}"

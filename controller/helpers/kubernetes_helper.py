@@ -43,7 +43,7 @@ v1 = client.CoreV1Api()
 v1_batch = client.BatchV1Api()
 v1_custom_objects = client.CustomObjectsApi()
 
-def get_secret(name:str, key:str, namespace:str="default") -> str:
+def get_secret(name:str, key:str, namespace:str=NAMESPACE) -> str:
     """
     Returns a secret decoded value from a secret name, and its key
     """

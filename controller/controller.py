@@ -12,7 +12,9 @@ from kubernetes.client.exceptions import ApiException
 
 from const import DOMAIN, TASK_NAMESPACE
 from excpetions import FederatedNodeException, KeycloakException
-from helpers.kubernetes_helper import v1_custom_objects, k8s_config, patch_crd_annotations, create_helper_job
+from helpers.kubernetes_helper import (
+    v1_custom_objects, k8s_config, patch_crd_annotations, create_helper_job
+)
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
 from helpers.task_helper import create_task, get_user_token
 
@@ -38,6 +40,12 @@ def create_labels(crds:dict) -> dict:
 
 
 def start(exit_on_tests=False):
+    """
+    Effectively the entrypoint of the controller.
+    Accepts the `exit_on_tests` argument which is mostly,
+    as the name suggests, used for tests and has to be explicitly
+    set via a code change rather than an env var
+    """
     watcher = Watch()
     for crds in watcher.stream(
         v1_custom_objects.list_namespaced_custom_object,
@@ -93,7 +101,13 @@ def start(exit_on_tests=False):
             elif annotations.get(f"{DOMAIN}/done") and not annotations.get(f"{DOMAIN}/results"):
                 # If we have already triggered a task, check if the pod has completed
                 annotations[f"{DOMAIN}/results"] = "true"
-                watch_task_pod(crd_name, crds["object"]["spec"], annotations[f"{DOMAIN}/task_id"], get_user_token(user), annotations)
+                watch_task_pod(
+                    crd_name,
+                    crds["object"]["spec"],
+                    annotations[f"{DOMAIN}/task_id"],
+                    get_user_token(user),
+                    annotations
+                )
 
             if exit_on_tests:
                 watcher.stop()
@@ -104,9 +118,9 @@ def start(exit_on_tests=False):
             raise mre
         except (KeycloakException, FederatedNodeException, ApiException) as ke:
             logger.error(ke.reason)
-        except KeyError as ke:
+        except KeyError:
             # Possibly missing values, it shouldn't crash the pod
             logger.error(traceback.format_exc())
-        except Exception as exc:
+        # pylint: disable=W0718
+        except Exception:
             logger.error("Unknown error: %s", traceback.format_exc())
-

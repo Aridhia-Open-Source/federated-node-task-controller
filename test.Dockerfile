@@ -1,7 +1,7 @@
 FROM python:3.12.2-alpine
 
 COPY controller /app/controller
-COPY --chmod=755 scripts/tests/test-entrypoint.sh /app/scripts/test-entrypoint.sh
+COPY --chmod=755 scripts/tests/*.sh /app/scripts/
 COPY Pipfile* /app
 
 WORKDIR /app

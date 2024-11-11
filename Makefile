@@ -28,3 +28,6 @@ tests_ci:
 	docker run --name ${TEST_CONTAINER} ${TESTS_IMAGE}
 	docker cp ${TEST_CONTAINER}:/app/controller/artifacts/coverage.xml artifacts/coverage.xml
 	docker rm ${TEST_CONTAINER}
+
+pylint_ci:
+	./scripts/linting/pylint.sh

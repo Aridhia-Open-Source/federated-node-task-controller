@@ -1,3 +1,8 @@
+"""
+Centralized collection of constants and
+environment variables
+"""
+
 import os
 
 DOMAIN = "tasks.federatednode.com"

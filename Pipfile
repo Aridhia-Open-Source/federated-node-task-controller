@@ -6,13 +6,12 @@ name = "pypi"
 [packages]
 kubernetes = "*"
 
-[dev-packages]
-
 [requires]
 python_version = "3.12"
 python_full_version = "3.12.2"
 
 [dev]
+pycobertura = "*"
 pylint=">=3.0.3"
 pytest = "*"
 pytest-mock = "*"

@@ -66,14 +66,10 @@ def mock_crd_done(mock_crd_task_done):
             [f"{DOMAIN}/results"] = "true"
     return deepcopy(mock_crd_task_done)
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def k8s_config(mocker):
     mocker.patch('kubernetes.config.load_kube_config', return_value=Mock())
-
-    mocker.patch(
-        'controller.helpers.kubernetes_helper.config',
-        side_effect=Mock()
-    )
+    mocker.patch('helpers.kubernetes_helper.config.load_kube_config', return_value=Mock())
 
 @pytest.fixture
 def k8s_watch_mock(mocker):

@@ -6,3 +6,6 @@ send_mini.sh
 local/
 k8s/fn-task-controller/*.values.yaml
 **/*.env
+!artifacts/.keep
+artifacts/*
+.coverage

@@ -28,10 +28,12 @@ def k8s_config():
     Configure the k8s client, if KUBERNETES_PORT
     is in the env, means we are on a cluster, otherwise
     load_kube_config will look into ~/.kube
+    If the env var RUN_PYTESTS is set, it will skip this
+    config initialization, as we are running tests
     """
     if 'KUBERNETES_PORT' in os.environ:
         config.load_incluster_config()
-    else:
+    elif not os.getenv("RUN_PYTESTS", False):
         config.load_kube_config()
 
 logger = logging.getLogger('k8s_helpers')

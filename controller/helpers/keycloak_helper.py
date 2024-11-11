@@ -9,8 +9,8 @@ Both kubernetes and keycloak standard operations
 import os
 import logging
 
-from controller.excpetions import KeycloakException
-from controller.helpers.kubernetes_helper import get_secret
+from excpetions import KeycloakException
+from helpers.kubernetes_helper import get_secret
 from .request_helper import client as requests
 
 
@@ -18,8 +18,8 @@ logger = logging.getLogger('keycloak_helper')
 logger.setLevel(logging.INFO)
 
 
-KEYCLOAK_SECRET = get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
-ADMIN_PSW = get_secret('kc-secrets', 'KEYCLOAK_ADMIN_PASSWORD')
+KEYCLOAK_SECRET = ""#get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
+ADMIN_PSW = ""#get_secret('kc-secrets', 'KEYCLOAK_ADMIN_PASSWORD')
 ADMIN_USER = "admin"
 KEYCLOAK_CLIENT = "global"
 REALM = "FederatedNode"

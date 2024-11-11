@@ -2,8 +2,8 @@
 Collection of functions to assist in performing FN-task-related operations
 """
 import logging
-from controller.const import BACKEND_HOST, GIT_HOME
-from controller.excpetions import FederatedNodeException
+from const import BACKEND_HOST, GIT_HOME
+from excpetions import FederatedNodeException
 from .keycloak_helper import get_user, impersonate_user
 from .request_helper import client as requests
 

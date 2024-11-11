@@ -7,7 +7,7 @@ Simple override of certain requests args.
 import functools
 import requests
 
-from controller.const import LOCAL_DEV
+from const import LOCAL_DEV
 
 client = requests.Session()
 client.request = functools.partial(client.request, timeout=60)

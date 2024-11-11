@@ -13,10 +13,10 @@ from uuid import uuid4
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-from controller.excpetions import KubernetesException
-from controller.const import (
+from excpetions import KubernetesException
+from const import (
     DOMAIN, NAMESPACE, TASK_NAMESPACE, IMAGE,
-    MOUNT_PATH, PULL_POLICY, TAG, KC_HOST, KC_USER
+    MOUNT_PATH, PULL_POLICY, TAG, KC_USER
 )
 
 base_label = {
@@ -120,7 +120,7 @@ def repo_secret_name(repository:str):
     """
     return re.sub(r'[\W_]+', '-', repository.lower())
 
-def create_job_push_results(
+def create_helper_job(
         name:str, task_id:str=None,
         repository="Federated-Node-Example-App",
         create_volumes:bool=True,

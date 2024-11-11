@@ -31,3 +31,6 @@ tests_ci:
 
 pylint_ci:
 	./scripts/linting/pylint.sh
+
+hadolint:
+	./scripts/tests/hadolint.sh

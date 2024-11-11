@@ -9,7 +9,9 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONIOENCODING=UTF-8
 
-RUN apk --update add gcc \
+# hadolint detects pipenv as another invocation of pip
+# hadolint ignore=DL3013,DL3018
+RUN apk --update --no-cache add gcc \
 && pip install --no-cache-dir --upgrade pip \
 && python3 -m pip install --no-cache-dir pipenv \
 && pipenv lock \

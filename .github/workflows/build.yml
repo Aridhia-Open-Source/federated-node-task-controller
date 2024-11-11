@@ -27,7 +27,52 @@ permissions:
   contents: write
 
 jobs:
+  linters:
+    defaults:
+      run:
+        shell: bash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for vulnerabilities
+        run: |
+          docker run --entrypoint /bin/sh \
+            -v ./Pipfile:/app/Pipfile \
+            -v ./Pipfile.lock:/app/Pipfile.lock \
+            -v ./scripts/tests/vulnerabilities.sh:/vulnerabilities.sh \
+            python:3.12.2-alpine \
+            /vulnerabilities.sh
+
+      - name: Run pylint
+        run: |
+          make pylint_ci
+
+      - name: Run hadolint
+        run: |
+          make hadolint
+  tests:
+    needs: linters
+    defaults:
+      run:
+        shell: bash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Python Tests
+        working-directory: contorller
+        run: |
+          make tests_ci
+
+      - uses: irongut/CodeCoverageSummary@v1.3.0
+        name: Code Coverage Summary Report
+        with:
+          filename: artifacts/coverage.xml
+          fail_below_min: true
+          thresholds: '60 80'
+
   update:
+    needs: tests
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ vars.VERSION }}

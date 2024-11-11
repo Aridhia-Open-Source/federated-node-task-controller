@@ -1,4 +1,4 @@
-SHELL=/bin/bash
+SHELL=/bin/sh
 IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:0.0.1-dev
 TESTS_IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller_tests
 TEST_CONTAINER ?= fn-controller-tests

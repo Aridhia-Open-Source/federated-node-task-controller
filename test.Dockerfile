@@ -18,6 +18,5 @@ RUN apk --update --no-cache add gcc \
 && pipenv install --system --deploy --categories "packages dev" \
 && pip uninstall -y pipenv
 
-WORKDIR /app/controller
 ENV PYTHONPATH=/app/controller
 CMD ["/app/scripts/test-entrypoint.sh"]

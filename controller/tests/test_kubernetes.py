@@ -18,12 +18,13 @@ class TestKubernetes:
             "tasks.federatednode.com": "fn-controller"
         }
 
-    @mock.patch('controller.watch_user_pod')
+    @mock.patch('helpers.pod_watcher.patch_crd_annotations')
     def test_sync_user(
         self,
-        wup_mock,
+        annotation_patch_mock,
         k8s_client,
-        k8s_watch_mock
+        k8s_watch_mock,
+        mock_pod_watch
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -31,11 +32,9 @@ class TestKubernetes:
         """
         expected_object = k8s_watch_mock.return_value.stream.return_value
         start(True)
-        wup_mock.assert_called_with(
+        annotation_patch_mock.assert_called_with(
             expected_object[0]["object"]["metadata"]["name"],
-            expected_object[0]["object"]["spec"]["user"],
-            self.expected_labels(expected_object[0]["object"]["spec"]),
-            expected_object[0]['object']['metadata']['annotations']
+            {f"{DOMAIN}/user": "ok"}
         )
 
     @mock.patch('controller.patch_crd_annotations')

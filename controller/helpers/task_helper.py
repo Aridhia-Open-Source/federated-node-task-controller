@@ -2,8 +2,8 @@
 Collection of functions to assist in performing FN-task-related operations
 """
 import logging
-from controller.const import BACKEND_HOST, GIT_HOME
-from controller.excpetions import FederatedNodeException
+from const import BACKEND_HOST, GIT_HOME
+from excpetions import FederatedNodeException
 from .keycloak_helper import get_user, impersonate_user
 from .request_helper import client as requests
 
@@ -82,21 +82,6 @@ def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:s
     logger.info("Task created")
     return task_resp.json()
 
-
-def check_status(task_id:str, token:str) -> dict:
-    """
-    Get the task status
-    """
-    logger.info("Checking task %s status", task_id)
-    status_check = requests.get(
-        f"{BACKEND_HOST}/tasks/{task_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        }
-    )
-    if not status_check.ok:
-        raise FederatedNodeException(status_check.json())
-    return status_check.json()["status"]
 
 def get_results(task_id:str, token:str):
     """

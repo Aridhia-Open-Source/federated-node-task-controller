@@ -13,10 +13,10 @@ from uuid import uuid4
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-from controller.excpetions import KubernetesException
-from controller.const import (
+from excpetions import KubernetesException
+from const import (
     DOMAIN, NAMESPACE, TASK_NAMESPACE, IMAGE,
-    MOUNT_PATH, PULL_POLICY, TAG, KC_HOST, KC_USER
+    MOUNT_PATH, PULL_POLICY, TAG, KC_USER, KC_HOST
 )
 
 base_label = {
@@ -28,10 +28,12 @@ def k8s_config():
     Configure the k8s client, if KUBERNETES_PORT
     is in the env, means we are on a cluster, otherwise
     load_kube_config will look into ~/.kube
+    If the env var RUN_PYTESTS is set, it will skip this
+    config initialization, as we are running tests
     """
     if 'KUBERNETES_PORT' in os.environ:
         config.load_incluster_config()
-    else:
+    elif not os.getenv("RUN_PYTESTS", False):
         config.load_kube_config()
 
 logger = logging.getLogger('k8s_helpers')
@@ -120,7 +122,7 @@ def repo_secret_name(repository:str):
     """
     return re.sub(r'[\W_]+', '-', repository.lower())
 
-def create_job_push_results(
+def create_helper_job(
         name:str, task_id:str=None,
         repository="Federated-Node-Example-App",
         create_volumes:bool=True,
@@ -152,7 +154,7 @@ def create_job_push_results(
         )
     ]
     env = [
-        client.V1EnvVar(name="KC_HOST", value="http://keycloak.identities.svc.cluster.local"),
+        client.V1EnvVar(name="KC_HOST", value=KC_HOST),
         client.V1EnvVar(name="KC_USER", value=KC_USER),
         client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
         client.V1EnvVar(name="GH_REPO", value=repository),

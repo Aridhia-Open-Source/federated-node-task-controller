@@ -22,7 +22,7 @@ class TestKubernetesHelper:
         k8s_client["kh_v1_batch_client"].create_namespaced_job.assert_called()
         annotation_patch_mock.assert_called()
 
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.pod_watcher.patch_crd_annotations')
     def test_job_pv_creation_fails(
         self,
         annotation_patch_mock,
@@ -40,7 +40,7 @@ class TestKubernetesHelper:
         k8s_client["kh_v1_batch_client"].create_namespaced_job.assert_not_called()
         annotation_patch_mock.assert_not_called()
 
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.pod_watcher.patch_crd_annotations')
     def test_job_creation_fails(
         self,
         annotation_patch_mock,
@@ -53,6 +53,6 @@ class TestKubernetesHelper:
         If the kubernetes user sync job can't be created it will not progress
         the CRD in its cycle
         """
-        k8s_client["kh_v1_client"].create_namespaced_job.side_effect = ApiException()
+        k8s_client["kh_v1_batch_client"].create_namespaced_job.side_effect = ApiException()
         start(True)
         annotation_patch_mock.assert_not_called()

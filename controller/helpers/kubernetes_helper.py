@@ -16,7 +16,7 @@ from kubernetes.client.exceptions import ApiException
 from excpetions import KubernetesException
 from const import (
     DOMAIN, NAMESPACE, TASK_NAMESPACE, IMAGE,
-    MOUNT_PATH, PULL_POLICY, TAG, KC_USER
+    MOUNT_PATH, PULL_POLICY, TAG, KC_USER, KC_HOST
 )
 
 base_label = {
@@ -154,7 +154,7 @@ def create_helper_job(
         )
     ]
     env = [
-        client.V1EnvVar(name="KC_HOST", value="http://keycloak.identities.svc.cluster.local"),
+        client.V1EnvVar(name="KC_HOST", value=KC_HOST),
         client.V1EnvVar(name="KC_USER", value=KC_USER),
         client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
         client.V1EnvVar(name="GH_REPO", value=repository),

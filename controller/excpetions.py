@@ -9,8 +9,8 @@ class BaseControllerException(Exception):
     the catching
     """
     reason = None
-    def __init__(self, *args: object, reason='') -> None:
-        self.reason = reason
+    def __init__(self, *args: object) -> None:
+        self.reason = args[0]
         super().__init__(*args)
 
 class KeycloakException(BaseControllerException):

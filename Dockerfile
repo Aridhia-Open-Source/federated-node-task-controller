@@ -18,4 +18,5 @@ RUN apk --update --no-cache add gcc build-base github-cli jq curl openssl \
     && pipenv install --system --deploy --categories packages \
     && pip uninstall -y pipenv
 
+ENV PYTHONPATH=/app/controller
 CMD ["python3", "-m", "controller"]

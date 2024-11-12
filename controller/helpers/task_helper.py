@@ -83,21 +83,6 @@ def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:s
     return task_resp.json()
 
 
-def check_status(task_id:str, token:str) -> dict:
-    """
-    Get the task status
-    """
-    logger.info("Checking task %s status", task_id)
-    status_check = requests.get(
-        f"{BACKEND_HOST}/tasks/{task_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        }
-    )
-    if not status_check.ok:
-        raise FederatedNodeException(status_check.json())
-    return status_check.json()["status"]
-
 def get_results(task_id:str, token:str):
     """
     Gets the tar file with the results, raises an exception

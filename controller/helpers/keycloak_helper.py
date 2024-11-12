@@ -18,13 +18,16 @@ logger = logging.getLogger('keycloak_helper')
 logger.setLevel(logging.INFO)
 
 
-KEYCLOAK_SECRET = ""#get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
-ADMIN_PSW = ""#get_secret('kc-secrets', 'KEYCLOAK_ADMIN_PASSWORD')
 ADMIN_USER = "admin"
 KEYCLOAK_CLIENT = "global"
 REALM = "FederatedNode"
 KC_HOST = os.getenv("KC_HOST")
 
+def get_keycloak_secret() -> str:
+    return get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
+
+def get_keycloak_admin_pass() -> str:
+    return get_secret('kc-secrets', 'KEYCLOAK_ADMIN_PASSWORD')
 
 def get_admin_token() -> str:
     """
@@ -35,10 +38,10 @@ def get_admin_token() -> str:
         f"{KC_HOST}/realms/{REALM}/protocol/openid-connect/token",
         data={
             'client_id': KEYCLOAK_CLIENT,
-            'client_secret': KEYCLOAK_SECRET,
+            'client_secret': get_keycloak_secret(),
             'grant_type': 'password',
             'username': ADMIN_USER,
-            'password': ADMIN_PSW
+            'password': get_keycloak_admin_pass()
         },
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -83,18 +86,17 @@ def impersonate_user(user_id:str) -> str:
     Given a user id, it will return a refresh_token for it
     through the admin-level user
     """
-    payload = {
-        'client_secret': KEYCLOAK_SECRET, # Target client
-        'client_id': KEYCLOAK_CLIENT, #Target client
-        'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
-        'requested_token_type': 'urn:ietf:params:oauth:token-type:refresh_token',
-        'subject_token': get_admin_token(),
-        'requested_subject': user_id,
-        'audience': KEYCLOAK_CLIENT
-    }
     exchange_resp = requests.post(
         f"{KC_HOST}/realms/{REALM}/protocol/openid-connect/token",
-        data=payload,
+        data={
+            'client_secret': get_keycloak_secret(), # Target client
+            'client_id': KEYCLOAK_CLIENT, #Target client
+            'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+            'requested_token_type': 'urn:ietf:params:oauth:token-type:refresh_token',
+            'subject_token': get_admin_token(),
+            'requested_subject': user_id,
+            'audience': KEYCLOAK_CLIENT
+        },
         headers={
             'Content-Type': 'application/x-www-form-urlencoded'
         }

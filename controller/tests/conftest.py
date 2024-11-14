@@ -2,7 +2,8 @@ import os
 import pytest
 import responses
 from copy import deepcopy
-from unittest.mock import Mock
+from kubernetes import client
+from unittest.mock import MagicMock, Mock
 
 from const import DOMAIN
 
@@ -88,19 +89,28 @@ def k8s_watch_mock(mocker):
     )
 
 @pytest.fixture
-def k8s_client(mocker, k8s_watch_mock):
+def job_spec_mock():
+    job = MagicMock(spec=client.V1Job)
+    job.mock_add_spec('spec.template.spec.containers')
+    return job
+
+@pytest.fixture
+def k8s_client(mocker, job_spec_mock, k8s_watch_mock):
     return {
         "kh_client": mocker.patch(
-            'helpers.kubernetes_helper.client', Mock()
+            'helpers.kubernetes_helper.client', Mock(
+                name="kh_client",
+                V1Job=job_spec_mock
+            )
         ),
         "kh_v1_client": mocker.patch(
-            'helpers.kubernetes_helper.v1'
+            'helpers.kubernetes_helper.v1', Mock(name="kh_v1_client")
         ),
         "kh_v1_batch_client": mocker.patch(
-            'helpers.kubernetes_helper.v1_batch'
+            'helpers.kubernetes_helper.v1_batch', Mock(name="kh_v1_batch_client")
         ),
         "pv_v1_client": mocker.patch(
-            'helpers.pod_watcher.v1', return_value=Mock()
+            'helpers.pod_watcher.v1', return_value=Mock(name="pv_v1_client")
         )
     }
 

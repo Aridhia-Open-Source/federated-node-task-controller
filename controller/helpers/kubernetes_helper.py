@@ -122,20 +122,83 @@ def repo_secret_name(repository:str):
     """
     return re.sub(r'[\W_]+', '-', repository.lower())
 
+def create_bare_job(
+        name:str,
+        run:bool=False,
+        script:str="push_to_github.sh",
+        labels:dict={},
+        command:str=None, image:str=None
+    ) -> client.V1Job:
+    """
+    Creates the job template and submits it to the cluster in the
+    same namespace as the controller's
+    """
+    name += f"-{uuid4()}"
+    name = name[:62]
+    labels.update(base_label)
+
+    if command:
+        command = ["/bin/sh", "-c", command]
+    else:
+        command = ["/bin/sh", f"/app/scripts/{script}"]
+
+    container = client.V1Container(
+        name=name,
+        image_pull_policy=PULL_POLICY,
+        image=image or f"{IMAGE}:{TAG}",
+        command=command
+    )
+
+    metadata = client.V1ObjectMeta(
+        name=name,
+        namespace=NAMESPACE,
+        labels=labels
+    )
+    specs = client.V1PodSpec(
+        containers=[container],
+        restart_policy="OnFailure",
+        image_pull_secrets=[client.V1LocalObjectReference("regcred")]
+    )
+    template = client.V1JobTemplateSpec(
+        metadata=metadata,
+        spec=specs
+    )
+    specs = client.V1JobSpec(
+        template=template,
+        ttl_seconds_after_finished=5
+    )
+    body = client.V1Job(
+        api_version='batch/v1',
+        kind='Job',
+        metadata=metadata,
+        spec=specs
+    )
+    if run:
+        try:
+            v1_batch.create_namespaced_job(
+                namespace=NAMESPACE,
+                body=body,
+                pretty=True
+            )
+        except ApiException as exc:
+            raise KubernetesException(exc.body) from exc
+    else:
+        return body
+
 def create_helper_job(
         name:str, task_id:str=None,
         repository="Federated-Node-Example-App",
         create_volumes:bool=True,
-        script:str="push_to_github.sh", labels:dict={}
+        script:str="push_to_github.sh", labels:dict={},
+        command:str=None
     ):
     """
     Creates the job template and submits it to the cluster in the
     same namespace as the controller's
     """
+    base_job = create_bare_job(name, script=script, command=command, labels=labels)
     volclaim_name = setup_pvc(name)
     secret_name=repo_secret_name(repository)
-    name += f"-{uuid4()}"
-    name = name[:62]
     labels.update(base_label)
 
     volumes = [
@@ -147,6 +210,7 @@ def create_helper_job(
             )
         )
     ]
+
     vol_mounts = [
         client.V1VolumeMount(
             mount_path="/mnt/key/",
@@ -172,6 +236,7 @@ def create_helper_job(
             )
         ))
     ]
+
     if task_id:
         env.append(client.V1EnvVar(name="TASK_ID", value=task_id),)
 
@@ -190,43 +255,14 @@ def create_helper_job(
                 name="results"
             )
         )
-    container = client.V1Container(
-        name=name,
-        image_pull_policy=PULL_POLICY,
-        image=f"{IMAGE}:{TAG}",
-        volume_mounts=vol_mounts,
-        command=["/bin/sh", f"/app/scripts/{script}"],
-        env=env
-    )
+    base_job.spec.template.spec.volumes = volumes
+    base_job.spec.template.spec.containers[0].volume_mounts = vol_mounts
+    base_job.spec.template.spec.containers[0].env = env
 
-    metadata = client.V1ObjectMeta(
-        name=name,
-        namespace=NAMESPACE,
-        labels=labels
-    )
-    specs = client.V1PodSpec(
-        containers=[container],
-        restart_policy="OnFailure",
-        volumes=volumes,
-        image_pull_secrets=[client.V1LocalObjectReference("regcred")]
-    )
-    template = client.V1JobTemplateSpec(
-        metadata=metadata,
-        spec=specs
-    )
-    specs = client.V1JobSpec(
-        template=template,
-        ttl_seconds_after_finished=5
-    )
     try:
         v1_batch.create_namespaced_job(
             namespace=NAMESPACE,
-            body=client.V1Job(
-                api_version='batch/v1',
-                kind='Job',
-                metadata=metadata,
-                spec=specs
-            ),
+            body=base_job,
             pretty=True
         )
     except ApiException as exc:

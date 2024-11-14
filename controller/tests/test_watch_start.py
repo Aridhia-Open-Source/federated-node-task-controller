@@ -37,8 +37,8 @@ class TestWatcher:
             {f"{DOMAIN}/user": "ok"}
         )
 
-    @mock.patch('controller.patch_crd_annotations')
-    @mock.patch('controller.watch_user_pod', side_effect=ApiException(reason="ImagePullBackOff"))
+    @mock.patch('helpers.actions.patch_crd_annotations')
+    @mock.patch('helpers.actions.watch_user_pod', side_effect=ApiException(reason="ImagePullBackOff"))
     def test_sync_user_fails_create_job(
         self,
         wup_mock,
@@ -54,7 +54,7 @@ class TestWatcher:
         start(True)
         annotation_patch_mock.assert_not_called()
 
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_post_task_successful(
             self,
             annotation_patch_mock,
@@ -91,8 +91,8 @@ class TestWatcher:
             }
         )
 
-    @mock.patch('controller.patch_crd_annotations')
-    @mock.patch('controller.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.patch_crd_annotations')
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_post_task_fails(
             self,
             token_mock,
@@ -121,7 +121,7 @@ class TestWatcher:
 
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.pod_watcher.patch_crd_annotations', return_value="token")
-    @mock.patch('controller.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_get_results(
             self,
             token_mock,
@@ -171,10 +171,10 @@ class TestWatcher:
         due to chart upgrades
         """
         calls_to_assert =[
-            mocker.patch('controller.patch_crd_annotations'),
-            mocker.patch('controller.create_helper_job'),
-            mocker.patch('controller.create_task'),
-            mocker.patch('controller.watch_task_pod')
+            mocker.patch('helpers.actions.patch_crd_annotations'),
+            mocker.patch('helpers.actions.create_helper_job'),
+            mocker.patch('helpers.actions.create_task'),
+            mocker.patch('helpers.actions.watch_task_pod')
         ]
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_done]
         start(True)
@@ -192,10 +192,10 @@ class TestWatcher:
         Tests that a deleted CRD it's plain ignored.
         """
         calls_to_assert =[
-            mocker.patch('controller.patch_crd_annotations'),
-            mocker.patch('controller.create_helper_job'),
-            mocker.patch('controller.create_task'),
-            mocker.patch('controller.watch_task_pod')
+            mocker.patch('helpers.actions.patch_crd_annotations'),
+            mocker.patch('helpers.actions.create_helper_job'),
+            mocker.patch('helpers.actions.create_task'),
+            mocker.patch('helpers.actions.watch_task_pod')
         ]
         mock_crd_done["type"] = "DELETED"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_done]

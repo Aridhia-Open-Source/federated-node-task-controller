@@ -5,7 +5,7 @@ from controller import start
 
 
 class TestKeycloakRequests:
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_user_auth_fails(
             self,
             annotation_patch_mock,
@@ -38,7 +38,7 @@ class TestKeycloakRequests:
 
         annotation_patch_mock.assert_not_called()
 
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_email_provided_in_crd(
             self,
             annotation_patch_mock,
@@ -83,7 +83,7 @@ class TestKeycloakRequests:
             }
         )
 
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_username_provided_in_crd(
             self,
             annotation_patch_mock,
@@ -128,8 +128,8 @@ class TestKeycloakRequests:
             }
         )
 
-    @mock.patch('controller.create_task')
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.actions.create_task')
+    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_user_not_found(
             self,
             annotation_patch_mock,
@@ -163,8 +163,8 @@ class TestKeycloakRequests:
         annotation_patch_mock.assert_not_called()
         create_task_mock.assert_not_called()
 
-    @mock.patch('controller.create_task')
-    @mock.patch('controller.patch_crd_annotations')
+    @mock.patch('helpers.actions.create_task')
+    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_no_user_provided_in_crd(
             self,
             annotation_patch_mock,

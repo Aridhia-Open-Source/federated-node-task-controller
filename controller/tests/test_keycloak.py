@@ -5,11 +5,8 @@ from controller import start
 
 
 class TestKeycloakRequests:
-    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_user_auth_fails(
             self,
-            annotation_patch_mock,
-            get_secret,
             mock_crd_user_synched,
             k8s_client,
             k8s_watch_mock,
@@ -36,13 +33,11 @@ class TestKeycloakRequests:
             )
             start(True)
 
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_not_called()
 
-    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_email_provided_in_crd(
             self,
-            annotation_patch_mock,
-            get_secret,
             mock_crd_user_synched,
             crd_name,
             k8s_client,
@@ -74,20 +69,20 @@ class TestKeycloakRequests:
             rsps.add(impersonate_request)
             start(True)
 
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_called_with(
-            crd_name,
-            {
-                f"{DOMAIN}/user": "ok",
-                f"{DOMAIN}/done": "true",
-                f"{DOMAIN}/task_id": "1"
-            }
+            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
         )
 
-    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_username_provided_in_crd(
             self,
-            annotation_patch_mock,
-            get_secret,
             mock_crd_user_synched,
             crd_name,
             k8s_client,
@@ -119,22 +114,22 @@ class TestKeycloakRequests:
             rsps.add(impersonate_request)
             start(True)
 
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_called_with(
-            crd_name,
-            {
-                f"{DOMAIN}/user": "ok",
-                f"{DOMAIN}/done": "true",
-                f"{DOMAIN}/task_id": "1"
-            }
+            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
         )
 
     @mock.patch('helpers.actions.create_task')
-    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_user_not_found(
             self,
-            annotation_patch_mock,
             create_task_mock,
-            get_secret,
             mock_crd_user_synched,
             k8s_client,
             user_email,
@@ -160,14 +155,13 @@ class TestKeycloakRequests:
             rsps.add(admin_token_request)
             start(True)
 
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_not_called()
         create_task_mock.assert_not_called()
 
     @mock.patch('helpers.actions.create_task')
-    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_no_user_provided_in_crd(
             self,
-            annotation_patch_mock,
             create_task_mock,
             mock_crd_user_synched,
             k8s_client,
@@ -182,5 +176,6 @@ class TestKeycloakRequests:
 
         start(True)
 
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_not_called()
         create_task_mock.assert_not_called()

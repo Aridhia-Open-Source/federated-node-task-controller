@@ -96,7 +96,7 @@ def job_spec_mock():
 
 @pytest.fixture
 def k8s_client(mocker, job_spec_mock, k8s_watch_mock):
-    return {
+    all_clients = {
         "kh_client": mocker.patch(
             'helpers.kubernetes_helper.client', Mock(
                 name="kh_client",
@@ -104,7 +104,13 @@ def k8s_client(mocker, job_spec_mock, k8s_watch_mock):
             )
         ),
         "kh_v1_client": mocker.patch(
-            'helpers.kubernetes_helper.v1', Mock(name="kh_v1_client")
+            'helpers.kubernetes_helper.v1', return_value=Mock(
+            read_namespaced_secret=Mock(),
+            name="kh_v1_client")
+        ),
+        "kh_v1_crd_client": mocker.patch(
+            'helpers.kubernetes_helper.v1_custom_objects', return_value=Mock(
+            name="kh_v1_crd_client")
         ),
         "kh_v1_batch_client": mocker.patch(
             'helpers.kubernetes_helper.v1_batch', Mock(name="kh_v1_batch_client")
@@ -113,21 +119,11 @@ def k8s_client(mocker, job_spec_mock, k8s_watch_mock):
             'helpers.pod_watcher.v1', return_value=Mock(name="pv_v1_client")
         )
     }
-
-@pytest.fixture
-def k8s_crd(mocker):
-    mocker.patch(
-        'controller.v1_custom_objects', return_value=Mock()
-    )
-
-@pytest.fixture
-def get_secret(mocker):
-    mocker.patch(
-        'helpers.keycloak_helper.get_secret', return_value="secretestsecret"
-    )
-    mocker.patch(
-        'helpers.kubernetes_helper.v1'
-    )
+    all_clients["kh_v1_client"].read_namespaced_secret.return_value.data = {
+        "KEYCLOAK_GLOBAL_CLIENT_SECRET": "YWJjMTIz",
+        "KEYCLOAK_ADMIN_PASSWORD": "YWJjMTIz"
+    }
+    return all_clients
 
 @pytest.fixture
 def backend_url(mocker):

@@ -18,31 +18,32 @@ class TestWatcher:
             "tasks.federatednode.com": "fn-controller"
         }
 
-    @mock.patch('helpers.pod_watcher.patch_crd_annotations')
     def test_sync_user(
         self,
-        annotation_patch_mock,
         k8s_client,
         k8s_watch_mock,
-        mock_pod_watch
+        mock_pod_watch,
+
     ):
         """
         Tests the first step of the CRD lifecycle.
         If has been ADDED, sync the GitHub user in Keycloak
         """
-        expected_object = k8s_watch_mock.return_value.stream.return_value
         start(True)
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_called_with(
-            expected_object[0]["object"]["metadata"]["name"],
-            {f"{DOMAIN}/user": "ok"}
+            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', 'crd1',
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok"
+                }
+            }]
         )
 
-    @mock.patch('helpers.actions.patch_crd_annotations')
     @mock.patch('helpers.actions.watch_user_pod', side_effect=ApiException(reason="ImagePullBackOff"))
     def test_sync_user_fails_create_job(
         self,
         wup_mock,
-        annotation_patch_mock,
         k8s_client,
         k8s_watch_mock
     ):
@@ -52,13 +53,11 @@ class TestWatcher:
         added to the CRD, keeping it to the same status
         """
         start(True)
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_not_called()
 
-    @mock.patch('helpers.actions.patch_crd_annotations')
     def test_post_task_successful(
             self,
-            annotation_patch_mock,
-            get_secret,
             mock_crd_user_synched,
             admin_token_request,
             impersonate_request,
@@ -82,21 +81,23 @@ class TestWatcher:
             rsps.add(admin_token_request)
             rsps.add(impersonate_request)
             start(True)
+
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_called_with(
-            crd_name,
-            {
-                f"{DOMAIN}/user": "ok",
-                f"{DOMAIN}/done": "true",
-                f"{DOMAIN}/task_id": "1"
-            }
+            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
         )
 
-    @mock.patch('helpers.actions.patch_crd_annotations')
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_post_task_fails(
             self,
             token_mock,
-            annotation_patch_mock,
             mock_crd_user_synched,
             crd_name,
             k8s_client,
@@ -117,15 +118,15 @@ class TestWatcher:
                 json={"error": 'Something went wrong'}
             )
             start(True)
+
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_not_called()
 
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.pod_watcher.patch_crd_annotations', return_value="token")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_get_results(
             self,
             token_mock,
-            annotation_patch_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
@@ -147,14 +148,17 @@ class TestWatcher:
                 status=200
             )
             start(True)
+        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
         annotation_patch_mock.assert_called_with(
-            crd_name,
-            {
-                f"{DOMAIN}/user": "ok",
-                f"{DOMAIN}/done": "true",
-                f"{DOMAIN}/results": "true",
-                f"{DOMAIN}/task_id": "1"
-            }
+            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
         )
 
     def test_ignore_done_crd(

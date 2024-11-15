@@ -202,3 +202,25 @@ class TestWatcher:
         start(True)
         for call in calls_to_assert:
             call.assert_not_called()
+
+    def test_incomplete_crd_fields(
+            self,
+            k8s_client,
+            k8s_watch_mock,
+            mock_crd_done,
+            mocker
+        ):
+        """
+        Tests that a CRD with missing expected fields it's not parsed.
+        """
+        k8s_watch_mock.return_value.stream.return_value[0]["object"]["spec"].pop("user")
+        calls_to_assert =[
+            k8s_client["patch_namespaced_custom_object_mock"],
+            mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
+            mocker.patch('helpers.actions.create_task'),
+            mocker.patch('helpers.actions.watch_task_pod')
+        ]
+        start(True)
+
+        for call in calls_to_assert:
+            call.assert_not_called()

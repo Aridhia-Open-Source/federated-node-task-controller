@@ -30,8 +30,7 @@ class TestWatcher:
         If has been ADDED, sync the GitHub user in Keycloak
         """
         start(True)
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_called_with(
+        k8s_client["patch_namespaced_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', 'analytics', 'crd1',
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
@@ -53,8 +52,7 @@ class TestWatcher:
         added to the CRD, keeping it to the same status
         """
         start(True)
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_not_called()
+        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
 
     def test_post_task_successful(
             self,
@@ -82,8 +80,7 @@ class TestWatcher:
             rsps.add(impersonate_request)
             start(True)
 
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_called_with(
+        k8s_client["patch_namespaced_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
@@ -119,8 +116,7 @@ class TestWatcher:
             )
             start(True)
 
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_not_called()
+        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
 
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
@@ -148,8 +144,8 @@ class TestWatcher:
                 status=200
             )
             start(True)
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_called_with(
+
+        k8s_client["patch_namespaced_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
@@ -175,8 +171,8 @@ class TestWatcher:
         due to chart upgrades
         """
         calls_to_assert =[
-            mocker.patch('helpers.actions.patch_crd_annotations'),
-            mocker.patch('helpers.actions.create_helper_job'),
+            k8s_client["patch_namespaced_custom_object_mock"],
+            mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
             mocker.patch('helpers.actions.create_task'),
             mocker.patch('helpers.actions.watch_task_pod')
         ]
@@ -196,8 +192,8 @@ class TestWatcher:
         Tests that a deleted CRD it's plain ignored.
         """
         calls_to_assert =[
-            mocker.patch('helpers.actions.patch_crd_annotations'),
-            mocker.patch('helpers.actions.create_helper_job'),
+            k8s_client["patch_namespaced_custom_object_mock"],
+            mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
             mocker.patch('helpers.actions.create_task'),
             mocker.patch('helpers.actions.watch_task_pod')
         ]

@@ -79,7 +79,7 @@ def mock_crd_done(mock_crd_task_done):
 @pytest.fixture(autouse=True)
 def k8s_config(mocker):
     mocker.patch('kubernetes.config.load_kube_config', return_value=Mock())
-    mocker.patch('helpers.kubernetes_helper.config.load_kube_config', return_value=Mock())
+    mocker.patch('helpers.kubernetes_helper.load_kube_config', return_value=Mock())
 
 @pytest.fixture
 def k8s_watch_mock(mocker):
@@ -95,31 +95,43 @@ def job_spec_mock():
     return job
 
 @pytest.fixture
-def k8s_client(mocker, job_spec_mock, k8s_watch_mock):
-    all_clients = {
-        "kh_client": mocker.patch(
-            'helpers.kubernetes_helper.client', Mock(
-                name="kh_client",
-                V1Job=job_spec_mock
-            )
+def v1_mock(mocker, job_spec_mock):
+    return {
+        "create_persistent_volume_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1.create_persistent_volume'
         ),
-        "kh_v1_client": mocker.patch(
-            'helpers.kubernetes_helper.v1', return_value=Mock(
-            read_namespaced_secret=Mock(),
-            name="kh_v1_client")
+        "create_namespaced_persistent_volume_claim_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1.create_namespaced_persistent_volume_claim'
         ),
-        "kh_v1_crd_client": mocker.patch(
-            'helpers.kubernetes_helper.v1_custom_objects', return_value=Mock(
-            name="kh_v1_crd_client")
+        "read_namespaced_secret": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1.read_namespaced_secret'
         ),
-        "kh_v1_batch_client": mocker.patch(
-            'helpers.kubernetes_helper.v1_batch', Mock(name="kh_v1_batch_client")
-        ),
-        "pv_v1_client": mocker.patch(
-            'helpers.pod_watcher.v1', return_value=Mock(name="pv_v1_client")
+    }
+
+@pytest.fixture
+def v1_batch_mock(mocker):
+    return {
+        "create_namespaced_job_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.create_namespaced_job'
         )
     }
-    all_clients["kh_v1_client"].read_namespaced_secret.return_value.data = {
+
+@pytest.fixture
+def v1_crd_mock(mocker):
+    return {
+        "patch_namespaced_custom_object_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesCRD.patch_namespaced_custom_object', return_value=Mock(
+            name="patch_namespaced_custom_object_mock")
+        )
+    }
+
+@pytest.fixture
+def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, job_spec_mock, k8s_watch_mock):
+    all_clients = {}
+    all_clients.update(v1_mock)
+    all_clients.update(v1_batch_mock)
+    all_clients.update(v1_crd_mock)
+    all_clients["read_namespaced_secret"].return_value.data = {
         "KEYCLOAK_GLOBAL_CLIENT_SECRET": "YWJjMTIz",
         "KEYCLOAK_ADMIN_PASSWORD": "YWJjMTIz"
     }
@@ -139,6 +151,9 @@ def keycloak_realm(mocker):
 
 @pytest.fixture
 def mock_pod_watch(mocker, k8s_client):
+    mocker.patch(
+        'helpers.pod_watcher.KubernetesV1',
+    )
     mocker.patch(
         'helpers.pod_watcher.Watch',
         return_value=Mock(stream=Mock(return_value=[pod_object_response()]))

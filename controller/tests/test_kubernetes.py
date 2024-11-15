@@ -17,11 +17,10 @@ class TestKubernetesHelper:
         If the kubernetes PV can't be created it will not progress
         the CRD in its cycle
         """
-        k8s_client["kh_v1_client"].create_persistent_volume.side_effect = ApiException(status=409)
+        k8s_client["create_persistent_volume_mock"].side_effect = ApiException(status=409)
         start(True)
-        k8s_client["kh_v1_batch_client"].create_namespaced_job.assert_called()
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_called()
+        k8s_client["create_namespaced_job_mock"].assert_called()
+        k8s_client["patch_namespaced_custom_object_mock"].assert_called()
 
     @mock.patch('controller.create_retry_job')
     def test_job_pv_creation_fails(
@@ -29,18 +28,18 @@ class TestKubernetesHelper:
         create_bare_job_mock,
         k8s_client,
         k8s_watch_mock,
-        job_spec_mock
+        job_spec_mock,
+        mock_pod_watch
     ):
         """
         Tests the first step of the CRD lifecycle.
         If the kubernetes PV can't be created it will not progress
         the CRD in its cycle
         """
-        k8s_client["kh_v1_client"].create_persistent_volume.side_effect = ApiException()
+        k8s_client["create_persistent_volume_mock"].side_effect = ApiException('Error')
         start(True)
-        k8s_client["kh_v1_batch_client"].create_namespaced_job.assert_not_called()
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_not_called()
+        k8s_client["create_namespaced_job_mock"].assert_not_called()
+        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
 
     @mock.patch('controller.create_retry_job')
     def test_job_creation_fails(
@@ -55,13 +54,12 @@ class TestKubernetesHelper:
         If the kubernetes user sync job can't be created it will not progress
         the CRD in its cycle
         """
-        k8s_client["kh_v1_batch_client"].create_namespaced_job.side_effect = ApiException(http_resp=mock.Mock(data=""))
+        k8s_client["create_namespaced_job_mock"].side_effect = ApiException(http_resp=mock.Mock(data=""))
         start(True)
-        annotation_patch_mock = k8s_client["kh_v1_crd_client"].patch_namespaced_custom_object
-        annotation_patch_mock.assert_not_called()
+        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
 
     @mock.patch('controller.sync_users')
-    @mock.patch('helpers.actions.create_bare_job')
+    @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')
     def test_on_crd_exceptions_create_retry_job(
             self,
             create_bare_job_mock,
@@ -94,7 +92,7 @@ class TestKubernetesHelper:
         )
 
     @mock.patch('controller.sync_users')
-    @mock.patch('helpers.actions.create_bare_job')
+    @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')
     def test_on_crd_exceptions_create_retry_job_max_retries(
             self,
             create_bare_job_mock,

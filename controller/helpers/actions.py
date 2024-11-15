@@ -5,7 +5,7 @@ from math import exp
 
 from const import DOMAIN, MAX_RETRIES
 from helpers.kubernetes_helper import (
-    patch_crd_annotations, create_helper_job, create_bare_job
+    KubernetesCRD, KubernetesV1Batch
 )
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
 from helpers.task_helper import create_task, get_user_token
@@ -29,7 +29,7 @@ def create_labels(crds:dict) -> dict:
     return labels
 
 
-def sync_users(crds: dict, annotations:dict, user:str):
+def sync_users(crds: dict, annotations:dict, user:dict):
     """
     Ensures that the user is already in keycloak and associated
     with the gihub IdP
@@ -37,7 +37,7 @@ def sync_users(crds: dict, annotations:dict, user:str):
     labels = create_labels(crds["object"]["spec"])
 
     # should trigger the user check
-    create_helper_job(
+    KubernetesV1Batch().create_helper_job(
         f"link-user-{"".join(user.values())}",
         script="init_container.sh",
         create_volumes=False,
@@ -67,7 +67,8 @@ def trigger_task(user:str, image:str, crd_name:str, proj_name:str, dataset:str, 
     annotations[f"{DOMAIN}/done"] = "true"
     if "task_id" in task_resp:
         annotations[f"{DOMAIN}/task_id"] = str(task_resp["task_id"])
-    patch_crd_annotations(crd_name, annotations)
+    client = KubernetesCRD()
+    client.patch_crd_annotations(crd_name, annotations)
 
 def handle_results(user:str, crds:dict, crd_name:str, annotations:dict):
     """
@@ -101,7 +102,7 @@ def create_retry_job(crd_name:str, annotations:dict):
         f" jq '.metadata.annotations += {{\"{annotation_check}\": \"{current_try}\"}}' | "\
         "kubectl replace -f-"
 
-    create_bare_job(
+    KubernetesV1Batch().create_bare_job(
         f"update-annotation-{crd_name}",
         command=cmd,
         run=True,

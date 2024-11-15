@@ -17,3 +17,4 @@ KC_HOST = os.getenv("KC_HOST")
 KC_USER = os.getenv("KC_USER")
 IMAGE = os.getenv("IMAGE")
 TAG = os.getenv("TAG")
+MAX_RETRIES = 5

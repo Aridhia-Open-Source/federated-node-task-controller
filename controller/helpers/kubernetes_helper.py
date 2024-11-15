@@ -33,8 +33,6 @@ class BaseK8s:
         Configure the k8s client, if KUBERNETES_PORT
         is in the env, means we are on a cluster, otherwise
         load_kube_config will look into ~/.kube
-        If the env var RUN_PYTESTS is set, it will skip this
-        config initialization, as we are running tests
         """
         if 'KUBERNETES_PORT' in os.environ:
             load_incluster_config()

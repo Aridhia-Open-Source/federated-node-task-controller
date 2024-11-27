@@ -21,7 +21,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: analytics-operator
-  namespace: {{ .Values.namespace.controller }}
+  namespace: {{ .Values.namespaces.controller }}
   apiGroup: ""
 roleRef:
   kind: ClusterRole
@@ -33,4 +33,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: analytics-operator
-  namespace: {{ .Values.namespace.controller }}
+  namespace: {{ .Values.namespaces.controller }}

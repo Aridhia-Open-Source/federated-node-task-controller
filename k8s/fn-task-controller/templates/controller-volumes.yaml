@@ -62,7 +62,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: controller-pv-volclaim
-  namespace: {{ .Values.namespace.controller }}
+  namespace: {{ .Values.namespaces.controller }}
 spec:
   storageClassName: controller-results
   volumeName: controller-pv

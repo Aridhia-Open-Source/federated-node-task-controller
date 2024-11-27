@@ -7,7 +7,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: {{ . }}
-  namespace: {{ $.Values.namespace.controller }}
+  namespace: {{ $.Values.namespaces.controller }}
 data:
 {{- with $regcred.data  }}
 {{ toYaml . | indent 2 }}
@@ -21,7 +21,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ . }}
-  namespace: {{ $.Values.namespace.controller }}
+  namespace: {{ $.Values.namespaces.controller }}
 data:
 {{- with $kccm.data  }}
 {{ toYaml . | indent 2 }}

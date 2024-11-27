@@ -6,7 +6,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: idp-init-config
-  namespace: {{ .Values.namespace.controller }}
+  namespace: {{ .Values.namespaces.controller }}
 data:
   config.py: |-
 {{ .Files.Get "scripts/idp-init.py" | indent 4 }}
@@ -15,7 +15,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: idp-initializer
-  namespace: {{ .Values.namespace.controller }}
+  namespace: {{ .Values.namespaces.controller }}
 spec:
   ttlSecondsAfterFinished: 30
   template:
@@ -32,7 +32,7 @@ spec:
                 name: controller-config
           env:
             - name: KEYCLOAK_NAMESPACE
-              value: {{ .Values.namespace.keycloak }}
+              value: {{ .Values.namespaces.keycloak }}
             - name: KEYCLOAK_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:

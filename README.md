@@ -47,9 +47,11 @@ idp:
 Of course, use the secret name and key names used in the bash command above.
 
 Then deploy as follows:
+
+__note__ set the `namespace_name` environment variable to match the namespace name where the Federated Node has been deployed on. That's needed to automatically look for secrets/configmaps
 ```bash
 cd k8s/fn-task-controller
-helm install fncontroller . -f dev.values.yaml
+helm install fncontroller . -f dev.values.yaml -n $namespace_name
 ```
 or though the helm repo:
 ```sh

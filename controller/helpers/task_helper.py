@@ -33,16 +33,6 @@ def create_task_body(image:str, user:str, project:str, dataset: int):
         },
         "inputs":{},
         "outputs":{},
-        "resources": {
-            "limits": {
-                "cpu": "100m",
-                "memory": "100Mi"
-            },
-            "requests": {
-                "cpu": "0.1",
-                "memory": "50Mi"
-            }
-        },
         "volumes": {},
         "description": project
     }

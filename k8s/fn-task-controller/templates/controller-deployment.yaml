@@ -50,8 +50,8 @@ spec:
                 key: KEYCLOAK_ADMIN
         resources:
           limits:
-            cpu: 2000m
-            memory: 1Gi
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
         volumeMounts:
           - name: git
             mountPath: {{ template "fn-task-controller.gitpath" . }}

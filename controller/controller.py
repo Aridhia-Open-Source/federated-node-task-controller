@@ -13,6 +13,8 @@ from const import DOMAIN, TASK_NAMESPACE
 from excpetions import FederatedNodeException, KeycloakException
 from helpers.kubernetes_helper import KubernetesCRD
 from helpers.actions import sync_users, trigger_task, handle_results, create_retry_job
+
+
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
@@ -42,17 +44,22 @@ def start(exit_on_tests=False):
             image = crds["object"]["spec"].get("image")
             proj_name = crds["object"]["spec"].get("project")
             dataset=crds["object"]["spec"].get("dataset")
+            logger.info("CRD: %s", crd_name)
 
             if crds["type"] == "DELETED" or crds["object"]["metadata"].get("deletionTimestamp"):
+                logger.info("CRD already processed")
                 continue
 
             new_annotations = deepcopy(annotations)
-
+            logger.info("Annotations: %s", new_annotations)
             if crds["type"] == "ADDED" and not annotations.get(f"{DOMAIN}/user"):
+                logger.info("Synching user")
                 sync_users(crds, new_annotations, user)
             elif annotations.get(f"{DOMAIN}/user") and not annotations.get(f"{DOMAIN}/done"):
+                logger.info("Triggering task")
                 trigger_task(user, image, crd_name, proj_name, dataset, new_annotations)
             elif annotations.get(f"{DOMAIN}/done") and not annotations.get(f"{DOMAIN}/results"):
+                logger.info("Getting task results")
                 handle_results(user, crds, crd_name, new_annotations)
             if exit_on_tests:
                 watcher.stop()

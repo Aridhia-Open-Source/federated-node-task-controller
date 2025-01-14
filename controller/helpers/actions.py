@@ -54,7 +54,6 @@ def trigger_task(user:str, image:str, crd_name:str, proj_name:str, dataset:str, 
     to send a FN API request, and the POST /tasks itself
     """
     user_token = get_user_token(user)
-    logger.info("User token %s", user_token)
     logger.info("Creating task with image %s", image)
 
     task_resp = create_task(

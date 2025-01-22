@@ -9,7 +9,7 @@ import urllib3
 from kubernetes.watch import Watch
 from kubernetes.client.exceptions import ApiException
 
-from const import DOMAIN, TASK_NAMESPACE
+from const import DOMAIN
 from excpetions import FederatedNodeException, KeycloakException
 from helpers.kubernetes_helper import KubernetesCRD
 from helpers.actions import sync_users, trigger_task, handle_results, create_retry_job
@@ -51,7 +51,7 @@ def start(exit_on_tests=False):
 
             new_annotations = deepcopy(annotations)
             logger.info("Annotations: %s", new_annotations)
-            if crds["type"] == "ADDED" and not annotations.get(f"{DOMAIN}/user"):
+            if not annotations.get(f"{DOMAIN}/user"):
                 logger.info("Synching user")
                 sync_users(crds, new_annotations, user)
             elif annotations.get(f"{DOMAIN}/user") and not annotations.get(f"{DOMAIN}/done"):

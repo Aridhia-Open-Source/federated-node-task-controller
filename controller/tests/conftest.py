@@ -35,8 +35,15 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
 def pod_object_response():
     return {
         "object": Mock(
+            name="pod_obj_resp",
             metadata=Mock(name="pod1"),
-            status=Mock(phase="Succeeded")
+            status=Mock(
+                succeeded=1,
+                ready=0,
+                terminating=0,
+                active=0,
+                failed=0
+            )
         )
     }
 
@@ -152,7 +159,7 @@ def keycloak_realm(mocker):
 @pytest.fixture
 def mock_pod_watch(mocker, k8s_client):
     mocker.patch(
-        'helpers.pod_watcher.KubernetesV1',
+        'helpers.pod_watcher.KubernetesV1Batch',
     )
     mocker.patch(
         'helpers.pod_watcher.Watch',

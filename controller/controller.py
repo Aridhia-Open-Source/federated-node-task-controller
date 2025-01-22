@@ -29,17 +29,16 @@ def start(exit_on_tests=False):
     """
     watcher = Watch()
     for crds in watcher.stream(
-        KubernetesCRD().list_namespaced_custom_object,
+        KubernetesCRD().list_cluster_custom_object,
         DOMAIN,
         "v1",
-        TASK_NAMESPACE,
         "analytics",
         resource_version='',
         watch=True
         ):
         try:
             crd_name = crds["object"]["metadata"]["name"]
-            annotations = crds["object"]["metadata"]["annotations"]
+            annotations = crds["object"]["metadata"].get("annotations", {})
             user = crds["object"]["spec"].get("user", {})
             image = crds["object"]["spec"].get("image")
             proj_name = crds["object"]["spec"].get("project")

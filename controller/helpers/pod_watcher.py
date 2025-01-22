@@ -16,6 +16,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     task_id label, and once completed, trigger the results fetching
     """
     repository = crd_spec.get("repository")
+    logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
     for pod in pod_watcher.stream(
         KubernetesV1().list_namespaced_pod,

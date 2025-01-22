@@ -36,7 +36,7 @@ spec:
                   type: string
                 repository:
                   type: string
-  scope: Namespaced
+  scope: Cluster
   names:
     plural: analytics
     singular: analytic

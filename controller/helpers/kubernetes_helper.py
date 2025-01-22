@@ -61,6 +61,7 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
         )
         logger.info("CRD patched")
 
+
 class KubernetesV1(BaseK8s, client.CoreV1Api):
     def get_secret(self, name:str, key:str, namespace:str=NAMESPACE) -> str:
         """
@@ -68,7 +69,6 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         """
         secret = self.read_namespaced_secret(name, namespace)
         return base64.b64decode(secret.data[key].encode()).decode()
-
 
     def setup_pvc(self, name:str) -> str:
         """

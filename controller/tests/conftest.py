@@ -32,11 +32,11 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
         "type" : type
     }
 
-def pod_object_response():
+def job_object_response():
     return {
         "object": Mock(
-            name="pod_obj_resp",
-            metadata=Mock(name="pod1"),
+            name="job_obj_resp",
+            metadata=Mock(name="job1"),
             status=Mock(
                 succeeded=1,
                 ready=0,
@@ -126,9 +126,9 @@ def v1_batch_mock(mocker):
 @pytest.fixture
 def v1_crd_mock(mocker):
     return {
-        "patch_namespaced_custom_object_mock": mocker.patch(
-            'helpers.kubernetes_helper.KubernetesCRD.patch_namespaced_custom_object', return_value=Mock(
-            name="patch_namespaced_custom_object_mock")
+        "patch_cluster_custom_object_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesCRD.patch_cluster_custom_object', return_value=Mock(
+            name="patch_cluster_custom_object_mock")
         )
     }
 
@@ -163,7 +163,7 @@ def mock_pod_watch(mocker, k8s_client):
     )
     mocker.patch(
         'helpers.pod_watcher.Watch',
-        return_value=Mock(stream=Mock(return_value=[pod_object_response()]))
+        return_value=Mock(stream=Mock(return_value=[job_object_response()]))
     )
 
 @pytest.fixture

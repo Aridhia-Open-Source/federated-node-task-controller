@@ -1,6 +1,6 @@
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
-from const import NAMESPACE, MAX_RETRIES
+from const import MAX_RETRIES
 from controller import start
 from excpetions import KubernetesException
 
@@ -20,7 +20,7 @@ class TestKubernetesHelper:
         k8s_client["create_persistent_volume_mock"].side_effect = ApiException(status=409)
         start(True)
         k8s_client["create_namespaced_job_mock"].assert_called()
-        k8s_client["patch_namespaced_custom_object_mock"].assert_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_called()
 
     @mock.patch('controller.create_retry_job')
     def test_job_pv_creation_fails(
@@ -39,7 +39,7 @@ class TestKubernetesHelper:
         k8s_client["create_persistent_volume_mock"].side_effect = ApiException('Error')
         start(True)
         k8s_client["create_namespaced_job_mock"].assert_not_called()
-        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @mock.patch('controller.create_retry_job')
     def test_job_creation_fails(
@@ -56,7 +56,7 @@ class TestKubernetesHelper:
         """
         k8s_client["create_namespaced_job_mock"].side_effect = ApiException(http_resp=mock.Mock(data=""))
         start(True)
-        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @mock.patch('controller.sync_users')
     @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')

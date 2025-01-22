@@ -33,7 +33,7 @@ class TestKeycloakRequests:
             )
             start(True)
 
-        annotation_patch_mock = k8s_client["patch_namespaced_custom_object_mock"].patch_namespaced_custom_object
+        annotation_patch_mock = k8s_client["patch_cluster_custom_object_mock"].patch_cluster_custom_object
         annotation_patch_mock.assert_not_called()
 
     def test_email_provided_in_crd(
@@ -69,8 +69,8 @@ class TestKeycloakRequests:
             rsps.add(impersonate_request)
             start(True)
 
-        k8s_client["patch_namespaced_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
                     f"{DOMAIN}/user": "ok",
@@ -113,8 +113,8 @@ class TestKeycloakRequests:
             rsps.add(impersonate_request)
             start(True)
 
-        k8s_client["patch_namespaced_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', 'analytics', crd_name,
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
                     f"{DOMAIN}/user": "ok",
@@ -153,7 +153,7 @@ class TestKeycloakRequests:
             rsps.add(admin_token_request)
             start(True)
 
-        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
         create_task_mock.assert_not_called()
 
     @mock.patch('helpers.actions.create_task')
@@ -173,5 +173,5 @@ class TestKeycloakRequests:
 
         start(True)
 
-        k8s_client["patch_namespaced_custom_object_mock"].assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
         create_task_mock.assert_not_called()

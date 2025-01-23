@@ -12,7 +12,7 @@ logger = logging.getLogger('task_helpers')
 logger.setLevel(logging.INFO)
 
 
-def create_task_body(image:str, user:str, project:str, dataset: int):
+def create_task_body(image:str, user:str, project:str, dataset: dict):
     """
     The task body is fairly strict, so we are going to inject few
     custom data in it, like a docker image, a user, a project name and the dataset
@@ -26,23 +26,14 @@ def create_task_body(image:str, user:str, project:str, dataset: int):
                 "env": {}
             }
         ],
-        "dataset_id": dataset,
+        "dataset_id": dataset.get("id"),
+        "dataset_name": dataset.get("name"),
         "tags": {
-            "dataset_id": dataset,
-            "test_tag": "some content"
+            "dataset_id": dataset.get("id"),
+            "dataset_name": dataset.get("name")
         },
         "inputs":{},
         "outputs":{},
-        "resources": {
-            "limits": {
-                "cpu": "100m",
-                "memory": "100Mi"
-            },
-            "requests": {
-                "cpu": "0.1",
-                "memory": "50Mi"
-            }
-        },
         "volumes": {},
         "description": project
     }
@@ -59,7 +50,7 @@ def get_user_token(user:dict) -> str:
     return impersonate_user(user_id)
 
 
-def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:str):
+def create_task(image:str, name:str, proj_name:str, dataset:dict, user_token:str):
     """
     Wrapper to call the Federated Node /tasks endpoint
     """
@@ -69,7 +60,7 @@ def create_task(image:str, name:str, proj_name:str, dataset_id:str, user_token:s
             image,
             name,
             proj_name,
-            dataset_id
+            dataset
         ),
         verify=False,
         headers={

@@ -22,7 +22,7 @@ def create_labels(crds:dict) -> dict:
     64 chars as that's k8s limit
     """
     labels = deepcopy(crds)
-    labels["dataset"] = str(labels["dataset"])[:63]
+    labels["dataset"] = "-".join(labels["dataset"].values())[:63]
     labels.update(labels.pop("user"))
     labels["repository"] = labels["repository"].replace("/", "-")[:63]
     labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
@@ -45,7 +45,6 @@ def sync_users(crds: dict, annotations:dict, user:dict):
         repository=crds["object"]["spec"].get("repository")
     )
 
-    annotations[f"{DOMAIN}/user"] = "ok"
     watch_user_pod(crds["object"]["metadata"]["name"], user, labels, annotations)
 
 def trigger_task(user:str, image:str, crd_name:str, proj_name:str, dataset:str, annotations:dict):
@@ -75,7 +74,6 @@ def handle_results(user:str, crds:dict, crd_name:str, annotations:dict):
     Common function to handle a CRD last lifecycle step
     """
     # If we have already triggered a task, check if the pod has completed
-    annotations[f"{DOMAIN}/results"] = "true"
     watch_task_pod(
         crd_name,
         crds["object"]["spec"],

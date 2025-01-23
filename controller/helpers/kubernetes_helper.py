@@ -55,11 +55,12 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
         """
         # Patch for the client library which somehow doesn't do it itself for the patch
         self.api_client.set_default_header('Content-Type', 'application/json-patch+json')
-        self.patch_namespaced_custom_object(
-            DOMAIN, "v1", TASK_NAMESPACE, "analytics", name,
+        self.patch_cluster_custom_object(
+            DOMAIN, "v1", "analytics", name,
             [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
         )
         logger.info("CRD patched")
+
 
 class KubernetesV1(BaseK8s, client.CoreV1Api):
     def get_secret(self, name:str, key:str, namespace:str=NAMESPACE) -> str:
@@ -68,7 +69,6 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         """
         secret = self.read_namespaced_secret(name, namespace)
         return base64.b64decode(secret.data[key].encode()).decode()
-
 
     def setup_pvc(self, name:str) -> str:
         """

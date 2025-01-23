@@ -80,6 +80,6 @@ You will also need the client id from the github app so you can apply it as envi
 
 ```bash
 CLIENT_ID="githubAppClientId"
-kubectl create secret generic ghpk -n controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
+kubectl create secret generic ghpk -n fn-controller --from-file scripts/key.pem --from-literal "GH_CLIENT_ID=$CLIENT_ID"
 ```
 This allows the controller to be able to checkout the repository where the results should be pushed to.

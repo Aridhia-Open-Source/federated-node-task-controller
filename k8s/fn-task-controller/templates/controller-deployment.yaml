@@ -34,6 +34,7 @@ spec:
       containers:
       - name: analytics-operator
         image: {{ template "fn-task-controller.image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}
+        imagePullPolicy: Always
         envFrom:
           - configMapRef:
               name: controller-config
@@ -50,8 +51,8 @@ spec:
                 key: KEYCLOAK_ADMIN
         resources:
           limits:
-            cpu: 2000m
-            memory: 1Gi
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
         volumeMounts:
           - name: git
             mountPath: {{ template "fn-task-controller.gitpath" . }}

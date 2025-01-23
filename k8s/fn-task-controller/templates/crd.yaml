@@ -29,14 +29,19 @@ spec:
                 project:
                   type: string
                 dataset:
-                  type: integer
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
                 branch:
                   type: string
                 organization:
                   type: string
                 repository:
                   type: string
-  scope: Namespaced
+  scope: Cluster
   names:
     plural: analytics
     singular: analytic

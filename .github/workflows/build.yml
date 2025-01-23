@@ -26,6 +26,13 @@ on:
 permissions:
   contents: write
 
+env:
+  TAG: ''
+  OWNER_LC: ''
+  HELM_CHANNEL: stable
+  IS_TAG: ${{ github.ref_type == 'tag' }}
+  DEV_BUILD: ${{ github.ref_type != 'tag' && github.ref != 'refs/heads/main' }}
+
 jobs:
   linters:
     defaults:
@@ -69,12 +76,45 @@ jobs:
           filename: artifacts/coverage.xml
           fail_below_min: true
           thresholds: '60 80'
-
   update:
     needs: tests
+    runs-on: ubuntu-latest
+    outputs:
+      is_tag: ${{ steps.vars.outputs.IS_TAG }}
+      dev_build: ${{ steps.vars.outputs.DEV_BUILD }}
+      chart_version: ${{ steps.vars.outputs.CHART_VERSION }}
+      tag: ${{ steps.vars.outputs.TAG }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setting global values
+        id: vars
+        run: |
+          echo "IS_TAG=${{ env.IS_TAG }}" >> ${GITHUB_OUTPUT}
+          echo "DEV_BUILD=${{ env.DEV_BUILD }}" >> ${GITHUB_OUTPUT}
+
+          echo "Setting version according to the Chart.yaml"
+          cd k8s/fn-task-controller
+
+          version=$(grep 'version:.*' Chart.yaml | sed 's/^.*: //')
+          echo "Chart version: ${version}"
+          appVersion=$(grep 'appVersion:.*' Chart.yaml | sed 's/^.*: \"//'| sed 's/\"//')
+          echo "Chart appVersion: ${appVersion}"
+
+          echo "CHART_VERSION=${version}" >> ${GITHUB_OUTPUT}
+
+          if [[ "${{ env.DEV_BUILD }}" == "false" ]]; then
+            echo "TAG=${appVersion}" >> ${GITHUB_OUTPUT}
+          else
+            echo "TAG=${appVersion}-${GITHUB_SHA::6}" >> ${GITHUB_OUTPUT}
+          fi
+
+
+  build:
+    needs: update
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
-      TAG: ${{ vars.VERSION }}
+      TAG: ${{ needs.update.outputs.tag }}
       IMAGE: fn_task_controller
       BUILD_PATH: .
       HASH_SUFFIX: false
@@ -83,9 +123,11 @@ jobs:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
-    needs: update
+    needs:
+      - build
+      - update
     with:
-      VERSION: ${{ vars.VERSION }}
+      VERSION: ${{ needs.update.outputs.chart_version }}
       HELM_REPO: ${{ vars.HELM_REPO }}
       USER_HELM: ${{ vars.USER_HELM }}
       PATH_BUILD: k8s/fn-task-controller

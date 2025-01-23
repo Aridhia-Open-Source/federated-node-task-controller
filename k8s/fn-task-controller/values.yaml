@@ -19,6 +19,11 @@ storage:
   azure:
   nfs:
 
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1Gi
+
 idp:
   github:
     secret_name:

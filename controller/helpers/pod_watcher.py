@@ -4,7 +4,7 @@ from kubernetes.client.models.v1_job_status import V1JobStatus
 
 from const import DOMAIN, TASK_NAMESPACE, NAMESPACE
 from excpetions import KubernetesException
-from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD
+from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
 from helpers.task_helper import get_results
 
 logging.basicConfig()
@@ -18,17 +18,17 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     task_id label, and once completed, trigger the results fetching
     """
     repository = crd_spec.get("repository")
-    logger.info("Looking for job with task_id: %s", task_id)
+    logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
-    for job in pod_watcher.stream(
-        KubernetesV1Batch().list_namespaced_job,
+    for pod in pod_watcher.stream(
+        KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
         label_selector=f"task_id={task_id}",
         resource_version='',
         watch=True
         ):
-            logger.info("Found job! %s", job["object"].metadata.name)
-            match get_job_status(job["object"].status):
+            logger.info("Found pod! %s", pod["object"].metadata.name)
+            match pod["object"].status.phase:
                 case "Succeeded":
                     annotations[f"{DOMAIN}/results"] = "true"
                     get_results(task_id, user_token)
@@ -42,11 +42,11 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
                     KubernetesCRD().patch_crd_annotations(crd_name, annotations)
                     break
                 case "Failed":
-                    raise KubernetesException("job in failed status. Refreshing annotation on CRD to trigger a restart")
+                    raise KubernetesException("pod in failed status. Refreshing annotation on CRD to trigger a restart")
                 case _:
-                    logger.info("%s Status: %s",  job["object"].metadata.name, job["object"].status.phase)
+                    logger.info("%s Status: %s",  pod["object"].metadata.name, pod["object"].status.phase)
 
-    logger.info(f"Stopping task {task_id} job watcher")
+    logger.info(f"Stopping task {task_id} pod watcher")
     pod_watcher.stop()
 
 

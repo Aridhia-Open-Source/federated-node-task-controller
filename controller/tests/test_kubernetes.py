@@ -10,7 +10,7 @@ class TestKubernetesHelper:
         self,
         k8s_client,
         k8s_watch_mock,
-        mock_pod_watch
+        mock_job_watch
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -29,7 +29,7 @@ class TestKubernetesHelper:
         k8s_client,
         k8s_watch_mock,
         job_spec_mock,
-        mock_pod_watch
+        mock_job_watch
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -47,7 +47,7 @@ class TestKubernetesHelper:
         create_bare_job_mock,
         k8s_client,
         k8s_watch_mock,
-        mock_pod_watch
+        mock_job_watch
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -66,7 +66,7 @@ class TestKubernetesHelper:
             sync_mock,
             k8s_client,
             k8s_watch_mock,
-            mock_pod_watch,
+            mock_job_watch,
         ):
         """
         When an exception occurs during the CRD lifecycle
@@ -99,7 +99,7 @@ class TestKubernetesHelper:
             sync_mock,
             k8s_client,
             k8s_watch_mock,
-            mock_pod_watch
+            mock_job_watch
         ):
         """
         When an exception occurs during the CRD lifecycle

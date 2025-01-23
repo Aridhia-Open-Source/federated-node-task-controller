@@ -16,8 +16,9 @@ kind: Job
 metadata:
   name: idp-initializer
   namespace: {{ .Values.namespaces.controller }}
+  helm.sh/hook: pre-install,pre-upgrade
+  helm.sh/hook-delete-policy: hook-succeeded
 spec:
-  ttlSecondsAfterFinished: 30
   template:
     metadata:
       name: "{{ .Release.Name }}"

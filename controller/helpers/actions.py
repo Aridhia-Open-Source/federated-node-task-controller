@@ -22,7 +22,7 @@ def create_labels(crds:dict) -> dict:
     64 chars as that's k8s limit
     """
     labels = deepcopy(crds)
-    labels["dataset"] = str(labels["dataset"])[:63]
+    labels["dataset"] = "-".join(labels["dataset"].values())[:63]
     labels.update(labels.pop("user"))
     labels["repository"] = labels["repository"].replace("/", "-")[:63]
     labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]

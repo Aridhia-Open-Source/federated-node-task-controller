@@ -25,7 +25,9 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
                 },
                 "image": "",
                 "project": "",
-                "dataset": "",
+                "dataset": {
+                    "id": ""
+                },
                 "repository": "",
             }
         },

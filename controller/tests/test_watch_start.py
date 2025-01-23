@@ -22,8 +22,7 @@ class TestWatcher:
         self,
         k8s_client,
         k8s_watch_mock,
-        mock_pod_watch,
-
+        mock_pod_watch
     ):
         """
         Tests the first step of the CRD lifecycle.

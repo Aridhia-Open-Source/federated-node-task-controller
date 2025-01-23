@@ -7,6 +7,9 @@ kind: ConfigMap
 metadata:
   name: idp-init-config
   namespace: {{ .Values.namespaces.controller }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: hook-succeeded
 data:
   config.py: |-
 {{ .Files.Get "scripts/idp-init.py" | indent 4 }}
@@ -16,8 +19,9 @@ kind: Job
 metadata:
   name: idp-initializer
   namespace: {{ .Values.namespaces.controller }}
-  helm.sh/hook: pre-install,pre-upgrade
-  helm.sh/hook-delete-policy: hook-succeeded
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: hook-succeeded
 spec:
   template:
     metadata:

@@ -33,6 +33,8 @@ GH_SECRET=""
 GH_CLIENT_ID=""
 kubectl create secret generic github-app -n fn-controller --from-literal "GH_SECRET=$GH_SECRET" --from-literal "GH_CLIENT_ID=$GH_CLIENT_ID"
 ```
+
+_NOTE: If the controller is deployed standalone_
 Just make sure the `fn-controller` namespace matches the one in your values file under `namespaces.controller`.
 If none is specified `fn-controller` is the default value.
 

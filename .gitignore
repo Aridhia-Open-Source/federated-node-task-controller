@@ -9,3 +9,4 @@ k8s/fn-task-controller/*.values.yaml
 !artifacts/.keep
 artifacts/*
 .coverage
+**/__pycache__

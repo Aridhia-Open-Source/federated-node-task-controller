@@ -1,9 +1,12 @@
+import base64
 import logging
+import requests
+import subprocess
 from kubernetes.watch import Watch
 from kubernetes.client.models.v1_job_status import V1JobStatus
 
 from const import DOMAIN, TASK_NAMESPACE, NAMESPACE
-from excpetions import KubernetesException
+from excpetions import KubernetesException, BaseControllerException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
 from helpers.task_helper import get_results
 
@@ -17,7 +20,8 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    repository = crd_spec.get("repository")
+    git_info = crd_spec["results"].get("git")
+    other_info = crd_spec["results"].get("other")
     logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
     for pod in pod_watcher.stream(
@@ -31,12 +35,41 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
             match pod["object"].status.phase:
                 case "Succeeded":
                     annotations[f"{DOMAIN}/results"] = "true"
-                    get_results(task_id, user_token)
-                    KubernetesV1Batch().create_helper_job(
-                        name=f"task-{task_id}-results",
-                        task_id=task_id,
-                        repository=repository
-                    )
+                    fp = get_results(task_id, user_token)
+                    if git_info:
+                        KubernetesV1Batch().create_helper_job(
+                            name=f"task-{task_id}-results",
+                            task_id=task_id,
+                            repository=git_info.get("repository")
+                        )
+                    else:
+                        auth = {}
+                        is_api = True
+                        # other_info["auth"] might be moved somewhere else
+                        # but for now is passed as CRD field
+                        creds = other_info.get("auth", '')
+                        match other_info.get("auth_type", '').lower():
+                            case "bearer":
+                                auth["headers"] = {"Authorization": f"Bearer {creds}"}
+                            case "basic":
+                                auth["auth"] = tuple(base64.b64decode(creds).split(":"))
+                            case "azcopy":
+                                out = subprocess.run(
+                                    ["azcopy", "copy", fp, creds],
+                                    capture_output=True
+                                )
+                                if out.stderr:
+                                    logger.error(out.stderr)
+                                    raise BaseControllerException("Something went wrong with the result push")
+                                logger.info(out.stdout)
+                                is_api = False
+                            case _:
+                                pass
+                        if is_api:
+                            resp = requests.post(other_info.get("url"),**auth)
+                            if not resp.ok:
+                                raise BaseControllerException("Failed to deliver results")
+
                     # Add results annotation to let the controller know
                     # we already handled results
                     KubernetesCRD().patch_crd_annotations(crd_name, annotations)

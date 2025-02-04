@@ -16,8 +16,8 @@ from kubernetes.client.exceptions import ApiException
 
 from excpetions import KubernetesException
 from const import (
-    DOMAIN, NAMESPACE, TASK_NAMESPACE, IMAGE,
-    MOUNT_PATH, PULL_POLICY, TAG, KC_USER, KC_HOST
+    DOMAIN, NAMESPACE, IMAGE, MOUNT_PATH,
+    PULL_POLICY, TAG, KC_USER, KC_HOST
 )
 
 logger = logging.getLogger('k8s_helpers')
@@ -156,8 +156,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         )
         specs = client.V1PodSpec(
             containers=[container],
-            restart_policy="OnFailure",
-            image_pull_secrets=[client.V1LocalObjectReference("regcred")]
+            restart_policy="OnFailure"
         )
         template = client.V1JobTemplateSpec(
             metadata=metadata,

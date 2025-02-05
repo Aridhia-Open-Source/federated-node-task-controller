@@ -20,8 +20,9 @@ RUN apk --update --no-cache add gcc build-base github-cli jq curl openssl \
     && pipenv install --system --deploy --categories packages \
     && pip uninstall -y pipenv
 
-RUN wget -O azcopy.tar.gz "https://aka.ms/downloadazcopy-v${AZCOPY_MAJ_VERSION}-linux" \
-    && apk add libc6-compat tar \
+# hadolint ignore=DL3013,DL3018
+RUN wget -qO azcopy.tar.gz "https://aka.ms/downloadazcopy-v${AZCOPY_MAJ_VERSION}-linux" \
+    && apk --no-cache add libc6-compat tar \
     && tar -xf azcopy.tar.gz \
     && mv azcopy_linux_amd64*/azcopy /usr/bin/azcopy \
     && chmod +x /usr/bin/azcopy \

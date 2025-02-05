@@ -1,3 +1,4 @@
+import base64
 import os
 import pytest
 import responses
@@ -28,7 +29,8 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
                 "dataset": {
                     "id": ""
                 },
-                "repository": "",
+                "source": {"repository": ""},
+                "results": {"git": {"repository": ""}},
             }
         },
         "type" : type
@@ -94,6 +96,32 @@ def mock_crd_task_done(mock_crd_user_synched):
 def mock_crd_done(mock_crd_task_done):
     mock_crd_task_done['object']['metadata']['annotations']\
             [f"{DOMAIN}/results"] = "true"
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_azcopy_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "auth": "preauthurl",
+        "auth_type": "AzCopy"
+    }}
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_api_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth": "token",
+        "auth_type": "Bearer"
+    }}
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_api_basic_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth": base64.b64encode("user:pass".encode()),
+        "auth_type": "Basic"
+    }}
     return deepcopy(mock_crd_task_done)
 
 @pytest.fixture(autouse=True)

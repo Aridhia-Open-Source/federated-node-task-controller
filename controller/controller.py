@@ -10,7 +10,7 @@ from kubernetes.watch import Watch
 from kubernetes.client.exceptions import ApiException
 
 from const import DOMAIN
-from excpetions import FederatedNodeException, KeycloakException
+from excpetions import BaseControllerException
 from helpers.kubernetes_helper import KubernetesCRD
 from helpers.actions import sync_users, trigger_task, handle_results, create_retry_job
 
@@ -67,7 +67,7 @@ def start(exit_on_tests=False):
             # in case of unreachable URLs we want to fail and exit
             logger.error(mre.reason)
             raise mre
-        except (KeycloakException, FederatedNodeException, ApiException) as ke:
+        except (BaseControllerException, ApiException) as ke:
             create_retry_job(crd_name, annotations)
             logger.error(ke.reason)
         except KeyError:

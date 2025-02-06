@@ -58,11 +58,13 @@ or though the helm repo:
 helm repo add fn-task-controller https://aridhia-open-source.github.io/federated-node-task-controller
 
 # Check available releases
-helm search repo fntc --versions
-# Note that only versions of format x.y.z are stable
+helm search repo fn-task-controller --versions
+
+# If you want to check development builds
+helm search repo fn-task-controller --devel --versions
 
 # Install
-helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --version <version> --namespace=$namespace_name
+helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
 ```
 
 ## Usage

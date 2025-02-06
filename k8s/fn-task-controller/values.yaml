@@ -29,3 +29,6 @@ idp:
     secret_name:
     secret_key:
     clientid_key:
+
+global:
+  host:

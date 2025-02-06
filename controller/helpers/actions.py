@@ -24,7 +24,12 @@ def create_labels(crds:dict) -> dict:
     labels = deepcopy(crds)
     labels["dataset"] = "-".join(labels["dataset"].values())[:63]
     labels.update(labels.pop("user"))
-    labels["repository"] = labels["repository"].replace("/", "-")[:63]
+    labels["repository"] = labels["source"]["repository"].replace("/", "-")[:63]
+    labels.pop("source")
+    if labels["results"].get("git"):
+        labels["repository_results"] = labels["results"]["git"]["repository"].replace("/", "-")[:63]
+    else:
+        labels["results"] = labels["results"]["other"].get("url") or labels["other"]["auth_type"]
     labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
     return labels
 
@@ -42,7 +47,7 @@ def sync_users(crds: dict, annotations:dict, user:dict):
         script="init_container.sh",
         create_volumes=False,
         labels=labels,
-        repository=crds["object"]["spec"].get("repository")
+        repository=crds["object"]["spec"]["source"].get("repository")
     )
 
     watch_user_pod(crds["object"]["metadata"]["name"], user, labels, annotations)

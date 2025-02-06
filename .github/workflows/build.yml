@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - pipeline-new
     paths-ignore:
       - '*.md'
       - 'README'

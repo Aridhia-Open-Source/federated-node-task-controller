@@ -3,62 +3,72 @@ entries:
   fn-task-controller:
   - apiVersion: v2
     appVersion: 0.3.2
-    created: "2025-02-06T11:29:31.628804442Z"
+    created: "2025-02-06T12:04:20.668114041Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 2b3e661277c2008d9606d78798c3b2bb496ba1d381b2e38a0d6402743fe152b6
     name: fn-task-controller
     type: application
     urls:
-    - https://aridhia-open-source.github.io/federated-node-task-controller/fn-task-controller-0.3.2.tgz
+    - fn-task-controller-0.3.2.tgz
     version: 0.3.2
   - apiVersion: v2
     appVersion: 0.3.2-5fe9d2
-    created: "2025-02-06T11:29:31.628608394Z"
+    created: "2025-02-06T12:04:20.667847393Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: e8154b2398126ba9d8a458fd49244b0b301eb36e0ce8d45e6b4568c8e8c63948
     name: fn-task-controller
     type: application
     urls:
-    - https://aridhia-open-source.github.io/federated-node-task-controller/fn-task-controller-0.3.2-5fe9d2.tgz
+    - fn-task-controller-0.3.2-5fe9d2.tgz
     version: 0.3.2-5fe9d2
   - apiVersion: v2
     appVersion: 0.3.2-46b563
-    created: "2025-02-06T11:29:31.628400891Z"
+    created: "2025-02-06T12:04:20.667565828Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 8216c535b4eb3ca2037b3d06010c4efe695986a46e4bea6efeb926948d0959b5
     name: fn-task-controller
     type: application
     urls:
-    - https://aridhia-open-source.github.io/federated-node-task-controller/fn-task-controller-0.3.2-46b563.tgz
+    - fn-task-controller-0.3.2-46b563.tgz
     version: 0.3.2-46b563
   - apiVersion: v2
+    appVersion: 0.3.2-44787f
+    created: "2025-02-06T12:04:20.667295604Z"
+    description: Helm chart for the Federated Node-GitHub task controller.
+    digest: 9a0a14e93eba52d1a5140b775346dca459a0f8c17bc66a90f1a2df2f4cc5f489
+    name: fn-task-controller
+    type: application
+    urls:
+    - fn-task-controller-0.3.2-44787f.tgz
+    version: 0.3.2-44787f
+  - apiVersion: v2
     appVersion: 0.3.2-3acfe9
-    created: "2025-02-06T11:29:31.628190871Z"
+    created: "2025-02-06T12:04:20.666995515Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: fe1daddfb6f77439161c013e679264c614a3ba0b6a3a5f825aded0d221fa436c
     name: fn-task-controller
     type: application
     urls:
-    - https://aridhia-open-source.github.io/federated-node-task-controller/fn-task-controller-0.3.2-3acfe9.tgz
+    - fn-task-controller-0.3.2-3acfe9.tgz
     version: 0.3.2-3acfe9
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-02-06T11:29:31.627916189Z"
+    created: "2025-02-06T12:04:20.666680688Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 531ac63b062c4e8700950123449bddbd8075001759492f1d536ed2d0c4c4d5c9
     name: fn-task-controller
     type: application
     urls:
-    - https://aridhia-open-source.github.io/federated-node-task-controller/fn-task-controller-0.2.1.tgz
+    - fn-task-controller-0.2.1.tgz
     version: 0.2.1
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-02-06T11:29:31.627566873Z"
+    created: "2025-02-06T12:04:20.666395667Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: f1afef2349c9e8129520cad58db40160a65ba0ef8bcba4f84f684d10fba4434f
     name: fn-task-controller
     type: application
     urls:
-    - https://aridhia-open-source.github.io/federated-node-task-controller/fn-task-controller-0.2.0.tgz
+    - fn-task-controller-0.2.0.tgz
     version: 0.2.0
-generated: "2025-02-06T11:29:31.627010688Z"
+generated: "2025-02-06T12:04:20.665963982Z"

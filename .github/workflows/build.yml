@@ -138,7 +138,8 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          ls -la
+          ls -la k8s
+          ls -la k8s/fn-task-controller
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0

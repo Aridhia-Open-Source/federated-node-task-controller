@@ -13,4 +13,3 @@ data:
   PULL-POLICY: IfNotPresent
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
   IMAGE: {{ template "fn-task-controller.image" . }}
-  TEST_VALUE: "not"

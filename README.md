@@ -55,10 +55,13 @@ helm install fncontroller . -f dev.values.yaml -n $namespace_name
 ```
 or though the helm repo:
 ```sh
-# Stable version
-helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/stable
-# Dev version
-helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/develop
+helm repo add fn-task-controller https://aridhia-open-source.github.io/federated-node-task-controller
+
+# Check available releases
+helm search repo fn-task-controller --versions
+
+# If you want to check development builds
+helm search repo fn-task-controller --devel --versions
 
 # Install
 helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name

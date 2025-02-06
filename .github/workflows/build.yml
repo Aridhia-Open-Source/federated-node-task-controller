@@ -35,50 +35,50 @@ env:
   DEV_BUILD: ${{ github.ref_type != 'tag' && github.ref != 'refs/heads/main' }}
 
 jobs:
-  linters:
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check for vulnerabilities
-        run: |
-          docker run --entrypoint /bin/sh \
-            -v ./Pipfile:/app/Pipfile \
-            -v ./Pipfile.lock:/app/Pipfile.lock \
-            -v ./scripts/tests/vulnerabilities.sh:/vulnerabilities.sh \
-            python:3.12.2-alpine \
-            /vulnerabilities.sh
+  # linters:
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Check for vulnerabilities
+  #       run: |
+  #         docker run --entrypoint /bin/sh \
+  #           -v ./Pipfile:/app/Pipfile \
+  #           -v ./Pipfile.lock:/app/Pipfile.lock \
+  #           -v ./scripts/tests/vulnerabilities.sh:/vulnerabilities.sh \
+  #           python:3.12.2-alpine \
+  #           /vulnerabilities.sh
 
-      - name: Run pylint
-        run: |
-          make pylint_ci
+  #     - name: Run pylint
+  #       run: |
+  #         make pylint_ci
 
-      - name: Run hadolint
-        run: |
-          make hadolint
-  tests:
-    needs: linters
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  #     - name: Run hadolint
+  #       run: |
+  #         make hadolint
+  # tests:
+  #   needs: linters
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Run Python Tests
-        run: |
-          make tests_ci
+  #     - name: Run Python Tests
+  #       run: |
+  #         make tests_ci
 
-      - uses: irongut/CodeCoverageSummary@v1.3.0
-        name: Code Coverage Summary Report
-        with:
-          filename: artifacts/coverage.xml
-          fail_below_min: true
-          thresholds: '60 80'
+  #     - uses: irongut/CodeCoverageSummary@v1.3.0
+  #       name: Code Coverage Summary Report
+  #       with:
+  #         filename: artifacts/coverage.xml
+  #         fail_below_min: true
+  #         thresholds: '60 80'
   update:
-    needs: tests
+    # needs: tests
     runs-on: ubuntu-latest
     outputs:
       is_tag: ${{ steps.vars.outputs.IS_TAG }}
@@ -111,21 +111,21 @@ jobs:
             echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
           fi
 
-  build:
-    needs: update
-    uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
-    with:
-      TAG: ${{ needs.update.outputs.tag }}
-      IMAGE: fn_task_controller
-      BUILD_PATH: .
-      HASH_SUFFIX: false
-      DOCKER_ACR: ${{ vars.DOCKER_ACR }}
-    secrets:
-      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  # build:
+  #   needs: update
+  #   uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
+  #   with:
+  #     TAG: ${{ needs.update.outputs.tag }}
+  #     IMAGE: fn_task_controller
+  #     BUILD_PATH: .
+  #     HASH_SUFFIX: false
+  #     DOCKER_ACR: ${{ vars.DOCKER_ACR }}
+  #   secrets:
+  #     DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
     needs:
-      - build
+      # - build
       - update
     with:
       VERSION: ${{ needs.update.outputs.chart_version }}

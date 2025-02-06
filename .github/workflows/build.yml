@@ -88,27 +88,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setting global values
+        working-directory: k8s/fn-task-controller
         id: vars
         run: |
           echo "IS_TAG=${{ env.IS_TAG }}" >> ${GITHUB_OUTPUT}
           echo "DEV_BUILD=${{ env.DEV_BUILD }}" >> ${GITHUB_OUTPUT}
 
           echo "Setting version according to the Chart.yaml"
-          cd k8s/fn-task-controller
-
           version=$(grep 'version:.*' Chart.yaml | sed 's/^.*: //')
           echo "Chart version: ${version}"
           appVersion=$(grep 'appVersion:.*' Chart.yaml | sed 's/^.*: \"//'| sed 's/\"//')
           echo "Chart appVersion: ${appVersion}"
 
-          echo "CHART_VERSION=${version}" >> ${GITHUB_OUTPUT}
-
           if [[ "${{ env.DEV_BUILD }}" == "false" ]]; then
+            echo "CHART_VERSION=${version}" >> ${GITHUB_OUTPUT}
             echo "TAG=${appVersion}" >> ${GITHUB_OUTPUT}
           else
-            echo "TAG=${appVersion}-${GITHUB_SHA::6}" >> ${GITHUB_OUTPUT}
+            DEV_SUFFIX="-${GITHUB_SHA::6}"
+            echo "CHART_VERSION=${version}${DEV_SUFFIX}" >> ${GITHUB_OUTPUT}
+            TAG="${appVersion}${DEV_SUFFIX}"
+            echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
           fi
-
 
   build:
     needs: update
@@ -128,9 +128,9 @@ jobs:
       - update
     with:
       VERSION: ${{ needs.update.outputs.chart_version }}
-      HELM_REPO: ${{ vars.HELM_REPO }}
-      USER_HELM: ${{ vars.USER_HELM }}
+      APP_VERSION: ${{ needs.update.outputs.tag }}
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
+      IS_TAG: ${{ needs.update.outputs.is_tag }}
     secrets:
       HELM_TOKEN: ${{ secrets.HELM_TOKEN }}

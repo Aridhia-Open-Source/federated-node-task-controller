@@ -78,7 +78,7 @@ jobs:
           fail_below_min: true
           thresholds: '60 80'
   update:
-    # needs: tests
+    needs: tests
     runs-on: ubuntu-latest
     outputs:
       is_tag: ${{ steps.vars.outputs.IS_TAG }}
@@ -101,16 +101,14 @@ jobs:
           appVersion=$(grep 'appVersion:.*' Chart.yaml | sed 's/^.*: \"//'| sed 's/\"//')
           echo "Chart appVersion: ${appVersion}"
 
-          echo "CHART_VERSION=${version}" >> ${GITHUB_OUTPUT}
-
           if [[ "${{ env.DEV_BUILD }}" == "false" ]]; then
+            echo "CHART_VERSION=${version}" >> ${GITHUB_OUTPUT}
             echo "TAG=${appVersion}" >> ${GITHUB_OUTPUT}
           else
             DEV_SUFFIX="-${GITHUB_SHA::6}"
+            echo "CHART_VERSION=${version}${DEV_SUFFIX}" >> ${GITHUB_OUTPUT}
             TAG="${appVersion}${DEV_SUFFIX}"
             echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
-            sed -i "s/${version}/${version}${DEV_SUFFIX}/" Chart.yaml
-            sed -i "s/${appVersion}/${TAG}/" Chart.yaml
           fi
 
   build:
@@ -127,38 +125,14 @@ jobs:
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
     needs:
-      # - build
+      - build
       - update
     with:
       VERSION: ${{ needs.update.outputs.chart_version }}
+      APP_VERSION: ${{ needs.update.outputs.tag }}
       HELM_REPO: ${{ vars.HELM_REPO }}
       USER_HELM: ${{ vars.USER_HELM }}
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
     secrets:
       HELM_TOKEN: ${{ secrets.HELM_TOKEN }}
-    # needs: build
-    # permissions:
-    #   contents: write
-    # runs-on: ubuntu-latest
-    # steps:
-      # - name: Checkout
-      #   uses: actions/checkout@v4
-      #   with:
-      #     fetch-depth: 0
-      # - name: Configure Git
-      #   run: |
-      #     git config user.name "$GITHUB_ACTOR"
-      #     git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-      #     ls -la k8s
-      #     ls -la k8s/fn-task-controller
-      # - name: Package helm
-      #   run: |
-
-
-      # - name: Run chart-releaser
-      #   uses: helm/chart-releaser-action@v1.6.0
-      #   with:
-      #     charts_dir: k8s/fn-task-controller
-      #   env:
-      #     CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -1,6 +1,7 @@
 send_mini.sh
 .vscode/
 *.yaml
+!docs/*.yaml
 !k8s/**/*.yaml
 *.pem
 local/

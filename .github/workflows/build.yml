@@ -130,8 +130,6 @@ jobs:
     with:
       VERSION: ${{ needs.update.outputs.chart_version }}
       APP_VERSION: ${{ needs.update.outputs.tag }}
-      HELM_REPO: ${{ vars.HELM_REPO }}
-      USER_HELM: ${{ vars.USER_HELM }}
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
     secrets:

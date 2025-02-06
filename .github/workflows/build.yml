@@ -88,14 +88,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setting global values
+        working-directory: k8s/fn-task-controller
         id: vars
         run: |
           echo "IS_TAG=${{ env.IS_TAG }}" >> ${GITHUB_OUTPUT}
           echo "DEV_BUILD=${{ env.DEV_BUILD }}" >> ${GITHUB_OUTPUT}
 
           echo "Setting version according to the Chart.yaml"
-          cd k8s/fn-task-controller
-
           version=$(grep 'version:.*' Chart.yaml | sed 's/^.*: //')
           echo "Chart version: ${version}"
           appVersion=$(grep 'appVersion:.*' Chart.yaml | sed 's/^.*: \"//'| sed 's/\"//')
@@ -106,9 +105,12 @@ jobs:
           if [[ "${{ env.DEV_BUILD }}" == "false" ]]; then
             echo "TAG=${appVersion}" >> ${GITHUB_OUTPUT}
           else
-            echo "TAG=${appVersion}-${GITHUB_SHA::6}" >> ${GITHUB_OUTPUT}
+            DEV_SUFFIX="-${GITHUB_SHA::6}"
+            TAG="${appVersion}${DEV_SUFFIX}"
+            echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
+            sed -i "s/${version}/${version}${DEV_SUFFIX}/" Chart.yaml
+            sed -i "s/${appVersion}/${TAG}/" Chart.yaml
           fi
-
 
   build:
     needs: update
@@ -122,15 +124,18 @@ jobs:
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   helm:
-    uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
-    needs:
-      - build
-      - update
-    with:
-      VERSION: ${{ needs.update.outputs.chart_version }}
-      HELM_REPO: ${{ vars.HELM_REPO }}
-      USER_HELM: ${{ vars.USER_HELM }}
-      PATH_BUILD: k8s/fn-task-controller
-      CHART_NAME: fn-task-controller
-    secrets:
-      HELM_TOKEN: ${{ secrets.HELM_TOKEN }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        with:
+          charts_dir: k8s/fn-task-controller
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -3,7 +3,7 @@ entries:
   fn-task-controller:
   - apiVersion: v2
     appVersion: 0.3.2
-    created: "2025-02-06T10:31:19.366753506Z"
+    created: "2025-02-06T11:18:04.144547503Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 2b3e661277c2008d9606d78798c3b2bb496ba1d381b2e38a0d6402743fe152b6
     name: fn-task-controller
@@ -13,7 +13,7 @@ entries:
     version: 0.3.2
   - apiVersion: v2
     appVersion: 0.3.2-46b563
-    created: "2025-02-06T10:31:19.366454295Z"
+    created: "2025-02-06T11:18:04.144268943Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 8216c535b4eb3ca2037b3d06010c4efe695986a46e4bea6efeb926948d0959b5
     name: fn-task-controller
@@ -22,8 +22,18 @@ entries:
     - fn-task-controller-0.3.2-46b563.tgz
     version: 0.3.2-46b563
   - apiVersion: v2
+    appVersion: 0.3.2-3acfe9
+    created: "2025-02-06T11:18:04.143953916Z"
+    description: Helm chart for the Federated Node-GitHub task controller.
+    digest: fe1daddfb6f77439161c013e679264c614a3ba0b6a3a5f825aded0d221fa436c
+    name: fn-task-controller
+    type: application
+    urls:
+    - fn-task-controller-0.3.2-3acfe9.tgz
+    version: 0.3.2-3acfe9
+  - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-02-06T10:31:19.366141148Z"
+    created: "2025-02-06T11:18:04.14366119Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 531ac63b062c4e8700950123449bddbd8075001759492f1d536ed2d0c4c4d5c9
     name: fn-task-controller
@@ -33,7 +43,7 @@ entries:
     version: 0.2.1
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-02-06T10:31:19.365839663Z"
+    created: "2025-02-06T11:18:04.143330303Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: f1afef2349c9e8129520cad58db40160a65ba0ef8bcba4f84f684d10fba4434f
     name: fn-task-controller
@@ -41,4 +51,4 @@ entries:
     urls:
     - fn-task-controller-0.2.0.tgz
     version: 0.2.0
-generated: "2025-02-06T10:31:19.365259414Z"
+generated: "2025-02-06T11:18:04.142906893Z"

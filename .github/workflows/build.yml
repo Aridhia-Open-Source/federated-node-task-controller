@@ -76,6 +76,12 @@ jobs:
           filename: artifacts/coverage.xml
           fail_below_min: true
           thresholds: '60 80'
+          format: markdown
+          output: file
+      - name: Set summary
+        run: |
+          echo "# Coverage" >> $GITHUB_STEP_SUMMARY
+          cat code-coverage-results.txt >> $GITHUB_STEP_SUMMARY
   update:
     needs: tests
     runs-on: ubuntu-latest

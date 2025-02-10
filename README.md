@@ -1,3 +1,4 @@
+[![Build Docker Image](https://github.com/Aridhia-Open-Source/federated-node-task-controller/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Aridhia-Open-Source/federated-node-task-controller/actions/workflows/build.yml)
 # Federated Node Task Controller (FNTC)
 
 For the time being is on a separate repo, it might get merged in the main Federated Node one: [PHEMS_federated_node](https://github.com/Aridhia-Open-Source/PHEMS_federated_node)

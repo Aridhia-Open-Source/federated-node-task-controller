@@ -144,7 +144,7 @@ jobs:
       HELM_TOKEN: ${{ secrets.HELM_TOKEN }}
   sumamry:
     needs:
-      - build
+      - helm
       - update
     runs-on: ubuntu-latest
     steps:

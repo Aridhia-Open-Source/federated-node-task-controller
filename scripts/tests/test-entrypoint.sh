@@ -19,5 +19,5 @@ export IMAGE=ghcr.io/aridhia-open-source/fn_task_controller
 export TAG=0.0.1
 export MOUNT_PATH=/data/test
 
-pytest -v --cov-report xml:/app/artifacts/coverage.xml --cov=controller .
+pytest -v .
 pycobertura show /app/artifacts/coverage.xml

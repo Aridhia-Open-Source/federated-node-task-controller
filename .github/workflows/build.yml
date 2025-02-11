@@ -129,16 +129,6 @@ jobs:
       DOCKER_ACR: ${{ vars.DOCKER_ACR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-  sumamry:
-    needs:
-      - build
-      - update
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set summary
-        run: |
-          echo "# Docker Images Build" >> $GITHUB_STEP_SUMMARY
-          echo "- ${{ vars.DOCKER_ACR }}/fn_task_controller:${{ needs.update.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
     needs:
@@ -152,3 +142,15 @@ jobs:
       IS_TAG: ${{ needs.update.outputs.is_tag }}
     secrets:
       HELM_TOKEN: ${{ secrets.HELM_TOKEN }}
+  sumamry:
+    needs:
+      - build
+      - update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set summary
+        run: |
+          echo "# Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ vars.DOCKER_ACR }}/fn_task_controller:${{ needs.update.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Helm Chart" >> $GITHUB_STEP_SUMMARY
+          echo "- fn-task-controller:${{ needs.update.outputs.chart_version }}" >> $GITHUB_STEP_SUMMARY

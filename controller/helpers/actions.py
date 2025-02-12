@@ -29,7 +29,7 @@ def create_labels(crds:dict) -> dict:
     if labels["results"].get("git"):
         labels["repository_results"] = labels["results"]["git"]["repository"].replace("/", "-")[:63]
     else:
-        labels["results"] = labels["results"]["other"].get("url") or labels["other"]["auth_type"]
+        labels["results"] = labels["results"]["other"].get("url") or labels["results"]["other"]["auth_type"]
     labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
     return labels
 

@@ -61,7 +61,6 @@ def create_task(image:str, name:str, proj_name:str, dataset:dict, user_token:str
             proj_name,
             dataset
         ),
-        verify=False,
         headers={
             "Authorization": f"Bearer {user_token}",
             "project-name": proj_name
@@ -81,7 +80,6 @@ def get_results(task_id:str, token:str) -> str:
     logger.info("Getting task %s results", task_id)
     res_resp = requests.get(
         f"{BACKEND_HOST}/tasks/{task_id}/results",
-        verify=False,
         headers={
             "Authorization": f"Bearer {token}"
         }

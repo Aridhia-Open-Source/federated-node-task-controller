@@ -11,7 +11,7 @@ import logging
 
 from excpetions import KeycloakException
 from helpers.kubernetes_helper import KubernetesV1
-from .request_helper import client as requests
+from helpers.request_helper import client as requests
 
 
 logger = logging.getLogger('keycloak_helper')
@@ -23,10 +23,19 @@ KEYCLOAK_CLIENT = "global"
 REALM = "FederatedNode"
 KC_HOST = os.getenv("KC_HOST")
 
+
 def get_keycloak_secret() -> str:
+    """
+    Simple generalization to get keycloak secret, as it has
+    fixed keys in it
+    """
     return KubernetesV1().get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
 
 def get_keycloak_admin_pass() -> str:
+    """
+    Simple generalization to get the specific admin key
+    for the keycloak secret
+    """
     return KubernetesV1().get_secret('kc-secrets', 'KEYCLOAK_ADMIN_PASSWORD')
 
 def get_admin_token() -> str:

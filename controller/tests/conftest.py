@@ -75,6 +75,22 @@ def user_email():
     return "something@email.com"
 
 @pytest.fixture
+def unencoded_bearer():
+    return "token"
+
+@pytest.fixture
+def encoded_bearer(unencoded_bearer):
+    return base64.b64encode(unencoded_bearer.encode()).decode()
+
+@pytest.fixture
+def unencoded_basic():
+    return "user:pass"
+
+@pytest.fixture
+def encoded_basic(unencoded_basic):
+    return base64.b64encode(unencoded_basic.encode()).decode()
+
+@pytest.fixture
 def mock_crd(crd_name, user_idp_id):
     return deepcopy(base_crd_object(name=crd_name, udpid=user_idp_id))
 
@@ -101,7 +117,7 @@ def mock_crd_done(mock_crd_task_done):
 @pytest.fixture
 def mock_crd_azcopy_done(mock_crd_task_done):
     mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "auth": "preauthurl",
+        "url": "https://fancyresultsplace.com/api/storage",
         "auth_type": "AzCopy"
     }}
     return deepcopy(mock_crd_task_done)
@@ -110,7 +126,6 @@ def mock_crd_azcopy_done(mock_crd_task_done):
 def mock_crd_api_done(mock_crd_task_done):
     mock_crd_task_done["object"]["spec"]["results"] = {"other": {
         "url": "https://fancyresultsplace.com/api/storage",
-        "auth": "token",
         "auth_type": "Bearer"
     }}
     return deepcopy(mock_crd_task_done)
@@ -119,7 +134,6 @@ def mock_crd_api_done(mock_crd_task_done):
 def mock_crd_api_basic_done(mock_crd_task_done):
     mock_crd_task_done["object"]["spec"]["results"] = {"other": {
         "url": "https://fancyresultsplace.com/api/storage",
-        "auth": base64.b64encode("user:pass".encode()),
         "auth_type": "Basic"
     }}
     return deepcopy(mock_crd_task_done)
@@ -154,6 +168,9 @@ def v1_mock(mocker, job_spec_mock):
         "read_namespaced_secret": mocker.patch(
             'helpers.kubernetes_helper.KubernetesV1.read_namespaced_secret'
         ),
+        "list_namespaced_secret": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1.list_namespaced_secret'
+        )
     }
 
 @pytest.fixture
@@ -174,7 +191,7 @@ def v1_crd_mock(mocker):
     }
 
 @pytest.fixture
-def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, job_spec_mock, k8s_watch_mock):
+def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, job_spec_mock, k8s_watch_mock, encoded_bearer):
     all_clients = {}
     all_clients.update(v1_mock)
     all_clients.update(v1_batch_mock)
@@ -183,6 +200,9 @@ def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, job_spec
         "KEYCLOAK_GLOBAL_CLIENT_SECRET": "YWJjMTIz",
         "KEYCLOAK_ADMIN_PASSWORD": "YWJjMTIz"
     }
+    all_clients["list_namespaced_secret"].return_value = [Mock(data={
+        "auth": encoded_bearer
+    })]
     return all_clients
 
 @pytest.fixture
@@ -198,14 +218,19 @@ def keycloak_realm(mocker):
     return "FederatedNode"
 
 @pytest.fixture
-def mock_pod_watch(mocker, k8s_client):
-    mocker.patch(
-        'helpers.pod_watcher.KubernetesV1',
-    )
-    mocker.patch(
-        'helpers.pod_watcher.Watch',
-        return_value=Mock(stream=Mock(return_value=[pod_object_response()]))
-    )
+def mock_pod_watch(mocker, k8s_client, encoded_bearer):
+    return {
+        "v1": mocker.patch(
+            'helpers.pod_watcher.KubernetesV1',
+            return_value=Mock(
+                get_secret_by_label=Mock(return_value=Mock(data={"auth": encoded_bearer}))
+            )
+        ),
+        "watch": mocker.patch(
+            'helpers.pod_watcher.Watch',
+            return_value=Mock(stream=Mock(return_value=[pod_object_response()]))
+        )
+    }
 
 @pytest.fixture
 def mock_job_watch(mocker, k8s_client):

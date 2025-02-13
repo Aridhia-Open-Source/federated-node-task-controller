@@ -242,7 +242,8 @@ class TestWatcherAzCopyDelivery:
             crd_name,
             mock_crd_azcopy_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            unencoded_bearer
         ):
         """
         Tests that once the task's pod is completed,
@@ -273,9 +274,9 @@ class TestWatcherAzCopyDelivery:
             [
                 "azcopy", "copy",
                 "/data/controller/localhost-1-results.tar.gz",
-                mock_crd_azcopy_done["object"]["spec"]["results"]["other"]["auth"]
+                unencoded_bearer
             ],
-            **{"capture_output":True}
+            **{"capture_output":True, "check": False}
         )
 
     @mock.patch("subprocess.run", return_value=mock.Mock(stdout="In progress", stderr="Failed!"))
@@ -292,7 +293,8 @@ class TestWatcherAzCopyDelivery:
             crd_name,
             mock_crd_azcopy_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            unencoded_bearer
         ):
         """
         Tests that once the task's pod is completed,
@@ -313,9 +315,9 @@ class TestWatcherAzCopyDelivery:
             [
                 "azcopy", "copy",
                 "/data/controller/localhost-1-results.tar.gz",
-                mock_crd_azcopy_done["object"]["spec"]["results"]["other"]["auth"]
+                unencoded_bearer
             ],
-            **{"capture_output":True}
+            **{"capture_output":True, "check": False}
         )
         # CRD not patched immediately
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
@@ -335,7 +337,8 @@ class TestWatcherApiDelivery:
             crd_name,
             mock_crd_api_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            unencoded_bearer
         ):
         """
         Tests that once the task's pod is completed,
@@ -353,7 +356,9 @@ class TestWatcherApiDelivery:
                 responses.POST,
                 mock_crd_api_done["object"]["spec"]["results"]["other"]["url"],
                 status=201,
-                match=[matchers.header_matcher({"Authorization": f"Bearer {mock_crd_api_done["object"]["spec"]["results"]["other"]["auth"]}"})]
+                match=[matchers.header_matcher({
+                    "Authorization": f"Bearer {unencoded_bearer}"
+                })]
             )
             start(True)
 
@@ -380,7 +385,8 @@ class TestWatcherApiDelivery:
             crd_name,
             mock_crd_api_basic_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            encoded_basic
         ):
         """
         Tests that once the task's pod is completed,
@@ -388,7 +394,9 @@ class TestWatcherApiDelivery:
         behave the same as the bearer auth, but it's to ensure
         we interpret basic auth correctly
         """
+        mock_pod_watch["v1"].return_value.get_secret_by_label.return_value.data["auth"] = encoded_basic
         crd_auth = mock_crd_api_basic_done["object"]["spec"]["results"]["other"]
+
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_basic_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
@@ -401,7 +409,7 @@ class TestWatcherApiDelivery:
                 responses.POST,
                 crd_auth["url"],
                 status=201,
-                match=[matchers.header_matcher({"Authorization": f"Basic {crd_auth["auth"].decode()}"})]
+                match=[matchers.header_matcher({"Authorization": f"Basic {encoded_basic}"})]
             )
             start(True)
 

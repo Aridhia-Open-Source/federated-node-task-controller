@@ -1,6 +1,13 @@
 """
 Kubernetes controller to handle the Custom Resource Definition Analytics
 The goal is simple, all new CRDs should trigger a new task on the FN.
+
+The lifecycle is documented through labels:
+    - user: ok          -> the external identity on github is confirmed and linked
+    - task_id: <int>    -> task triggered, waiting for completion
+    - results: true     -> results fetched
+    - done: true        -> All done, results pushed successfully
+    - tries: <1:5>      -> There is a max of 5 retries with exponential waiting times
 """
 from copy import deepcopy
 import logging

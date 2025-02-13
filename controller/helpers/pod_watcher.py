@@ -1,6 +1,6 @@
 import base64
 import logging
-import requests
+import re
 import subprocess
 from kubernetes.watch import Watch
 from kubernetes.client.models.v1_job_status import V1JobStatus
@@ -8,6 +8,7 @@ from kubernetes.client.models.v1_job_status import V1JobStatus
 from const import DOMAIN, TASK_NAMESPACE, NAMESPACE
 from excpetions import KubernetesException, PodWatcherException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
+from helpers.request_helper import client as requests
 from helpers.task_helper import get_results
 
 logging.basicConfig()
@@ -30,59 +31,79 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
         label_selector=f"task_id={task_id}",
         resource_version='',
         watch=True
-        ):
-            logger.info("Found pod! %s", pod["object"].metadata.name)
-            match pod["object"].status.phase:
-                case "Succeeded":
-                    annotations[f"{DOMAIN}/results"] = "true"
-                    fp = get_results(task_id, user_token)
-                    if git_info:
-                        KubernetesV1Batch().create_helper_job(
-                            name=f"task-{task_id}-results",
-                            task_id=task_id,
-                            repository=git_info.get("repository")
-                        )
-                    else:
-                        auth = {}
-                        is_api = True
-                        # other_info["auth"] might be moved somewhere else
-                        # but for now is passed as CRD field
-                        creds = other_info.get("auth", '')
-                        match other_info.get("auth_type", '').lower():
-                            case "bearer":
-                                auth["headers"] = {"Authorization": f"Bearer {creds}"}
-                            case "basic":
-                                auth["auth"] = tuple(base64.b64decode(creds).decode().split(":"))
-                            case "azcopy":
-                                out = subprocess.run(
-                                    ["azcopy", "copy", fp, creds],
-                                    capture_output=True
+    ):
+        logger.info("Found pod! %s", pod["object"].metadata.name)
+        match pod["object"].status.phase:
+            case "Succeeded":
+                annotations[f"{DOMAIN}/results"] = "true"
+                fp = get_results(task_id, user_token)
+                if git_info:
+                    KubernetesV1Batch().create_helper_job(
+                        name=f"task-{task_id}-results",
+                        task_id=task_id,
+                        repository=git_info.get("repository")
+                    )
+                else:
+                    auth = {}
+                    is_api = True
+
+                    # Remove the http(s) from the string and use it as a label filter
+                    url = re.sub(r"http(s)*://", "", other_info.get("url", ''))
+                    auth_secret = KubernetesV1().get_secret_by_label(
+                        namespace=NAMESPACE, label=f"url={url}"
+                    )
+                    creds = base64.b64decode(
+                        auth_secret.data["auth"].encode()
+                    ).decode()
+
+                    match other_info.get("auth_type", '').lower():
+                        case "bearer":
+                            auth["headers"] = {"Authorization": f"Bearer {creds}"}
+                        case "basic":
+                            auth["auth"] = tuple(creds.split(":"))
+                        case "azcopy":
+                            out = subprocess.run(
+                                ["azcopy", "copy", fp, creds],
+                                capture_output=True,
+                                check=False
+                            )
+                            if out.stderr:
+                                logger.error(out.stderr)
+                                raise PodWatcherException(
+                                    "Something went wrong with the result push"
                                 )
-                                if out.stderr:
-                                    logger.error(out.stderr)
-                                    raise PodWatcherException("Something went wrong with the result push")
-                                logger.info(out.stdout)
-                                is_api = False
-                            case _:
-                                # This won't happen, as validation happend at CRD
-                                # creation at k8s api level
-                                pass
-                        if is_api:
-                            with open(fp, 'r') as file:
-                                resp = requests.post(other_info.get("url"), files={fp: file}, **auth)
-                            if not resp.ok:
-                                raise PodWatcherException("Failed to deliver results")
+                            logger.info(out.stdout)
+                            is_api = False
+                        case _:
+                            # This won't happen, as validation happend at CRD
+                            # creation at k8s api level
+                            pass
+                    if is_api:
+                        with open(fp, 'r', encoding="utf-8") as file:
+                            resp = requests.post(
+                                other_info.get("url"),
+                                files={fp: file},
+                                **auth
+                            )
+                        if not resp.ok:
+                            raise PodWatcherException("Failed to deliver results")
 
-                    # Add results annotation to let the controller know
-                    # we already handled results
-                    KubernetesCRD().patch_crd_annotations(crd_name, annotations)
-                    break
-                case "Failed":
-                    raise KubernetesException("pod in failed status. Refreshing annotation on CRD to trigger a restart")
-                case _:
-                    logger.info("%s Status: %s",  pod["object"].metadata.name, pod["object"].status.phase)
+                # Add results annotation to let the controller know
+                # we already handled results
+                KubernetesCRD().patch_crd_annotations(crd_name, annotations)
+                break
+            case "Failed":
+                raise KubernetesException(
+                    "Pod in failed status. Refreshing annotation on CRD to trigger a restart"
+                )
+            case _:
+                logger.info(
+                    "%s Status: %s",
+                    pod["object"].metadata.name,
+                    pod["object"].status.phase
+                )
 
-    logger.info(f"Stopping task {task_id} pod watcher")
+    logger.info("Stopping task %s pod watcher", task_id)
     pod_watcher.stop()
 
 
@@ -99,21 +120,27 @@ def watch_user_pod(crd_name:str, user:str, labels:dict, annotations:dict):
         label_selector=ls,
         resource_version='',
         watch=True
-        ):
-            logger.info("Found job! %s", job["object"].metadata.name)
-            match get_job_status(job["object"].status):
-                case "Succeeded":
-                    annotations[f"{DOMAIN}/user"] = "ok"
-                    # Add results annotation to let the controller know
-                    # we already handled the user
-                    KubernetesCRD().patch_crd_annotations(crd_name, annotations)
-                    break
-                case "Failed":
-                    raise KubernetesException("Job in failed status. Refreshing annotation on CRD to trigger a restart")
-                case _:
-                    logger.info("%s Status: %s", job["object"].metadata.name, get_job_status( job["object"].status))
+    ):
+        logger.info("Found job! %s", job["object"].metadata.name)
+        match get_job_status(job["object"].status):
+            case "Succeeded":
+                annotations[f"{DOMAIN}/user"] = "ok"
+                # Add results annotation to let the controller know
+                # we already handled the user
+                KubernetesCRD().patch_crd_annotations(crd_name, annotations)
+                break
+            case "Failed":
+                raise KubernetesException(
+                    "Job in failed status. Refreshing annotation on CRD to trigger a restart"
+                )
+            case _:
+                logger.info(
+                    "%s Status: %s",
+                    job["object"].metadata.name,
+                    get_job_status( job["object"].status)
+                )
 
-    logger.info(f"Stopping {" ".join(user.values())} job watcher")
+    logger.info("Stopping %s job watcher", " ".join(user.values()))
     pod_watcher.stop()
 
 
@@ -126,3 +153,5 @@ def get_job_status(status:V1JobStatus) -> str:
     for state in possible_status:
         if getattr(status, state.lower(), False):
             return state
+    # Let's assume it's failed if the status is not on what we expect
+    return "Failed"

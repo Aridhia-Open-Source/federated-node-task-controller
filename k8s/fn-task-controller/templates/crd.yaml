@@ -14,9 +14,6 @@ spec:
           properties:
             spec:
               type: object
-              x-kubernetes-validations:
-                - rule: "self.results.other.auth_type != 'AzCopy' && has(self.results.other.url) || has(self.results.other.auth)"
-                  message: "url and auth are required field when auth_type is not AzCopy"
               required:
                 - image
                 - user
@@ -88,14 +85,11 @@ spec:
                       properties:
                           url:
                             type: string
-                          auth:
-                            type: string
                           auth_type:
                             type: string
                       oneOf:
                       - required:
                           - url
-                          - auth
                           - auth_type
                         oneOf:
                           - not:
@@ -103,25 +97,10 @@ spec:
                                 - git
                         properties:
                           url:
-                          auth:
-                            format: password
                           auth_type:
                             enum:
                               - Bearer
                               - Basic
-                      - required:
-                          - auth
-                          - auth_type
-                        oneOf:
-                          - not:
-                              required:
-                                - git
-                        properties:
-                          url:
-                          auth:
-                            format: password
-                          auth_type:
-                            enum:
                               - AzCopy
 
   scope: Cluster

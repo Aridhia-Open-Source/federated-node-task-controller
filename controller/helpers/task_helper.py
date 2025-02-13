@@ -4,8 +4,8 @@ Collection of functions to assist in performing FN-task-related operations
 import logging
 from const import BACKEND_HOST, GIT_HOME, PUBLIC_URL
 from excpetions import FederatedNodeException
-from .keycloak_helper import get_user, impersonate_user
-from .request_helper import client as requests
+from helpers.keycloak_helper import get_user, impersonate_user
+from helpers.request_helper import client as requests
 
 
 logger = logging.getLogger('task_helpers')
@@ -49,7 +49,6 @@ def get_user_token(user:dict) -> str:
     user_id = get_user(**user)["id"]
     return impersonate_user(user_id)
 
-
 def create_task(image:str, name:str, proj_name:str, dataset:dict, user_token:str):
     """
     Wrapper to call the Federated Node /tasks endpoint
@@ -82,6 +81,7 @@ def get_results(task_id:str, token:str) -> str:
     logger.info("Getting task %s results", task_id)
     res_resp = requests.get(
         f"{BACKEND_HOST}/tasks/{task_id}/results",
+        verify=False,
         headers={
             "Authorization": f"Bearer {token}"
         }

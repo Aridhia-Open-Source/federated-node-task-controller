@@ -394,7 +394,7 @@ class TestWatcherApiDelivery:
         behave the same as the bearer auth, but it's to ensure
         we interpret basic auth correctly
         """
-        mock_pod_watch["v1"].return_value.get_secret_by_label.return_value.data["auth"] = encoded_basic
+        k8s_client["list_namespaced_secret"].return_value.items[0].data["auth"] = encoded_basic
         crd_auth = mock_crd_api_basic_done["object"]["spec"]["results"]["other"]
 
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_basic_done]

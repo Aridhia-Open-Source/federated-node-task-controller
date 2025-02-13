@@ -1,3 +1,9 @@
+"""
+Collection of job and pod watchers.
+    - Pod watcher monitors the actual task lifecycle
+    - Job watcher is mostly to focus on user sync
+"""
+
 import base64
 import logging
 import re
@@ -25,6 +31,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     other_info = crd_spec["results"].get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
+
     for pod in pod_watcher.stream(
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,

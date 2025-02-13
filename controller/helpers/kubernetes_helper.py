@@ -25,6 +25,9 @@ logger.setLevel(logging.INFO)
 
 
 class BaseK8s:
+    """
+    Base k8s client to handle credentials for child classes
+    """
     base_label = {
         f"{DOMAIN}": "fn-controller"
     }
@@ -48,6 +51,9 @@ class BaseK8s:
 
 
 class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
+    """
+    Custom k8s client wrapper to handle CRD operations
+    """
     def patch_crd_annotations(self, name:str, annotations:dict):
         """
         Since it's too verbose, and has to get a "patch" dedicated to it
@@ -63,6 +69,10 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
 
 
 class KubernetesV1(BaseK8s, client.CoreV1Api):
+    """
+    Custom k8s client wrapper to centralized common
+    operations on top of the base client
+    """
     def get_secret(self, name:str, key:str, namespace:str=NAMESPACE) -> str:
         """
         Returns a secret decoded value from a secret name, and its key
@@ -75,7 +85,7 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         Gets the list of secrets with the label, and return the first match
         """
         secrets_list = self.list_namespaced_secret(namespace=namespace, label_selector=label)
-        if not len(secrets_list):
+        if not secrets_list:
             raise KubernetesException(f"No secrets found with label(s) {label}")
 
         return secrets_list.items[0]
@@ -132,7 +142,7 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
 
 class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
     """
-    Custom k8s client wrapper to centralized common
+    Custom k8s batch client wrapper to centralized common
     operations on top of the base client
     """
     #pylint: disable=R0913

@@ -157,7 +157,7 @@ def job_spec_mock():
     return job
 
 @pytest.fixture
-def v1_mock(mocker, job_spec_mock):
+def v1_mock(mocker, job_spec_mock, encoded_bearer):
     return {
         "create_persistent_volume_mock": mocker.patch(
             'helpers.kubernetes_helper.KubernetesV1.create_persistent_volume'
@@ -169,7 +169,8 @@ def v1_mock(mocker, job_spec_mock):
             'helpers.kubernetes_helper.KubernetesV1.read_namespaced_secret'
         ),
         "list_namespaced_secret": mocker.patch(
-            'helpers.kubernetes_helper.KubernetesV1.list_namespaced_secret'
+            'helpers.pod_watcher.KubernetesV1.list_namespaced_secret',
+            return_value=Mock(items=[Mock(data={"auth": encoded_bearer})])
         )
     }
 
@@ -200,9 +201,6 @@ def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, job_spec
         "KEYCLOAK_GLOBAL_CLIENT_SECRET": "YWJjMTIz",
         "KEYCLOAK_ADMIN_PASSWORD": "YWJjMTIz"
     }
-    all_clients["list_namespaced_secret"].return_value = [Mock(data={
-        "auth": encoded_bearer
-    })]
     return all_clients
 
 @pytest.fixture
@@ -220,12 +218,6 @@ def keycloak_realm(mocker):
 @pytest.fixture
 def mock_pod_watch(mocker, k8s_client, encoded_bearer):
     return {
-        "v1": mocker.patch(
-            'helpers.pod_watcher.KubernetesV1',
-            return_value=Mock(
-                get_secret_by_label=Mock(return_value=Mock(data={"auth": encoded_bearer}))
-            )
-        ),
         "watch": mocker.patch(
             'helpers.pod_watcher.Watch',
             return_value=Mock(stream=Mock(return_value=[pod_object_response()]))

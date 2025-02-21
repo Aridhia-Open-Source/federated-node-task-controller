@@ -133,5 +133,3 @@ jobs:
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
       IS_TAG: ${{ needs.update.outputs.is_tag }}
-    secrets:
-      HELM_TOKEN: ${{ secrets.HELM_TOKEN }}

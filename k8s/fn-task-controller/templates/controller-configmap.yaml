@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: controller-config
   namespace: {{ .Values.namespaces.controller }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
 data:
   TASK_NAMESPACE: {{ .Values.namespaces.tasks }}
   NAMESPACE: {{ .Values.namespaces.controller }}

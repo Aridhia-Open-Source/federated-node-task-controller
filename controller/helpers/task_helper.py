@@ -2,10 +2,10 @@
 Collection of functions to assist in performing FN-task-related operations
 """
 import logging
-from const import BACKEND_HOST, GIT_HOME
+from const import BACKEND_HOST, GIT_HOME, PUBLIC_URL
 from excpetions import FederatedNodeException
-from .keycloak_helper import get_user, impersonate_user
-from .request_helper import client as requests
+from helpers.keycloak_helper import get_user, impersonate_user
+from helpers.request_helper import client as requests
 
 
 logger = logging.getLogger('task_helpers')
@@ -35,7 +35,8 @@ def create_task_body(image:str, user:str, project:str, dataset: dict):
         "inputs":{},
         "outputs":{},
         "volumes": {},
-        "description": project
+        "description": project,
+        "task_controller": True
     }
 
 def get_user_token(user:dict) -> str:
@@ -49,7 +50,6 @@ def get_user_token(user:dict) -> str:
     user_id = get_user(**user)["id"]
     return impersonate_user(user_id)
 
-
 def create_task(image:str, name:str, proj_name:str, dataset:dict, user_token:str):
     """
     Wrapper to call the Federated Node /tasks endpoint
@@ -62,7 +62,6 @@ def create_task(image:str, name:str, proj_name:str, dataset:dict, user_token:str
             proj_name,
             dataset
         ),
-        verify=False,
         headers={
             "Authorization": f"Bearer {user_token}",
             "project-name": proj_name
@@ -74,7 +73,7 @@ def create_task(image:str, name:str, proj_name:str, dataset:dict, user_token:str
     return task_resp.json()
 
 
-def get_results(task_id:str, token:str):
+def get_results(task_id:str, token:str) -> str:
     """
     Gets the tar file with the results, raises an exception
     if the request fails
@@ -88,5 +87,7 @@ def get_results(task_id:str, token:str):
     )
     if not res_resp.ok:
         raise FederatedNodeException(res_resp.json())
-    with open(f"{GIT_HOME}/results.tar.gz", "wb") as file:
+    filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results.tar.gz"
+    with open(filepath, "wb") as file:
         file.write(res_resp.content)
+    return filepath

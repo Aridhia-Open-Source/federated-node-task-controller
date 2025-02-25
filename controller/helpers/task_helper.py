@@ -35,7 +35,8 @@ def create_task_body(image:str, user:str, project:str, dataset: dict):
         "inputs":{},
         "outputs":{},
         "volumes": {},
-        "description": project
+        "description": project,
+        "task_controller": True
     }
 
 def get_user_token(user:dict) -> str:

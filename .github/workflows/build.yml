@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 env:
   TAG: ''
@@ -120,7 +121,7 @@ jobs:
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_ACR }}
     secrets:
-      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
     needs:
@@ -132,5 +133,3 @@ jobs:
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
       IS_TAG: ${{ needs.update.outputs.is_tag }}
-    secrets:
-      HELM_TOKEN: ${{ secrets.HELM_TOKEN }}

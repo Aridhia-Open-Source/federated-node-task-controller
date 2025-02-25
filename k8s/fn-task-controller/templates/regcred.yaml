@@ -1,13 +1,15 @@
 ## This assumes the federated node being already deployed
 # Basically duplicates the regcred and kc-secret to the controller's
 # namespace
-{{- range list "regcred" "kc-secrets" }}
+{{- range list "kc-secrets" }}
 {{ $regcred := lookup "v1" "Secret" $.Release.Namespace . | default dict }}
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ . }}
   namespace: {{ $.Values.namespaces.controller }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
 data:
 {{- with $regcred.data  }}
 {{ toYaml . | indent 2 }}

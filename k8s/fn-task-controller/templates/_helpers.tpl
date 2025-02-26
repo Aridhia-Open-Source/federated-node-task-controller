@@ -69,3 +69,12 @@ Create the name of the service account to use
 {{- define "rollMe" -}}
 {{ randAlphaNum 5 | quote }}
 {{- end -}}
+{{- define "controller_ns" -}}
+{{- .Values.global.namespaces.controller | default .Values.namespaces.controller -}}
+{{- end }}
+{{- define "tasks_ns" -}}
+{{- .Values.global.namespaces.tasks | default .Values.namespaces.tasks -}}
+{{- end }}
+{{- define "kc_ns" -}}
+{{- .Values.global.namespaces.keycloak | default .Values.namespaces.keycloak -}}
+{{- end }}

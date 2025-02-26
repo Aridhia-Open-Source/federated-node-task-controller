@@ -1,6 +1,8 @@
 ## This assumes the federated node being already deployed
 # Basically duplicates the regcred and kc-secret to the controller's
-# namespace
+# namespace.
+# This won't run when used as subchart
+{{- if (include "isSubchart" . ) }}
 {{- range list "kc-secrets" }}
 {{ $regcred := lookup "v1" "Secret" $.Release.Namespace . | default dict }}
 apiVersion: v1
@@ -31,4 +33,5 @@ data:
 {{ toYaml . | indent 2 }}
 {{- end }}
 ---
+{{- end }}
 {{- end }}

@@ -53,7 +53,7 @@ def sync_users(crds: dict, annotations:dict, user:dict):
 
     watch_user_pod(crds["object"]["metadata"]["name"], user, labels, annotations)
 
-def trigger_task(user:str, image:str, crd_name:str, proj_name:str, dataset:str, annotations:dict):
+def trigger_task(user:str, image:str, crd_name:str, proj_name:str, dataset:dict, annotations:dict):
     """
     Common function to setup all the info necessary
     to send a FN API request, and the POST /tasks itself

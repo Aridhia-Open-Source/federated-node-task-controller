@@ -69,3 +69,6 @@ Create the name of the service account to use
 {{- define "rollMe" -}}
 {{ randAlphaNum 5 | quote }}
 {{- end -}}
+{{- define "isSubchart" -}}
+{{ not eq .Values.global dict }}
+{{- end -}}

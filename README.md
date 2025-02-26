@@ -57,7 +57,7 @@ secret_name="super-secret"
 url=""
 token=""
 
-kubectl create secret generic -n fn-controller "${secret_name}" --from-literal="auth=${token}$"
+kubectl create secret generic -n fn-controller "${secret_name}" --from-literal="auth=${token}"
 
 kubectl label secret "${secret_name}" -n fn-controller "url=${url}"
 ```

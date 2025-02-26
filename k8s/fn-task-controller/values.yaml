@@ -11,8 +11,6 @@ namespaces:
 controller:
   vol_path:
 
-imagePullSecrets: regcred
-
 storage:
   size: 100Mi
   local:
@@ -30,5 +28,5 @@ idp:
     secret_key:
     clientid_key:
 
-global:
-  host:
+global: {}
+  # host:

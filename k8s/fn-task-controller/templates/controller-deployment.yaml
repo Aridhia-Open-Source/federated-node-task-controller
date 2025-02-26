@@ -28,8 +28,6 @@ spec:
         app: analytics-operator
     spec:
       serviceAccountName: analytics-operator
-      imagePullSecrets:
-        - name: regcred
       volumes:
         - name: git
           persistentVolumeClaim:

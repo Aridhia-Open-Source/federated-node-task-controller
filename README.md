@@ -8,9 +8,6 @@ This python controller aims to monitor a CRD which is defined in [this manifest]
 
 After creating a task successfully, it will periodically check for the status and (TODO) push the results, once the pod completes, ideally outside the environment.
 
-### Assumptions
-GitHub should be set as IdP (Identity Provider) in the FN keycloak, so that the user that triggers the task from GH, can be mapped with the internal permission system, basically acting as a bridge between analytics code and the Data Permission Platform.
-
 ### How does this work?
 Let's imagine that the source code to run some analytics is hosted in github in repo `average_analysis`.
 
@@ -35,9 +32,11 @@ GH_CLIENT_ID=""
 kubectl create secret generic github-app -n fn-controller --from-literal "GH_SECRET=$GH_SECRET" --from-literal "GH_CLIENT_ID=$GH_CLIENT_ID"
 ```
 
-_NOTE: If the controller is deployed standalone_
+_**NOTE**: If the controller is deployed standalone_
 Just make sure the `fn-controller` namespace matches the one in your values file under `namespaces.controller`.
 If none is specified `fn-controller` is the default value.
+
+_**NOTE**: If deployed as one with the federated node, the namespace the secret is created on should be the one used to install the federated node itself. It will be automatically copied to the relevent namespace_
 
 Once the secret has been created set in the values file as follows:
 ```yaml

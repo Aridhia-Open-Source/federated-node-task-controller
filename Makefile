@@ -40,3 +40,6 @@ pylint_ci:
 
 hadolint:
 	./scripts/tests/hadolint.sh
+
+chart:
+	helm package k8s/fn-task-controller -d artifacts/

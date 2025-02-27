@@ -7,6 +7,8 @@ kind: ConfigMap
 metadata:
   name: idp-init-config
   namespace: {{ include "controller_ns" . }}
+  annotations:
+    helm.sh/hook-delete-policy: hook-succeeded
 data:
   config.py: |-
 {{ .Files.Get "scripts/idp-init.py" | indent 4 }}
@@ -18,6 +20,7 @@ metadata:
   namespace: {{ include "controller_ns" . }}
   annotations:
     helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook-weight: "2"
 spec:
   template:
     metadata:

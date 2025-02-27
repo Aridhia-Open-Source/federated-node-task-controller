@@ -5,7 +5,6 @@
 namespaces:
   controller: fn-controller
   keycloak: keycloak
-  nginx: ingress-nginx
   tasks: tasks
 
 controller:

@@ -18,6 +18,11 @@ class KeycloakException(BaseControllerException):
     To be used in the keycloak helper
     """
 
+class PodWatcherException(BaseControllerException):
+    """
+    To be used in the pod watcher helper
+    """
+
 class FederatedNodeException(BaseControllerException):
     """
     To be used in the task helper

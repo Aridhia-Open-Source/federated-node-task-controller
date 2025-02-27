@@ -36,7 +36,7 @@ _**NOTE**: If the controller is deployed standalone_
 Just make sure the `fn-controller` namespace matches the one in your values file under `namespaces.controller`.
 If none is specified `fn-controller` is the default value.
 
-_**NOTE**: If deployed as one with the federated node, the namespace the secret is created on should be the one used to install the federated node itself. It will be automatically copied to the relevent namespace_
+_**NOTE**: If deployed as one with the federated node, the namespace the secret is created on should match the one used to install the federated node itself. It will be automatically copied to the relevent namespace_
 
 Once the secret has been created set in the values file as follows:
 ```yaml

@@ -43,9 +43,3 @@ hadolint:
 
 chart:
 	helm package k8s/fn-task-controller -d artifacts/
-
-push_chart:
-	curl --request POST \
-		--form 'chart=@artifacts/fn-task-controller-${VERSION}.tgz' \
-		--user r-casula:${HELM_TOKEN} \
-		https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/api/develop/charts

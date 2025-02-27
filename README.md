@@ -1,3 +1,4 @@
+[![Build Docker Image](https://github.com/Aridhia-Open-Source/federated-node-task-controller/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Aridhia-Open-Source/federated-node-task-controller/actions/workflows/build.yml)
 # Federated Node Task Controller (FNTC)
 
 For the time being is on a separate repo, it might get merged in the main Federated Node one: [PHEMS_federated_node](https://github.com/Aridhia-Open-Source/PHEMS_federated_node)
@@ -57,10 +58,13 @@ helm install fncontroller . -f dev.values.yaml -n $namespace_name
 ```
 or though the helm repo:
 ```sh
-# Stable version
-helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/stable
-# Dev version
-helm repo add fn-task-controller https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/develop
+helm repo add fn-task-controller https://aridhia-open-source.github.io/federated-node-task-controller
+
+# Check available releases
+helm search repo fn-task-controller --versions
+
+# If you want to check development builds
+helm search repo fn-task-controller --devel --versions
 
 # Install
 helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name

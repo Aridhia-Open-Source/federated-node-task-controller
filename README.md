@@ -6,7 +6,7 @@ For the time being is on a separate repo, it might get merged in the main Federa
 
 This python controller aims to monitor a CRD which is defined in [this manifest](./k8s/crd.yaml) and translate it into an internal request to the federated node to `POST /tasks`.
 
-After creating a task successfully, it will periodically check for the status and (TODO) push the results, once the pod completes, ideally outside the environment.
+After creating a task successfully, it will periodically check for the status and push the results, once the task pod completes, on a github repository.
 
 ### How does this work?
 Let's imagine that the source code to run some analytics is hosted in github in repo `average_analysis`.

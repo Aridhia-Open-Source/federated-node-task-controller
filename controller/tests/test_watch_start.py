@@ -84,7 +84,8 @@ class TestWatcher:
             fn_task_request,
             crd_name,
             k8s_client,
-            k8s_watch_mock
+            k8s_watch_mock,
+            review_env
         ):
         """
         Tests that the task request is sent to the FN
@@ -120,7 +121,8 @@ class TestWatcher:
             crd_name,
             k8s_client,
             k8s_watch_mock,
-            backend_url
+            backend_url,
+            review_env
         ):
         """
         Tests that no annotations are updated
@@ -145,6 +147,7 @@ class TestWatcher:
             k8s_watch_mock,
             crd_name,
             mock_crd_task_done,
+            review_env
         ):
         """
         Tests that once the task's pod is completed,
@@ -164,7 +167,8 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            review_env
         ):
         """
         Tests that once the task's pod is completed,
@@ -190,6 +194,89 @@ class TestWatcher:
                     f"{DOMAIN}/done": "true",
                     f"{DOMAIN}/results": "true",
                     f"{DOMAIN}/approved": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
+        )
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_no_review_required_ignore_annotations(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created without the need
+        of checking for review, or ignoring it
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        # Mock the request response from the FN API
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"{backend_url}/tasks/1/results",
+                status=200
+            )
+            start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/approved": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
+        )
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_no_review_required(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created without the need
+        of checking for review, or ignoring it
+        """
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        # Mock the request response from the FN API
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"{backend_url}/tasks/1/results",
+                status=200
+            )
+            start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/results": "true",
                     f"{DOMAIN}/task_id": "1"
                 }
             }]

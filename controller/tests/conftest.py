@@ -271,3 +271,7 @@ def impersonate_request(keycloak_url, keycloak_realm):
         status=200,
         json={"refresh_token": "refresh_token"}
     )
+
+@pytest.fixture
+def review_env(monkeypatch):
+    monkeypatch.setenv("TASK_REVIEW", "enabled")

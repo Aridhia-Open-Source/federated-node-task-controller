@@ -14,3 +14,6 @@ data:
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
   IMAGE: {{ template "fn-task-controller.image" . }}
   PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}
+{{- if .Values.global.taskReview }}
+  TASK_REVIEW: enabled
+{{- end }}

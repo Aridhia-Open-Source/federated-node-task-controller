@@ -9,6 +9,7 @@ The lifecycle is documented through labels:
     - done: true        -> All done, results pushed successfully
     - tries: <1:5>      -> There is a max of 5 retries with exponential waiting times
 """
+import os
 from copy import deepcopy
 import logging
 import traceback
@@ -25,6 +26,25 @@ from helpers.actions import sync_users, trigger_task, handle_results, create_ret
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
+
+
+def can_get_results(annotations:dict) -> bool:
+    """
+    Overcomplicated flow control, but there are few requirements to
+    fetch results:
+    - done HAS to be there, which means task pod is done
+    - results HAS NOT to be there, meaning results have not been fetched and delivered yet
+
+    TASK_REVIEW and approved annotation should make the whole check fail when:
+        TASK_REVIEW is set and approved is not "true". So we check for this
+        case, and negate it.
+    """
+    return annotations.get(f"{DOMAIN}/done") and \
+        not annotations.get(f"{DOMAIN}/results") and \
+        not (
+            os.getenv("TASK_REVIEW") is not None and \
+            annotations.get(f"{DOMAIN}/approved", "false").lower() != "true"
+        )
 
 
 def start(exit_on_tests=False):
@@ -64,9 +84,7 @@ def start(exit_on_tests=False):
             elif annotations.get(f"{DOMAIN}/user") and not annotations.get(f"{DOMAIN}/done"):
                 logger.info("Triggering task")
                 trigger_task(user, image, crd_name, proj_name, dataset, new_annotations)
-            elif annotations.get(f"{DOMAIN}/done") and \
-                not annotations.get(f"{DOMAIN}/results") and \
-                    annotations.get(f"{DOMAIN}/approved", "false").lower() == "true":
+            elif can_get_results(annotations):
                 logger.info("Getting task results")
                 handle_results(user, crds, crd_name, new_annotations)
             if exit_on_tests:

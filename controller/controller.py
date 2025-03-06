@@ -64,7 +64,9 @@ def start(exit_on_tests=False):
             elif annotations.get(f"{DOMAIN}/user") and not annotations.get(f"{DOMAIN}/done"):
                 logger.info("Triggering task")
                 trigger_task(user, image, crd_name, proj_name, dataset, new_annotations)
-            elif annotations.get(f"{DOMAIN}/done") and not annotations.get(f"{DOMAIN}/results"):
+            elif annotations.get(f"{DOMAIN}/done") and \
+                not annotations.get(f"{DOMAIN}/results") and \
+                    annotations.get(f"{DOMAIN}/approved", "false").lower() == "true":
                 logger.info("Getting task results")
                 handle_results(user, crds, crd_name, new_annotations)
             if exit_on_tests:

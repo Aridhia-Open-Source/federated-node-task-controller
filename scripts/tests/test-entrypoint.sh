@@ -5,6 +5,7 @@ set -e
 echo "Setting env vars"
 export TASK_NAMESPACE=analytics
 export NAMESPACE=fn-controller-test
+export PUBLIC_URL=localhost
 export BACKEND_HOST=http://localhost:5000
 export KC_HOST=http://localhost:8081
 export GIT_HOME=/data/controller

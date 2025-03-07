@@ -3,7 +3,7 @@ entries:
   fn-task-controller:
   - apiVersion: v2
     appVersion: 0.3.2
-    created: "2025-03-07T08:49:27.783585619Z"
+    created: "2025-03-07T09:17:54.116598601Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 2b3e661277c2008d9606d78798c3b2bb496ba1d381b2e38a0d6402743fe152b6
     name: fn-task-controller
@@ -13,7 +13,7 @@ entries:
     version: 0.3.2
   - apiVersion: v2
     appVersion: 0.3.2-5fe9d2
-    created: "2025-03-07T08:49:27.783314586Z"
+    created: "2025-03-07T09:17:54.11632445Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: e8154b2398126ba9d8a458fd49244b0b301eb36e0ce8d45e6b4568c8e8c63948
     name: fn-task-controller
@@ -23,7 +23,7 @@ entries:
     version: 0.3.2-5fe9d2
   - apiVersion: v2
     appVersion: 0.3.2-46b563
-    created: "2025-03-07T08:49:27.783060854Z"
+    created: "2025-03-07T09:17:54.11607226Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 8216c535b4eb3ca2037b3d06010c4efe695986a46e4bea6efeb926948d0959b5
     name: fn-task-controller
@@ -33,7 +33,7 @@ entries:
     version: 0.3.2-46b563
   - apiVersion: v2
     appVersion: 0.3.2-44787f
-    created: "2025-03-07T08:49:27.782798767Z"
+    created: "2025-03-07T09:17:54.115817865Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 9a0a14e93eba52d1a5140b775346dca459a0f8c17bc66a90f1a2df2f4cc5f489
     name: fn-task-controller
@@ -43,7 +43,7 @@ entries:
     version: 0.3.2-44787f
   - apiVersion: v2
     appVersion: 0.3.2-3acfe9
-    created: "2025-03-07T08:49:27.782538212Z"
+    created: "2025-03-07T09:17:54.115540328Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: fe1daddfb6f77439161c013e679264c614a3ba0b6a3a5f825aded0d221fa436c
     name: fn-task-controller
@@ -53,7 +53,7 @@ entries:
     version: 0.3.2-3acfe9
   - apiVersion: v2
     appVersion: 0.3.0
-    created: "2025-03-07T08:49:27.782244696Z"
+    created: "2025-03-07T09:17:54.115251078Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 06586d1d122775dd2c1d27338463e8d70c1d96b74a21dc698ffc85c4a3a3ff0a
     name: fn-task-controller
@@ -63,7 +63,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.3.0-f6638f
-    created: "2025-03-07T08:49:27.781968252Z"
+    created: "2025-03-07T09:17:54.114987978Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 0ff520a69924e40fb63fc10c89a03be51cede24e4867de9167b95bd75d2ca471
     name: fn-task-controller
@@ -73,7 +73,7 @@ entries:
     version: 0.3.0-f6638f
   - apiVersion: v2
     appVersion: 0.3.0-efe6c4
-    created: "2025-03-07T08:49:27.7813874Z"
+    created: "2025-03-07T09:17:54.114704279Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 5c4becd809b7f838776c39eea07312a24bfce6cf163c0298595a355189ad13a8
     name: fn-task-controller
@@ -83,7 +83,7 @@ entries:
     version: 0.3.0-efe6c4
   - apiVersion: v2
     appVersion: 0.3.0-ee618d
-    created: "2025-03-07T08:49:27.780723145Z"
+    created: "2025-03-07T09:17:54.114105867Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 8b46d913a961dc81a0951c2df97521f838eb53de4bcd2c7338a7cc655ad2bcfb
     name: fn-task-controller
@@ -93,7 +93,7 @@ entries:
     version: 0.3.0-ee618d
   - apiVersion: v2
     appVersion: 0.3.0-eb7456
-    created: "2025-03-07T08:49:27.780450148Z"
+    created: "2025-03-07T09:17:54.113375666Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 77dd753dd3c663806c1248f4d31a023ad0629dcf33bce0f88d0b16a8e60c20c3
     name: fn-task-controller
@@ -103,7 +103,7 @@ entries:
     version: 0.3.0-eb7456
   - apiVersion: v2
     appVersion: 0.3.0-e91552
-    created: "2025-03-07T08:49:27.780159167Z"
+    created: "2025-03-07T09:17:54.113119398Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: caf5149aec05aa480101ce83b6f99cf01f612b23d8971f1f1b3298f782771239
     name: fn-task-controller
@@ -113,7 +113,7 @@ entries:
     version: 0.3.0-e91552
   - apiVersion: v2
     appVersion: 0.3.0-debc90
-    created: "2025-03-07T08:49:27.779892531Z"
+    created: "2025-03-07T09:17:54.112855005Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 2ac320ef13563836d45d962a2064223f1b5ac5064adc5cafc86a9f731fea8d37
     name: fn-task-controller
@@ -123,7 +123,7 @@ entries:
     version: 0.3.0-debc90
   - apiVersion: v2
     appVersion: 0.3.0-d9af79
-    created: "2025-03-07T08:49:27.779632778Z"
+    created: "2025-03-07T09:17:54.112595661Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 284fe763233adc2e77d25fa647e669cdb0bbbe1feb10070fea4a86a6e15f7c8c
     name: fn-task-controller
@@ -133,7 +133,7 @@ entries:
     version: 0.3.0-d9af79
   - apiVersion: v2
     appVersion: 0.3.0-ce9bb2
-    created: "2025-03-07T08:49:27.779356374Z"
+    created: "2025-03-07T09:17:54.112320038Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: f2174de8d267827ff49df7a7d3623d7ffb274d78680803faae9644e6d3cfd4db
     name: fn-task-controller
@@ -143,7 +143,7 @@ entries:
     version: 0.3.0-ce9bb2
   - apiVersion: v2
     appVersion: 0.3.0-cae6d9
-    created: "2025-03-07T08:49:27.77909611Z"
+    created: "2025-03-07T09:17:54.11206399Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 1242e17759be2a69090f80ee6988776438a9c9957a8a1e44ac01b6045c30f2e0
     name: fn-task-controller
@@ -153,7 +153,7 @@ entries:
     version: 0.3.0-cae6d9
   - apiVersion: v2
     appVersion: 0.3.0-aea140
-    created: "2025-03-07T08:49:27.778838571Z"
+    created: "2025-03-07T09:17:54.111802373Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: dbb0e8a3adbc028213f14cc62862d48f5b3b3c0df56ada26d8cc1bdbe0cd27b1
     name: fn-task-controller
@@ -163,7 +163,7 @@ entries:
     version: 0.3.0-aea140
   - apiVersion: v2
     appVersion: 0.3.0-acf331
-    created: "2025-03-07T08:49:27.778578888Z"
+    created: "2025-03-07T09:17:54.111542168Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: ed3c35acfab07394d9782dec89520f65cb7d8938053ed662690750f25bec84dd
     name: fn-task-controller
@@ -173,7 +173,7 @@ entries:
     version: 0.3.0-acf331
   - apiVersion: v2
     appVersion: 0.3.0-aa16a0
-    created: "2025-03-07T08:49:27.778290993Z"
+    created: "2025-03-07T09:17:54.111263237Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 6695fe00eb470b07c65a5074c920c283179f275f14374e8d3c78e9d9448fe7d8
     name: fn-task-controller
@@ -183,7 +183,7 @@ entries:
     version: 0.3.0-aa16a0
   - apiVersion: v2
     appVersion: 0.3.0-92495a
-    created: "2025-03-07T08:49:27.777990544Z"
+    created: "2025-03-07T09:17:54.111003694Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 2ec74a1cf8c4f7e6d331917e5a63c322847b9fbff1b859bd1e09e82296bd7348
     name: fn-task-controller
@@ -193,7 +193,7 @@ entries:
     version: 0.3.0-92495a
   - apiVersion: v2
     appVersion: 0.3.0-7c20ad
-    created: "2025-03-07T08:49:27.77773025Z"
+    created: "2025-03-07T09:17:54.110743749Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 88e1903fbc00f7e117dbe3461c292d3af9c37fb51d324bb9714d875914a516f4
     name: fn-task-controller
@@ -203,7 +203,7 @@ entries:
     version: 0.3.0-7c20ad
   - apiVersion: v2
     appVersion: 0.3.0-6b6f1a
-    created: "2025-03-07T08:49:27.77717088Z"
+    created: "2025-03-07T09:17:54.110193904Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 7e2fd169b48e925e94266611f97ed05db207156c7caee6c504937617b6b424e9
     name: fn-task-controller
@@ -213,7 +213,7 @@ entries:
     version: 0.3.0-6b6f1a
   - apiVersion: v2
     appVersion: 0.3.0-6b4bd1
-    created: "2025-03-07T08:49:27.776909253Z"
+    created: "2025-03-07T09:17:54.10985897Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: d40758716753b74a147b56276bf66708d11c50ac2bd4186475b8bb93260f25d4
     name: fn-task-controller
@@ -223,7 +223,7 @@ entries:
     version: 0.3.0-6b4bd1
   - apiVersion: v2
     appVersion: 0.3.0-6390b5
-    created: "2025-03-07T08:49:27.776637688Z"
+    created: "2025-03-07T09:17:54.109491605Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 350c60f44790763e43fbf22e994365d24ad4d5df8dd1ac1fef26092bd865ffd2
     name: fn-task-controller
@@ -233,7 +233,7 @@ entries:
     version: 0.3.0-6390b5
   - apiVersion: v2
     appVersion: 0.3.0-588bfb
-    created: "2025-03-07T08:49:27.776328704Z"
+    created: "2025-03-07T09:17:54.109114412Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 26619faea39b2638ff76f6c706517404c011a3cc27720cdff14db146c19af3c1
     name: fn-task-controller
@@ -243,7 +243,7 @@ entries:
     version: 0.3.0-588bfb
   - apiVersion: v2
     appVersion: 0.3.0-5479cb
-    created: "2025-03-07T08:49:27.776026602Z"
+    created: "2025-03-07T09:17:54.108681094Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: f8d6cd28d49f2d7f35d5ea399d1bb712e7a7ddf7d43828a9fef6989580fb7dd1
     name: fn-task-controller
@@ -253,7 +253,7 @@ entries:
     version: 0.3.0-5479cb
   - apiVersion: v2
     appVersion: 0.3.0-50f14b
-    created: "2025-03-07T08:49:27.774585725Z"
+    created: "2025-03-07T09:17:54.102034679Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: a5c0d4d328aed451fdc3afdad22c5c22bd02b98c99cb8b251d6763337b41f7e3
     name: fn-task-controller
@@ -263,7 +263,7 @@ entries:
     version: 0.3.0-50f14b
   - apiVersion: v2
     appVersion: 0.3.0-4f45d4
-    created: "2025-03-07T08:49:27.774304772Z"
+    created: "2025-03-07T09:17:54.101747674Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 318013f4cda2c8a360027e8595536278896d0413e76c6489501bef5e5dc2b4d4
     name: fn-task-controller
@@ -272,8 +272,18 @@ entries:
     - fn-task-controller-0.3.0-4f45d4.tgz
     version: 0.3.0-4f45d4
   - apiVersion: v2
+    appVersion: 0.3.0-4ef5cd
+    created: "2025-03-07T09:17:54.101406368Z"
+    description: Helm chart for the Federated Node-GitHub task controller.
+    digest: 310e49cd69ebdb573f2fe44013a89e6ccd916648a15b30ea1c4b53250e47a933
+    name: fn-task-controller
+    type: application
+    urls:
+    - fn-task-controller-0.3.0-4ef5cd.tgz
+    version: 0.3.0-4ef5cd
+  - apiVersion: v2
     appVersion: 0.3.0-4ed554
-    created: "2025-03-07T08:49:27.774046632Z"
+    created: "2025-03-07T09:17:54.101047939Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 9a27861efaee27f51a61638b1deba65987560837eccf0a297838debd1d8856f2
     name: fn-task-controller
@@ -283,7 +293,7 @@ entries:
     version: 0.3.0-4ed554
   - apiVersion: v2
     appVersion: 0.3.0-48596c
-    created: "2025-03-07T08:49:27.773762634Z"
+    created: "2025-03-07T09:17:54.100780711Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: d7c4bd9abfe8b99962ffb281bd1cad687e25f0df838fee5a66947848cb06066f
     name: fn-task-controller
@@ -293,7 +303,7 @@ entries:
     version: 0.3.0-48596c
   - apiVersion: v2
     appVersion: 0.3.0-30aa47
-    created: "2025-03-07T08:49:27.773481071Z"
+    created: "2025-03-07T09:17:54.100505318Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 686224ba57dfd3eed456fd35614f405cf06132cb5d47722e7af48c9ebfa32982
     name: fn-task-controller
@@ -303,7 +313,7 @@ entries:
     version: 0.3.0-30aa47
   - apiVersion: v2
     appVersion: 0.3.0-1f5bed
-    created: "2025-03-07T08:49:27.773194157Z"
+    created: "2025-03-07T09:17:54.100211901Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 91adf7cb1670668845e02f81ca007c80537bcf68cc9fba026e155739a1782a3b
     name: fn-task-controller
@@ -313,7 +323,7 @@ entries:
     version: 0.3.0-1f5bed
   - apiVersion: v2
     appVersion: 0.3.0-0da3c7
-    created: "2025-03-07T08:49:27.77292121Z"
+    created: "2025-03-07T09:17:54.099920187Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 595d5d95455af70f60f7588e27c1d4c1adf0d54af719efc31059461004ed61e3
     name: fn-task-controller
@@ -323,7 +333,7 @@ entries:
     version: 0.3.0-0da3c7
   - apiVersion: v2
     appVersion: 0.3.0-0b30ef
-    created: "2025-03-07T08:49:27.772636009Z"
+    created: "2025-03-07T09:17:54.099623775Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: df409ecd22a648eaed035c3f97344b82a46960751ee449837b5011e77c4ba442
     name: fn-task-controller
@@ -333,7 +343,7 @@ entries:
     version: 0.3.0-0b30ef
   - apiVersion: v2
     appVersion: 0.3.0-799860
-    created: "2025-03-07T08:49:27.777457413Z"
+    created: "2025-03-07T09:17:54.110476361Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 6d1c8c2d6e54376f6e28f97389348614a30defa6d5bbe0f96d43bc8d9a7caf00
     name: fn-task-controller
@@ -343,7 +353,7 @@ entries:
     version: 0.3.0-799860
   - apiVersion: v2
     appVersion: 0.3.0-532801
-    created: "2025-03-07T08:49:27.775286177Z"
+    created: "2025-03-07T09:17:54.102310393Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: ba175921c66d49e0e6dd24458727590514ed01ce896772a8cf146053a1854a3a
     name: fn-task-controller
@@ -353,7 +363,7 @@ entries:
     version: 0.3.0-532801
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-03-07T08:49:27.772335751Z"
+    created: "2025-03-07T09:17:54.099327001Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 531ac63b062c4e8700950123449bddbd8075001759492f1d536ed2d0c4c4d5c9
     name: fn-task-controller
@@ -363,7 +373,7 @@ entries:
     version: 0.2.1
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2025-03-07T08:49:27.77203921Z"
+    created: "2025-03-07T09:17:54.099038413Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 5912476cf14e56ce8ee61018cb15fa462f6b264d34f194986c912a361d5082a7
     name: fn-task-controller
@@ -373,7 +383,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.2.0-c186b8
-    created: "2025-03-07T08:49:27.771769959Z"
+    created: "2025-03-07T09:17:54.09874702Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: d5167c015eb099bde8335c3afab212901b97ad20c17c85ade0a161adf3f2d86a
     name: fn-task-controller
@@ -383,7 +393,7 @@ entries:
     version: 0.2.0-c186b8
   - apiVersion: v2
     appVersion: 0.2.0-a625a7
-    created: "2025-03-07T08:49:27.771479299Z"
+    created: "2025-03-07T09:17:54.098397098Z"
     description: Helm chart for the Federated Node-GitHub task controller.
     digest: 4cfc172c40d8a0300342f387592cbfba881bc9444114c7c79748805750988359
     name: fn-task-controller
@@ -391,4 +401,4 @@ entries:
     urls:
     - fn-task-controller-0.2.0-a625a7.tgz
     version: 0.2.0-a625a7
-generated: "2025-03-07T08:49:27.771032979Z"
+generated: "2025-03-07T09:17:54.097955214Z"

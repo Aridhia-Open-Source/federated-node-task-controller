@@ -20,9 +20,6 @@ on:
 permissions:
   contents: write
 
-env:
-  GH_TOKEN: ${{ github.token }}
-
 jobs:
   bump:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/version-bump.yml@main

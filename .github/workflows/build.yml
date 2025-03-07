@@ -121,7 +121,7 @@ jobs:
       IMAGE: fn_task_controller
       BUILD_PATH: .
       HASH_SUFFIX: false
-      DOCKER_ACR: ${{ vars.DOCKER_ACR }}
+      DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   helm:

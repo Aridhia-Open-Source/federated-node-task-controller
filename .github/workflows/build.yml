@@ -3,6 +3,8 @@ run-name: Building image
 on:
   workflow_dispatch:
   push:
+    tags:
+      - '**'
     branches:
       - main
       - develop

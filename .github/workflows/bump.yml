@@ -28,3 +28,5 @@ jobs:
       appVersion: ${{ inputs.appVersion }}
       dryRun: ${{ inputs.dryRun }}
       chartDir: k8s/fn-task-controller
+    secrets:
+      BUMP_APP_SECRET: ${{ secrets.BUMP_APP_SECRET }}

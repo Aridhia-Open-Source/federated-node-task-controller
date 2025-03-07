@@ -33,4 +33,5 @@ jobs:
           git push --set-upstream origin version-${{ inputs.new_version }}
           gh pr create \
             --title "Version bump to ${{ inputs.new_version }}" \
-            --body "Automated version bump to ${{ inputs.new_version }}"
+            --body "Automated version bump to ${{ inputs.new_version }}" \
+            --base ${{ github.ref }}

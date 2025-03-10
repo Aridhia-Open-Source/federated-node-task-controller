@@ -1,10 +1,16 @@
 import os
 import requests
+import sys
 
 KEYCLOAK_URL = os.getenv('KC_HOST')
 KEYCLOAK_PASS = os.getenv('KEYCLOAK_ADMIN_PASSWORD')
 GITHUB_SECRET = os.getenv('GITHUB_SECRET')
 GITHUB_CLIENTID = os.getenv('GITHUB_CLIENTID')
+REPOSITORY = os.getenv('REPOSITORY')
+
+if not REPOSITORY:
+    print("REPOSITORY name missing. Skipping IdP setup")
+    sys.exit(0)
 
 # Login as admin
 admin_response = requests.post(
@@ -28,6 +34,8 @@ if not admin_response.ok:
 print("Logged in!")
 admin_token = admin_response.json()["access_token"]
 
+idp_alias = REPOSITORY.replace("/", "-")
+
 # Create IdP entry
 idp_create_response = requests.post(
     f"{KEYCLOAK_URL}/admin/realms/FederatedNode/identity-provider/instances",
@@ -39,8 +47,8 @@ idp_create_response = requests.post(
             "baseUrl":"",
             "apiUrl":""
         },
-        "providerId":"github",
-        "alias":"github",
+        "providerId": "github",
+        "alias": idp_alias,
 		"enabled": True,
 		"updateProfileFirstLoginMode": "on",
 		"trustEmail": False,

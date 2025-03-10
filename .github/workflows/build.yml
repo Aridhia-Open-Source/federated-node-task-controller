@@ -3,6 +3,8 @@ run-name: Building image
 on:
   workflow_dispatch:
   push:
+    tags:
+      - '**'
     branches:
       - main
       - develop
@@ -107,7 +109,7 @@ jobs:
             echo "CHART_VERSION=${version}" >> ${GITHUB_OUTPUT}
             echo "TAG=${appVersion}" >> ${GITHUB_OUTPUT}
           else
-            DEV_SUFFIX="-${GITHUB_SHA::6}"
+            DEV_SUFFIX="-v${GITHUB_SHA::6}"
             echo "CHART_VERSION=${version}${DEV_SUFFIX}" >> ${GITHUB_OUTPUT}
             TAG="${appVersion}${DEV_SUFFIX}"
             echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
@@ -121,7 +123,7 @@ jobs:
       IMAGE: fn_task_controller
       BUILD_PATH: .
       HASH_SUFFIX: false
-      DOCKER_ACR: ${{ vars.DOCKER_ACR }}
+      DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   helm:

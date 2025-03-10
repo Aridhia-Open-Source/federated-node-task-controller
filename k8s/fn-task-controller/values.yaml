@@ -7,9 +7,6 @@ namespaces:
   keycloak: keycloak
   tasks: tasks
 
-controller:
-  vol_path:
-
 storage:
   size: 100Mi
   local:
@@ -29,3 +26,4 @@ idp:
 
 global: {}
   # host:
+  # orgAndRepo:

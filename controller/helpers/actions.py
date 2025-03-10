@@ -42,7 +42,6 @@ def sync_users(crds: dict, annotations:dict, user:dict):
         script="init_container.sh",
         create_volumes=False,
         labels=labels,
-        organization=crds["object"]["spec"].get("organization"),
         repository=crds["object"]["spec"].get("repository")
     )
 

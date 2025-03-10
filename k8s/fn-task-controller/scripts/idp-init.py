@@ -48,7 +48,7 @@ idp_create_response = requests.post(
             "apiUrl":""
         },
         "providerId": "github",
-        "alias": "github",
+        "alias": idp_alias,
 		"enabled": True,
 		"updateProfileFirstLoginMode": "on",
 		"trustEmail": False,

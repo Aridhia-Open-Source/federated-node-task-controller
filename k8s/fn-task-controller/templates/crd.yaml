@@ -37,8 +37,6 @@ spec:
                       type: string
                 branch:
                   type: string
-                organization:
-                  type: string
                 repository:
                   type: string
   scope: Cluster

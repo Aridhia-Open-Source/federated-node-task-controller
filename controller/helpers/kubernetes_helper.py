@@ -188,6 +188,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
     def create_helper_job(
             self,
             name:str, task_id:str=None,
+            organization:str="Aridhia-Open-Source",
             repository="Federated-Node-Example-App",
             create_volumes:bool=True,
             script:str="push_to_github.sh", labels:dict={},
@@ -201,6 +202,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         volclaim_name = KubernetesV1().setup_pvc(name)
         secret_name=self.repo_secret_name(repository)
         labels.update(self.base_label)
+        full_repo = f"{organization}-{repository}"
 
         volumes = [
             client.V1Volume(
@@ -223,6 +225,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),
+            client.V1EnvVar(name="FULL_REPO", value=full_repo),
             client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
             client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(

@@ -7,11 +7,6 @@ namespaces:
   keycloak: keycloak
   tasks: tasks
 
-controller:
-  vol_path:
-
-imagePullSecrets: regcred
-
 storage:
   size: 100Mi
   local:
@@ -28,3 +23,4 @@ idp:
     secret_name:
     secret_key:
     clientid_key:
+    orgAndRepo:

@@ -45,6 +45,7 @@ idp:
     secret_name: github-app
     secret_key: GH_SECRET
     clientid_key: GH_CLIENT_ID
+    orgAndRepo: organization/repository
 ```
 Of course, use the secret name and key names used in the bash command above.
 

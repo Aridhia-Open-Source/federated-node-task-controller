@@ -32,11 +32,7 @@ GH_CLIENT_ID=""
 kubectl create secret generic github-app -n $NAMESPACE --from-literal "GH_SECRET=$GH_SECRET" --from-literal "GH_CLIENT_ID=$GH_CLIENT_ID"
 ```
 
-_**NOTE**: If the controller is deployed standalone_
-Just make sure the `NAMESPACE` variable matches the namespace name in the values file under `namespaces.controller`.
-If none is specified `fn-controller` is the default value.
-
-_**NOTE**: If deployed as one with the federated node, the namespace the secret is created on should match the one used to install the federated node itself. It will be automatically copied to the relevent namespace_
+The namespace the secret is created on should match the one used to install the federated node itself. It will be automatically copied to the relevent namespace.
 
 Once the secret has been created set in the values file as follows:
 ```yaml

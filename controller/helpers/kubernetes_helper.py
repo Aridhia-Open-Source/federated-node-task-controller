@@ -227,7 +227,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             )
         ]
         env = [
-            client.V1EnvVar(name="KC_HOST", value="keycloak.keycloak.svc"),
+            client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),

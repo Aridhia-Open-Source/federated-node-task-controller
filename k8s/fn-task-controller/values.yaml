@@ -37,6 +37,7 @@ idp:
     secret_key:
     clientid_key:
 
-global: {}
+global:
+  taskReview: true
   # host:
   # orgAndRepo:

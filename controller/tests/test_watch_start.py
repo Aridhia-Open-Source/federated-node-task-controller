@@ -1,3 +1,4 @@
+import pytest
 import responses
 from kubernetes.client.exceptions import ApiException
 from responses import matchers
@@ -6,6 +7,7 @@ from unittest.mock import mock_open
 
 from controller import start
 from const import DOMAIN
+from excpetions import KubernetesException
 
 
 class TestWatcher:
@@ -55,6 +57,24 @@ class TestWatcher:
         start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    def test_sync_user_job_fails_run(
+        self,
+        k8s_client,
+        k8s_watch_mock,
+        mock_job_watch
+    ):
+        """
+        Tests the first step of the CRD lifecycle.
+        If, for whichever reason, the job fails during execute,
+        no annotation is added to the CRD,
+        keeping it to the same status
+        """
+        mock_job_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status="Failed")}]
+
+        start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+
     def test_post_task_successful(
             self,
             mock_crd_user_synched,
@@ -64,7 +84,8 @@ class TestWatcher:
             fn_task_request,
             crd_name,
             k8s_client,
-            k8s_watch_mock
+            k8s_watch_mock,
+            review_env
         ):
         """
         Tests that the task request is sent to the FN
@@ -100,7 +121,8 @@ class TestWatcher:
             crd_name,
             k8s_client,
             k8s_watch_mock,
-            backend_url
+            backend_url,
+            review_env
         ):
         """
         Tests that no annotations are updated
@@ -119,9 +141,24 @@ class TestWatcher:
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    def test_get_results_not_reviewed(
+            self,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            review_env
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created
+        """
+        k8s_watch_mock.assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results(
+    def test_get_results_approved(
             self,
             token_mock,
             open_mock,
@@ -130,11 +167,98 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            review_env
         ):
         """
         Tests that once the task's pod is completed,
         a new github job pusher is created
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        # Mock the request response from the FN API
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"{backend_url}/tasks/1/results",
+                status=200
+            )
+            start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/approved": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
+        )
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_no_review_required_ignore_annotations(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created without the need
+        of checking for review, or ignoring it
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        # Mock the request response from the FN API
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"{backend_url}/tasks/1/results",
+                status=200
+            )
+            start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/approved": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
+        )
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_no_review_required(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created without the need
+        of checking for review, or ignoring it
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
@@ -157,6 +281,48 @@ class TestWatcher:
                 }
             }]
         )
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_task_fails(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created
+        """
+        mock_pod_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status=mock.Mock(phase="Failed"))}]
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+
+    def test_get_results_blocked(
+            self,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            backend_url
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "false"
+        k8s_watch_mock.assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     def test_ignore_done_crd(
             self,
@@ -249,6 +415,8 @@ class TestWatcherAzCopyDelivery:
         Tests that once the task's pod is completed,
         the results are sent through AzCopy to a storage account
         """
+        mock_crd_azcopy_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_azcopy_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
@@ -266,6 +434,7 @@ class TestWatcherAzCopyDelivery:
                     f"{DOMAIN}/user": "ok",
                     f"{DOMAIN}/done": "true",
                     f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/approved": "true",
                     f"{DOMAIN}/task_id": "1"
                 }
             }]
@@ -301,6 +470,8 @@ class TestWatcherAzCopyDelivery:
         the results fail to be sent through AzCopy to a storage account
         and the retry job is triggered
         """
+        mock_crd_azcopy_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_azcopy_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
@@ -344,6 +515,8 @@ class TestWatcherApiDelivery:
         Tests that once the task's pod is completed,
         the results are delivered to an API
         """
+        mock_crd_api_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
@@ -369,6 +542,7 @@ class TestWatcherApiDelivery:
                     f"{DOMAIN}/user": "ok",
                     f"{DOMAIN}/done": "true",
                     f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/approved": "true",
                     f"{DOMAIN}/task_id": "1"
                 }
             }]
@@ -394,6 +568,8 @@ class TestWatcherApiDelivery:
         behave the same as the bearer auth, but it's to ensure
         we interpret basic auth correctly
         """
+        mock_crd_api_basic_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
         k8s_client["list_namespaced_secret"].return_value.items[0].data["auth"] = encoded_basic
         crd_auth = mock_crd_api_basic_done["object"]["spec"]["results"]["other"]
 
@@ -420,6 +596,7 @@ class TestWatcherApiDelivery:
                     f"{DOMAIN}/user": "ok",
                     f"{DOMAIN}/done": "true",
                     f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/approved": "true",
                     f"{DOMAIN}/task_id": "1"
                 }
             }]
@@ -443,6 +620,8 @@ class TestWatcherApiDelivery:
         Tests that once the task's pod is completed,
         the results fail to be sent, and will trigger the retry job
         """
+        mock_crd_api_done['object']['metadata']['annotations']\
+                [f"{DOMAIN}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:

@@ -17,7 +17,7 @@ from kubernetes.client.exceptions import ApiException
 from excpetions import KubernetesException
 from const import (
     DOMAIN, NAMESPACE, IMAGE, MOUNT_PATH,
-    PULL_POLICY, TAG, KC_USER, KC_HOST
+    PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
 )
 
 logger = logging.getLogger('k8s_helpers')
@@ -258,7 +258,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             )
         ]
         env = [
-            client.V1EnvVar(name="KC_HOST", value="keycloak.keycloak.svc"),
+            client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),

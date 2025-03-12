@@ -1,6 +1,8 @@
 # Default values for fn-task-controller.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+controller:
+  tag:
 
 namespaces:
   controller: fn-controller
@@ -8,10 +10,21 @@ namespaces:
   tasks: tasks
 
 storage:
-  size: 100Mi
-  local:
-  azure:
-  nfs:
+  size: 1Gi
+  azure: {}
+    # secretName:
+    # storageAccountName:
+    # storageAccountKey:
+    # shareName:
+  nfs: {}
+    # provisioner:
+    # url:
+    # path:
+  local: {}
+    # Local storage that will be shared with the backend
+    # path:
+    # Local storage that will be shared with the db
+    # dbpath: /data/db
 
 resources:
   limits:

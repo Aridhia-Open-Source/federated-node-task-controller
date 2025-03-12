@@ -32,7 +32,7 @@ spec:
             - -c
             - mkdir -p /mnt/storage/controller
           volumeMounts:
-            - name: respv
+            - name: git
               mountPath: /mnt/storage
       containers:
       - name: analytics-operator

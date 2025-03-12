@@ -9,7 +9,12 @@ data:
   BACKEND_HOST: http://backend.{{ .Release.Namespace }}.svc.cluster.local:5000
   KC_HOST: http://keycloak.{{ include "kc_ns" . }}.svc.cluster.local
   GIT_HOME: {{ template "fn-task-controller.gitpath" . }}
-  MOUNT_PATH: {{ .Values.storage.local.path }}
+  MOUNT_PATH: {{ (.Values.storage.local).path }}
   PULL-POLICY: IfNotPresent
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
   IMAGE: {{ template "fn-task-controller.image" . }}
+{{- if .Values.storage.azure }}
+  AZURE_STORAGE_ENABLED: "true"
+  AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/controller
+  AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+{{- end }}

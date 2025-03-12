@@ -75,20 +75,29 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         Create a pvc and returns the name
         """
         pv_name = f"{name}-pv"
-        pers_vol = client.V1PersistentVolume(
-            api_version='v1',
-            kind='PersistentVolume',
-            metadata=client.V1ObjectMeta(
-                name=pv_name, namespace=NAMESPACE,
-                labels=self.base_label
-            ),
-            spec=client.V1PersistentVolumeSpec(
-                access_modes=['ReadWriteMany'],
-                capacity={"storage": "100Mi"},
+        pv_spec = client.V1PersistentVolumeSpec(
+            access_modes=['ReadWriteMany'],
+            capacity={"storage": "100Mi"},
+            storage_class_name="controller-results"
+        )
+        if os.getenv("AZURE_STORAGE_ENABLED"):
+            pv_spec.azure_file = client.V1AzureFilePersistentVolumeSource(
+                read_only=False,
+                secret_name=os.getenv("AZURE_SECRET_NAME"),
+                share_name=os.getenv("AZURE_SHARE_NAME")
+            )
+        else:
+            pv_spec.host_path = client.V1PersistentVolumeSpec(
                 storage_class_name="controller-results",
                 host_path=client.V1HostPathVolumeSource(path=MOUNT_PATH),
                 persistent_volume_reclaim_policy="Delete"
             )
+
+        pers_vol = client.V1PersistentVolume(
+            api_version='v1',
+            kind='PersistentVolume',
+            metadata=client.V1ObjectMeta(name=name, namespace=TASK_NAMESPACE),
+            spec=pv_spec
         )
 
         volclaim_name = f"{name}-volclaim"

@@ -1,5 +1,9 @@
 # Releases Changelog
 
+## 0.4.1
+- Fixed few inconsistencies with values fields.
+- Fixed an issue whith azure storage, if the fileshare doesn't have the required folder, it will fail
+
 ## 0.4.0
 - Support for multiple IdP from GitHub (use the `idp.github.orgAndRepo` to set the repository source in the format organizaiton/repository)
 

@@ -78,3 +78,6 @@ Create the name of the service account to use
 {{- define "rollMe" -}}
 {{ randAlphaNum 5 | quote }}
 {{- end -}}
+{{- define "fn-alpine" -}}
+ghcr.io/aridhia-open-source/alpine:3.19
+{{- end }}

@@ -24,6 +24,16 @@ spec:
         - name: git
           persistentVolumeClaim:
             claimName: controller-pv-volclaim
+      initContainers:
+        - name: storage-init
+          image: {{ include "fn-alpine" . }}
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - mkdir -p /mnt/storage/controller
+          volumeMounts:
+            - name: respv
+              mountPath: /mnt/storage
       containers:
       - name: analytics-operator
         image: {{ template "fn-task-controller.image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}
@@ -49,3 +59,4 @@ spec:
         volumeMounts:
           - name: git
             mountPath: {{ template "fn-task-controller.gitpath" . }}
+            subPath: controller

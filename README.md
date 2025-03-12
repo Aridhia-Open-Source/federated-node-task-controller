@@ -4,21 +4,18 @@
 For the time being is on a separate repo, it might get merged in the main Federated Node one: [PHEMS_federated_node](https://github.com/Aridhia-Open-Source/PHEMS_federated_node)
 
 
-This python controller aims to monitor a CRD which is defined in [this manifest](./k8s/crd.yaml) and translate it into an internal request to the federated node to `POST /tasks`.
+This python controller aims to monitor a CRD which is defined in [this manifest](./k8s/fn-task-controller/templates/crd.yaml) and translate it into an internal request to the federated node to `POST /tasks`.
 
-After creating a task successfully, it will periodically check for the status and (TODO) push the results, once the pod completes, ideally outside the environment.
-
-### Assumptions
-GitHub should be set as IdP (Identity Provider) in the FN keycloak, so that the user that triggers the task from GH, can be mapped with the internal permission system, basically acting as a bridge between analytics code and the Data Permission Platform.
+After creating a task successfully, it will periodically check for the status and push the results, once the task pod completes, on a github repository.
 
 ### How does this work?
 Let's imagine that the source code to run some analytics is hosted in github in repo `average_analysis`.
 
-In this repo there will be a folder where the CRD defined [here](./k8s/crd.yaml) is hosted as template.
+In this repo there will be a folder where the CRD defined [here](./k8s/fn-task-controller/templates/crd.yaml) is hosted as template.
 
 ArgoCD will start monitoring this repo on a dedicated branch, set to read-only for all users, except the Admins.
 
-There will also be a pipeline (i.e [example](./pipeline-template.yml)) that refers to another actions template (provided by us), which takes care of (upon merge to a user-defined branch) merging the CRD changes to a third branch (i.e. `monitor`) which ArgoCD is monitoring for changes. It also injects the username on the PR author dynamically.
+There will also be a pipeline (i.e [example](https://github.com/Aridhia-Open-Source/Federated-Node-Example-App/blob/pipe-test/.github/workflows/triggertask.yml)) that refers to another actions template (provided by us), which takes care of (upon merge to a user-defined branch) merging the CRD changes to a third branch (i.e. `monitor`) which ArgoCD is monitoring for changes. It also injects the username on the PR author dynamically.
 
 The researcher would then open a PR that aims to modify the CRD template, or add a new one. Once merged we expect ArgoCD to detect the change, and create the CRD entity.
 
@@ -32,12 +29,14 @@ Luckily there is an automation in place to take care of this. The only pre-requi
 ```sh
 GH_SECRET=""
 GH_CLIENT_ID=""
-kubectl create secret generic github-app -n fn-controller --from-literal "GH_SECRET=$GH_SECRET" --from-literal "GH_CLIENT_ID=$GH_CLIENT_ID"
+kubectl create secret generic github-app -n $NAMESPACE --from-literal "GH_SECRET=$GH_SECRET" --from-literal "GH_CLIENT_ID=$GH_CLIENT_ID"
 ```
 
-_NOTE: If the controller is deployed standalone_
-Just make sure the `fn-controller` namespace matches the one in your values file under `namespaces.controller`.
+_**NOTE**: If the controller is deployed standalone_
+Just make sure the `NAMESPACE` variable matches the namespace name in the values file under `namespaces.controller`.
 If none is specified `fn-controller` is the default value.
+
+_**NOTE**: If deployed as one with the federated node, the namespace the secret is created on should match the one used to install the federated node itself. It will be automatically copied to the relevent namespace_
 
 Once the secret has been created set in the values file as follows:
 ```yaml
@@ -46,6 +45,7 @@ idp:
     secret_name: github-app
     secret_key: GH_SECRET
     clientid_key: GH_CLIENT_ID
+    orgAndRepo: organization/repository
 ```
 Of course, use the secret name and key names used in the bash command above.
 
@@ -67,6 +67,8 @@ kubectl label secret "${secret_name}" -n fn-controller "url=${url}"
 
 Then deploy as follows:
 
+### STANDALONE
+
 __note__ set the `namespace_name` environment variable to match the namespace name where the Federated Node has been deployed on. That's needed to automatically look for secrets/configmaps
 ```bash
 cd k8s/fn-task-controller
@@ -85,6 +87,9 @@ helm search repo fn-task-controller --devel --versions
 # Install
 helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
 ```
+
+### AS SUBCHART
+When deployed with the Federated Node, only the secret has to be setup.
 
 ## Usage
 There are 2 things to setup:

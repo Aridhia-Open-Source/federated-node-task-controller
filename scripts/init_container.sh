@@ -34,7 +34,7 @@ do
 
     if [ -n "${KC_USER_ID}" ]; then
         # shellcheck disable=SC2086
-        curl ${CURL_PARAMS} "${KC_HOST}/admin/realms/FederatedNode/users/${KC_USER_ID}/federated-identity/github" \
+        curl ${CURL_PARAMS} "${KC_HOST}/admin/realms/FederatedNode/users/${KC_USER_ID}/federated-identity/$FULL_REPO" \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${ADMIN_TOKEN}" \
             --data "{

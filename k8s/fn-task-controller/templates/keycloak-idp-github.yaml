@@ -13,6 +13,7 @@ data:
   config.py: |-
 {{ .Files.Get "scripts/idp-init.py" | indent 4 }}
 ---
+{{- if (.Values.idp).github }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -35,6 +36,8 @@ spec:
             - configMapRef:
                 name: controller-config
           env:
+            - name: REPOSITORY
+              value: {{ .Values.idp.github.orgAndRepo }}
             - name: KEYCLOAK_NAMESPACE
               value: {{ include "kc_ns" . }}
             - name: KEYCLOAK_ADMIN_PASSWORD
@@ -67,3 +70,4 @@ spec:
           items:
           - key: config.py
             path: config.py
+{{- end }}

@@ -3,34 +3,30 @@ run-name: Chart Bump
 on:
   workflow_dispatch:
     inputs:
-      new_version:
-        description: New Chart version for the Helm Chart
+      chartVersion:
+        description: 'New Helm Chart version'
         required: true
+        type: string
+      appVersion:
+        description: 'New tag the docker images are going to use'
+        required: false
+        type: string
+      dryRun:
+        description: 'Dry run, no changes committed. Shows the new Chart.yaml contents'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
-  pull-requests: write
-
-env:
-  GH_TOKEN: ${{ github.token }}
 
 jobs:
   bump:
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-      - name: Bump Chart.yaml
-        run: |
-          git checkout -b version-${{ inputs.new_version }}
-          sed -i "s/version: .*/version: ${{ inputs.new_version }}/" k8s/fn-task-controller/Chart.yaml
-          git config --global user.name 'BotMan'
-          git config --global user.email 'r-casula@users.noreply.github.com'
-          git commit -am "Version bumped to ${{ inputs.new_version }}"
-          git push --set-upstream origin version-${{ inputs.new_version }}
-          gh pr create \
-            --title "Version bump to ${{ inputs.new_version }}" \
-            --body "Automated version bump to ${{ inputs.new_version }}"
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/version-bump.yml@main
+    with:
+      chartVersion: ${{ inputs.chartVersion }}
+      appVersion: ${{ inputs.appVersion }}
+      dryRun: ${{ inputs.dryRun }}
+      chartDir: k8s/fn-task-controller
+    secrets:
+      BUMP_APP_SECRET: ${{ secrets.BUMP_APP_SECRET }}

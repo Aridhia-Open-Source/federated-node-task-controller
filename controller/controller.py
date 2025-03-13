@@ -1,6 +1,13 @@
 """
 Kubernetes controller to handle the Custom Resource Definition Analytics
 The goal is simple, all new CRDs should trigger a new task on the FN.
+
+The lifecycle is documented through labels:
+    - user: ok          -> the external identity on github is confirmed and linked
+    - task_id: <int>    -> task triggered, waiting for completion
+    - results: true     -> results fetched
+    - done: true        -> All done, results pushed successfully
+    - tries: <1:5>      -> There is a max of 5 retries with exponential waiting times
 """
 from copy import deepcopy
 import logging
@@ -10,7 +17,7 @@ from kubernetes.watch import Watch
 from kubernetes.client.exceptions import ApiException
 
 from const import DOMAIN
-from excpetions import FederatedNodeException, KeycloakException
+from excpetions import BaseControllerException
 from helpers.kubernetes_helper import KubernetesCRD
 from helpers.actions import sync_users, trigger_task, handle_results, create_retry_job
 
@@ -67,7 +74,7 @@ def start(exit_on_tests=False):
             # in case of unreachable URLs we want to fail and exit
             logger.error(mre.reason)
             raise mre
-        except (KeycloakException, FederatedNodeException, ApiException) as ke:
+        except (BaseControllerException, ApiException) as ke:
             create_retry_job(crd_name, annotations)
             logger.error(ke.reason)
         except KeyError:

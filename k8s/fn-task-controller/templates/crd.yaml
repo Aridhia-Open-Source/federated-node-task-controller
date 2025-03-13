@@ -14,6 +14,12 @@ spec:
           properties:
             spec:
               type: object
+              required:
+                - image
+                - user
+                - project
+                - dataset
+                - source
               properties:
                 image:
                   type: string
@@ -35,10 +41,62 @@ spec:
                       type: integer
                     name:
                       type: string
-                branch:
-                  type: string
-                repository:
-                  type: string
+                source:
+                  type: object
+                  nullable: true
+                  required:
+                    - repository
+                  properties:
+                    branch:
+                      type: string
+                    repository:
+                      type: string
+                results:
+                  type: object
+                  oneOf:
+                    - properties:
+                      required: [ "git" ]
+                    - properties:
+                      required: [ "other" ]
+                  properties:
+                    git:
+                      type: object
+                      nullable: true
+                      required:
+                        - repository
+                      allOf:
+                        - not:
+                            required:
+                              - other
+                      properties:
+                        branch:
+                          type: string
+                        repository:
+                          type: string
+                    other:
+                      type: object
+                      nullable: true
+                      properties:
+                          url:
+                            type: string
+                          auth_type:
+                            type: string
+                      oneOf:
+                      - required:
+                          - url
+                          - auth_type
+                        oneOf:
+                          - not:
+                              required:
+                                - git
+                        properties:
+                          url:
+                          auth_type:
+                            enum:
+                              - Bearer
+                              - Basic
+                              - AzCopy
+
   scope: Cluster
   names:
     plural: analytics

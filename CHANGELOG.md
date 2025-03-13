@@ -1,11 +1,15 @@
 # Releases Changelog
 
+## 0.5.0
+- Support for multiple IdP from GitHub (use the `idp.github.orgAndRepo` to set the repository source in the format organizaiton/repository)
+
 ## 0.4.1
 - Fixed few inconsistencies with values fields.
 - Fixed an issue whith azure storage, if the fileshare doesn't have the required folder, it will fail
 
 ## 0.4.0
 - Support for multiple IdP from GitHub (use the `idp.github.orgAndRepo` to set the repository source in the format organizaiton/repository)
+- Added support to deliver to defferent destinations. Without a matching secret this delivery will not work, even if it doesn't require auth.
 
 ## 0.3.0
 - Set the CRD as a cluster-level, not namespaced

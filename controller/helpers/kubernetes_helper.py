@@ -16,8 +16,8 @@ from kubernetes.client.exceptions import ApiException
 
 from excpetions import KubernetesException
 from const import (
-    DOMAIN, NAMESPACE, TASK_NAMESPACE, IMAGE,
-    MOUNT_PATH, PULL_POLICY, TAG, KC_USER, KC_HOST
+    DOMAIN, NAMESPACE, IMAGE, MOUNT_PATH,
+    PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
 )
 
 logger = logging.getLogger('k8s_helpers')
@@ -25,6 +25,9 @@ logger.setLevel(logging.INFO)
 
 
 class BaseK8s:
+    """
+    Base k8s client to handle credentials for child classes
+    """
     base_label = {
         f"{DOMAIN}": "fn-controller"
     }
@@ -48,6 +51,9 @@ class BaseK8s:
 
 
 class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
+    """
+    Custom k8s client wrapper to handle CRD operations
+    """
     def patch_crd_annotations(self, name:str, annotations:dict):
         """
         Since it's too verbose, and has to get a "patch" dedicated to it
@@ -63,12 +69,26 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
 
 
 class KubernetesV1(BaseK8s, client.CoreV1Api):
+    """
+    Custom k8s client wrapper to centralized common
+    operations on top of the base client
+    """
     def get_secret(self, name:str, key:str, namespace:str=NAMESPACE) -> str:
         """
         Returns a secret decoded value from a secret name, and its key
         """
         secret = self.read_namespaced_secret(name, namespace)
         return base64.b64decode(secret.data[key].encode()).decode()
+
+    def get_secret_by_label(self, label:str, namespace:str=NAMESPACE):
+        """
+        Gets the list of secrets with the label, and return the first match
+        """
+        secrets_list = self.list_namespaced_secret(namespace=namespace, label_selector=label)
+        if not secrets_list:
+            raise KubernetesException(f"No secrets found with label(s) {label}")
+
+        return secrets_list.items[0]
 
     def setup_pvc(self, name:str) -> str:
         """
@@ -130,13 +150,19 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
 
 
 class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
+    """
+    Custom k8s batch client wrapper to centralized common
+    operations on top of the base client
+    """
+    #pylint: disable=R0913
     def create_bare_job(
             self,
             name:str,
             run:bool=False,
             script:str="push_to_github.sh",
-            labels:dict={},
-            command:str=None, image:str=None
+            labels:dict=None,
+            command:str=None,
+            image:str=None
         ) -> client.V1Job:
         """
         Creates the job template and submits it to the cluster in the
@@ -144,6 +170,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         """
         name += f"-{uuid4()}"
         name = name[:62]
+        if labels is None:
+            labels = {}
         labels.update(self.base_label)
 
         if command:
@@ -190,15 +218,16 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
                 )
             except ApiException as exc:
                 raise KubernetesException(exc.body) from exc
-        else:
-            return body
+        return body
 
     def create_helper_job(
             self,
-            name:str, task_id:str=None,
+            name:str,
+            task_id:str=None,
             repository="Federated-Node-Example-App",
             create_volumes:bool=True,
-            script:str="push_to_github.sh", labels:dict={},
+            script:str="push_to_github.sh",
+            labels:dict | None=None,
             command:str=None
         ):
         """
@@ -208,6 +237,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         base_job = self.create_bare_job(name, script=script, command=command, labels=labels)
         volclaim_name = KubernetesV1().setup_pvc(name)
         secret_name=self.repo_secret_name(repository)
+        if labels is None:
+            labels = {}
         labels.update(self.base_label)
 
         volumes = [

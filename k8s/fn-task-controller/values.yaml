@@ -36,4 +36,7 @@ idp:
     secret_name:
     secret_key:
     clientid_key:
-    orgAndRepo:
+
+global: {}
+  # host:
+  # orgAndRepo:

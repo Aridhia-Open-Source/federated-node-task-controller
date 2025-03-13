@@ -45,6 +45,22 @@ idp:
 ```
 Of course, use the secret name and key names used in the bash command above.
 
+One more secret (if applicable) to create is related to the additional result delivery destination that is not github.
+
+Create a secret with whichever name you prefer, and then add the label with the url it should be used on.
+
+To make it as broad as possible, the url should not include `http://` or `https://`. Basically the hostname.
+```sh
+secret_name="super-secret"
+url=""
+token=""
+
+kubectl create secret generic -n fn-controller "${secret_name}" --from-literal="auth=${token}"
+
+kubectl label secret "${secret_name}" -n fn-controller "url=${url}"
+```
+
+
 Then deploy as follows:
 
 ### STANDALONE
@@ -52,7 +68,7 @@ Then deploy as follows:
 __note__ set the `namespace_name` environment variable to match the namespace name where the Federated Node has been deployed on. That's needed to automatically look for secrets/configmaps
 ```bash
 cd k8s/fn-task-controller
-helm install fncontroller . -f dev.values.yaml -n $namespace_name
+helm install fncontroller . -f dev.values.yaml -n "${namespace_name}"
 ```
 or though the helm repo:
 ```sh

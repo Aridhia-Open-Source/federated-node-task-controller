@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   bump:
-    uses: Aridhia-Open-Source/pipelines/.github/workflows/version-bump.yml@main
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/version-bump.yml@preview
     with:
       chartVersion: ${{ inputs.chartVersion }}
       appVersion: ${{ inputs.appVersion }}

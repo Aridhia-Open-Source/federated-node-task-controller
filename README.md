@@ -65,12 +65,7 @@ Then deploy as follows:
 
 ### STANDALONE
 
-__note__ set the `namespace_name` environment variable to match the namespace name where the Federated Node has been deployed on. That's needed to automatically look for secrets/configmaps
-```bash
-cd k8s/fn-task-controller
-helm install fncontroller . -f dev.values.yaml -n "${namespace_name}"
-```
-or though the helm repo:
+Trhough the helm repo:
 ```sh
 helm repo add fn-task-controller https://aridhia-open-source.github.io/federated-node-task-controller
 
@@ -80,8 +75,11 @@ helm search repo fn-task-controller --versions
 # If you want to check development builds
 helm search repo fn-task-controller --devel --versions
 
+# Federated Node namespace
+FN_NAMESPACE=$(helm list -A -o json | jq -r '.[] | select(.name=="federatednode") | .namespace')
+
 # Install
-helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
+helm install fn-task-controller fn-task-controller/fn-task-controller -f <custom_value.yaml> --namespace=$FN_NAMESPACE
 ```
 
 ### AS SUBCHART

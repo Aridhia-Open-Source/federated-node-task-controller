@@ -20,11 +20,14 @@ class TestWatcher:
             "tasks.federatednode.com": "fn-controller"
         }
 
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     def test_sync_user(
         self,
+        open_mock,
         k8s_client,
         k8s_watch_mock,
-        mock_job_watch
+        mock_job_watch,
+        delivery_open
     ):
         """
         Tests the first step of the CRD lifecycle.

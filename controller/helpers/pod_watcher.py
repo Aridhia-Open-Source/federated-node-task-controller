@@ -28,7 +28,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    delivery = json.load(open("./delivery.json"))
+    delivery = json.load(open("controller/delivery.json"))
     # results_path = crd_spec.get("results", {})
     # git_info = results_path.get("git", {})
     # other_info = results_path.get("other", {})

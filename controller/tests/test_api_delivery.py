@@ -8,6 +8,9 @@ from const import DOMAIN
 
 
 class TestWatcherApiDelivery:
+    delivery_content = {"other": {"url": "https://fancyresultsplace.com/api/storage", "auth_type": "Bearer"}}
+    delivery_content_basic = {"other": {"url": "https://fancyresultsplace.com/api/storage", "auth_type": "Basic"}}
+
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_get_results_api_delivery(
@@ -17,16 +20,18 @@ class TestWatcherApiDelivery:
             k8s_client,
             k8s_watch_mock,
             crd_name,
-            mock_crd_api_done,
+            mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            unencoded_bearer
+            unencoded_bearer,
+            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
         the results are delivered to an API
         """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_done]
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        delivery_open.return_value = self.delivery_content
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
             rsps.add(
@@ -36,7 +41,7 @@ class TestWatcherApiDelivery:
             )
             rsps.add(
                 responses.POST,
-                mock_crd_api_done["object"]["spec"]["results"]["other"]["url"],
+                self.delivery_content["other"]["url"],
                 status=201,
                 match=[matchers.header_matcher({
                     "Authorization": f"Bearer {unencoded_bearer}"
@@ -65,10 +70,11 @@ class TestWatcherApiDelivery:
             k8s_client,
             k8s_watch_mock,
             crd_name,
-            mock_crd_api_basic_done,
+            mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            encoded_basic
+            encoded_basic,
+            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
@@ -76,10 +82,11 @@ class TestWatcherApiDelivery:
         behave the same as the bearer auth, but it's to ensure
         we interpret basic auth correctly
         """
-        k8s_client["list_namespaced_secret"].return_value.items[0].data["auth"] = encoded_basic
-        crd_auth = mock_crd_api_basic_done["object"]["spec"]["results"]["other"]
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
 
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_basic_done]
+        delivery_open.return_value = self.delivery_content_basic
+        k8s_client["list_namespaced_secret"].return_value.items[0].data["auth"] = encoded_basic
+
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
             rsps.add(
@@ -89,7 +96,7 @@ class TestWatcherApiDelivery:
             )
             rsps.add(
                 responses.POST,
-                crd_auth["url"],
+                self.delivery_content_basic["other"]["url"],
                 status=201,
                 match=[matchers.header_matcher({"Authorization": f"Basic {encoded_basic}"})]
             )
@@ -117,15 +124,18 @@ class TestWatcherApiDelivery:
             k8s_watch_mock,
             v1_batch_mock,
             crd_name,
-            mock_crd_api_done,
+            mock_crd_task_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            unencoded_bearer,
+            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
         the results fail to be sent, and will trigger the retry job
         """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_done]
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        delivery_open.return_value = self.delivery_content
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
             rsps.add(
@@ -135,7 +145,7 @@ class TestWatcherApiDelivery:
             )
             rsps.add(
                 responses.POST,
-                mock_crd_api_done["object"]["spec"]["results"]["other"]["url"],
+                self.delivery_content["other"]["url"],
                 status=400
             )
             start(True)

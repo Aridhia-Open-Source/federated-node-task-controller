@@ -130,7 +130,8 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
@@ -237,12 +238,12 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url
+            backend_url,
+            delivery_open
         ):
         """
         Tests that a CRD with missing results fields will by default create a github delivery
         """
-        mock_crd_task_done["object"]["spec"].pop("results")
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
@@ -253,7 +254,7 @@ class TestWatcher:
             )
             start(True)
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
-        assert os.getenv("DEFAULT_DELIVERY_REPO") in [env.value for env in requested_env if env.name == "GH_REPO"]
+        assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
 
         k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,

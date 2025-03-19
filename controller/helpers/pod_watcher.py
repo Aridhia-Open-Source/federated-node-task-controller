@@ -6,12 +6,13 @@ Collection of job and pod watchers.
 
 import base64
 import logging
+import json
 import re
 import subprocess
 from kubernetes.watch import Watch
 from kubernetes.client.models.v1_job_status import V1JobStatus
 
-from const import DOMAIN, TASK_NAMESPACE, NAMESPACE, DEFAULT_GIT
+from const import DOMAIN, TASK_NAMESPACE, NAMESPACE
 from excpetions import KubernetesException, PodWatcherException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
 from helpers.request_helper import client as requests
@@ -27,9 +28,12 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    results_path = crd_spec.get("results", {})
-    git_info = results_path.get("git", {})
-    other_info = results_path.get("other", {})
+    delivery = json.load(open("./delivery.json"))
+    # results_path = crd_spec.get("results", {})
+    # git_info = results_path.get("git", {})
+    # other_info = results_path.get("other", {})
+    git_info = delivery.get("git", {})
+    other_info = delivery.get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
 
@@ -96,11 +100,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
                         if not resp.ok:
                             raise PodWatcherException("Failed to deliver results")
                 else:
-                    KubernetesV1Batch().create_helper_job(
-                        name=f"task-{task_id}-results",
-                        task_id=task_id,
-                        repository=DEFAULT_GIT
-                    )
+                    raise PodWatcherException("No suitable delivery options available")
                 # Add results annotation to let the controller know
                 # we already handled results
                 KubernetesCRD().patch_crd_annotations(crd_name, annotations)

@@ -29,8 +29,7 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
                 "dataset": {
                     "id": ""
                 },
-                "source": {"repository": ""},
-                "results": {"git": {"repository": ""}},
+                "source": {"repository": ""}
             }
         },
         "type" : type
@@ -269,3 +268,7 @@ def impersonate_request(keycloak_url, keycloak_realm):
         status=200,
         json={"refresh_token": "refresh_token"}
     )
+
+@pytest.fixture
+def delivery_open(mocker):
+    return mocker.patch('json.load', return_value={"git": {"repository": "org/repo"}})

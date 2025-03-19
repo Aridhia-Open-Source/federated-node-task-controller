@@ -7,6 +7,7 @@ from const import DOMAIN
 
 
 class TestWatcherAzCopyDelivery:
+    delivery_content = {"other": {"url": "https://fancyresultsplace.com/api/storage", "auth_type": "AzCopy"}}
 
     @mock.patch("subprocess.run", return_value=mock.Mock(stdout="Success", stderr=None))
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
@@ -19,16 +20,18 @@ class TestWatcherAzCopyDelivery:
             k8s_client,
             k8s_watch_mock,
             crd_name,
-            mock_crd_azcopy_done,
+            mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            unencoded_bearer
+            unencoded_bearer,
+            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
         the results are sent through AzCopy to a storage account
         """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_azcopy_done]
+        delivery_open.return_value = self.delivery_content
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
             rsps.add(
@@ -70,17 +73,19 @@ class TestWatcherAzCopyDelivery:
             k8s_watch_mock,
             v1_batch_mock,
             crd_name,
-            mock_crd_azcopy_done,
+            mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            unencoded_bearer
+            unencoded_bearer,
+            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
         the results fail to be sent through AzCopy to a storage account
         and the retry job is triggered
         """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_azcopy_done]
+        delivery_open.return_value = self.delivery_content
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
             rsps.add(

@@ -14,7 +14,6 @@ data:
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
   IMAGE: {{ template "fn-task-controller.image" . }}
   PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}
-  DEFAULT_DELIVERY_REPO: {{ (.Values.delivery.github).repo }}
 {{- if .Values.storage.azure }}
   AZURE_STORAGE_ENABLED: "true"
   AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/controller

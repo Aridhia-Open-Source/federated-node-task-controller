@@ -1,6 +1,6 @@
+import os
 import responses
 from kubernetes.client.exceptions import ApiException
-from responses import matchers
 from unittest import mock
 from unittest.mock import mock_open
 
@@ -226,224 +226,24 @@ class TestWatcher:
         for call in calls_to_assert:
             call.assert_not_called()
 
-
-class TestWatcherAzCopyDelivery:
-
-    @mock.patch("subprocess.run", return_value=mock.Mock(stdout="Success", stderr=None))
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_azcopy_delivery(
-            self,
-            token_mock,
-            open_mock,
-            subprocees_mock,
-            k8s_client,
-            k8s_watch_mock,
-            crd_name,
-            mock_crd_azcopy_done,
-            mock_pod_watch,
-            backend_url,
-            unencoded_bearer
-        ):
-        """
-        Tests that once the task's pod is completed,
-        the results are sent through AzCopy to a storage account
-        """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_azcopy_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            start(True)
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
-                }
-            }]
-        )
-        subprocees_mock.assert_called_with(
-            [
-                "azcopy", "copy",
-                "/data/controller/localhost-1-results.tar.gz",
-                unencoded_bearer
-            ],
-            **{"capture_output":True, "check": False}
-        )
-
-    @mock.patch("subprocess.run", return_value=mock.Mock(stdout="In progress", stderr="Failed!"))
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_azcopy_delivery_fails(
-            self,
-            token_mock,
-            open_mock,
-            subprocees_mock,
-            k8s_client,
-            k8s_watch_mock,
-            v1_batch_mock,
-            crd_name,
-            mock_crd_azcopy_done,
-            mock_pod_watch,
-            backend_url,
-            unencoded_bearer
-        ):
-        """
-        Tests that once the task's pod is completed,
-        the results fail to be sent through AzCopy to a storage account
-        and the retry job is triggered
-        """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_azcopy_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            start(True)
-
-        subprocees_mock.assert_called_with(
-            [
-                "azcopy", "copy",
-                "/data/controller/localhost-1-results.tar.gz",
-                unencoded_bearer
-            ],
-            **{"capture_output":True, "check": False}
-        )
-        # CRD not patched immediately
-        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
-        # The retry job is triggered
-        v1_batch_mock["create_namespaced_job_mock"].assert_called()
-
-
-class TestWatcherApiDelivery:
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_api_delivery(
+    def test_missing_result_crd_fields(
             self,
             token_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
             crd_name,
-            mock_crd_api_done,
-            mock_pod_watch,
-            backend_url,
-            unencoded_bearer
-        ):
-        """
-        Tests that once the task's pod is completed,
-        the results are delivered to an API
-        """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            rsps.add(
-                responses.POST,
-                mock_crd_api_done["object"]["spec"]["results"]["other"]["url"],
-                status=201,
-                match=[matchers.header_matcher({
-                    "Authorization": f"Bearer {unencoded_bearer}"
-                })]
-            )
-            start(True)
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
-                }
-            }]
-        )
-
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_api_delivery_basic(
-            self,
-            token_mock,
-            open_mock,
-            k8s_client,
-            k8s_watch_mock,
-            crd_name,
-            mock_crd_api_basic_done,
-            mock_pod_watch,
-            backend_url,
-            encoded_basic
-        ):
-        """
-        Tests that once the task's pod is completed,
-        the results are delivered to an API. Virtually
-        behave the same as the bearer auth, but it's to ensure
-        we interpret basic auth correctly
-        """
-        k8s_client["list_namespaced_secret"].return_value.items[0].data["auth"] = encoded_basic
-        crd_auth = mock_crd_api_basic_done["object"]["spec"]["results"]["other"]
-
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_basic_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            rsps.add(
-                responses.POST,
-                crd_auth["url"],
-                status=201,
-                match=[matchers.header_matcher({"Authorization": f"Basic {encoded_basic}"})]
-            )
-            start(True)
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
-                }
-            }]
-        )
-
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_api_delivery_fails(
-            self,
-            token_mock,
-            open_mock,
-            k8s_client,
-            k8s_watch_mock,
-            v1_batch_mock,
-            crd_name,
-            mock_crd_api_done,
+            mock_crd_task_done,
             mock_pod_watch,
             backend_url
         ):
         """
-        Tests that once the task's pod is completed,
-        the results fail to be sent, and will trigger the retry job
+        Tests that a CRD with missing results fields will by default create a github delivery
         """
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_api_done]
+        mock_crd_task_done["object"]["spec"].pop("results")
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
             rsps.add(
@@ -451,14 +251,18 @@ class TestWatcherApiDelivery:
                 f"{backend_url}/tasks/1/results",
                 status=200
             )
-            rsps.add(
-                responses.POST,
-                mock_crd_api_done["object"]["spec"]["results"]["other"]["url"],
-                status=400
-            )
             start(True)
+        requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
+        assert os.getenv("DEFAULT_DELIVERY_REPO") in [env.value for env in requested_env if env.name == "GH_REPO"]
 
-        # CRD not patched immediately
-        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
-        # The retry job is triggered
-        v1_batch_mock["create_namespaced_job_mock"].assert_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{DOMAIN}/user": "ok",
+                    f"{DOMAIN}/done": "true",
+                    f"{DOMAIN}/results": "true",
+                    f"{DOMAIN}/task_id": "1"
+                }
+            }]
+        )

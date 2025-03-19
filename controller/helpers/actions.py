@@ -3,7 +3,7 @@ import logging
 import re
 from math import exp
 
-from const import DOMAIN, MAX_RETRIES
+from const import DOMAIN, MAX_RETRIES, DEFAULT_GIT
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch
 )
@@ -26,11 +26,13 @@ def create_labels(crds:dict) -> dict:
     labels.update(labels.pop("user"))
     labels["repository"] = labels["source"]["repository"].replace("/", "-")[:63]
     labels.pop("source")
-    if labels["results"].get("git"):
+    if labels.get("results", {}).get("git"):
         labels["repository_results"] = labels["results"]["git"]["repository"].replace("/", "-")[:63]
-    else:
+    elif labels.get("results", {}).get("other"):
         other = labels["results"]["other"]
         labels["results"] = other.get("url") or other["auth_type"]
+    else:
+        labels["repository_results"] = DEFAULT_GIT.replace("/", "-")[:63]
     labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
     return labels
 

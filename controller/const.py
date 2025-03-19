@@ -18,4 +18,5 @@ KC_HOST = os.getenv("KC_HOST")
 KC_USER = os.getenv("KC_USER")
 IMAGE = os.getenv("IMAGE")
 TAG = os.getenv("TAG")
+DEFAULT_GIT = os.getenv("DEFAULT_DELIVERY_REPO")
 MAX_RETRIES = 5

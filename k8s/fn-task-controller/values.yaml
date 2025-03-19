@@ -40,3 +40,7 @@ idp:
 global: {}
   # host:
   # orgAndRepo:
+
+delivery:
+  github: {}
+    # repo:

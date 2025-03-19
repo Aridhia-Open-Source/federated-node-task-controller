@@ -1,5 +1,6 @@
 from copy import deepcopy
 import logging
+import json
 import re
 from math import exp
 
@@ -21,16 +22,17 @@ def create_labels(crds:dict) -> dict:
     to be used as a labels set. Trims each field to
     64 chars as that's k8s limit
     """
+    delivery = json.load(open("controller/delivery.json"))
+
     labels = deepcopy(crds)
     labels["dataset"] = "-".join(labels["dataset"].values())[:63]
     labels.update(labels.pop("user"))
     labels["repository"] = labels["source"]["repository"].replace("/", "-")[:63]
     labels.pop("source")
-    if labels["results"].get("git"):
-        labels["repository_results"] = labels["results"]["git"]["repository"].replace("/", "-")[:63]
+    if delivery.get("github"):
+        labels["repository_results"] = delivery["github"]["repository"].replace("/", "-")[:63]
     else:
-        other = labels["results"]["other"]
-        labels["results"] = other.get("url") or other["auth_type"]
+        labels["results"] = delivery["other"].get("url") or delivery["other"]["auth_type"]
     labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
     return labels
 

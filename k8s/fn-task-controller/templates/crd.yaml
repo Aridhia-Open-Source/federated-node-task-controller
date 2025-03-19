@@ -53,11 +53,6 @@ spec:
                       type: string
                 results:
                   type: object
-                  oneOf:
-                    - properties:
-                      required: [ "git" ]
-                    - properties:
-                      required: [ "other" ]
                   properties:
                     git:
                       type: object

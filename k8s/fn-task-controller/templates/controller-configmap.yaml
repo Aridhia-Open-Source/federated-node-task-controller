@@ -10,7 +10,7 @@ data:
   KC_HOST: http://keycloak.{{ include "kc_ns" . }}.svc.cluster.local
   GIT_HOME: {{ template "fn-task-controller.gitpath" . }}
   MOUNT_PATH: {{ (.Values.storage.local).path }}
-  PULL-POLICY: IfNotPresent
+  PULL-POLICY: Always
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
   IMAGE: {{ template "fn-task-controller.image" . }}
   PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}

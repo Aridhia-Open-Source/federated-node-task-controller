@@ -18,8 +18,8 @@ echo "Setting up GitHub"
 git config --global user.email "fn@phems.com"
 git config --global user.name "FNController"
 
-if [ -d "repo " ]; then
-    rm -r repo
+if [ -d "${REPO_FOLDER}" ]; then
+    rm -r "${REPO_FOLDER}"
 fi
 echo "Cloning repo"
 gh repo clone "${GH_REPO}" "${REPO_FOLDER}"

@@ -44,3 +44,6 @@ global: {}
 delivery:
   github: {}
     # repo:
+  other: {}
+    # url
+    # auth_type

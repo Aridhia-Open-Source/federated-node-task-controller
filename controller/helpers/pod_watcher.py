@@ -32,7 +32,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     # results_path = crd_spec.get("results", {})
     # git_info = results_path.get("git", {})
     # other_info = results_path.get("other", {})
-    git_info = delivery.get("git", {})
+    git_info = delivery.get("github", {})
     other_info = delivery.get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()

@@ -41,8 +41,6 @@ spec:
           volumeMounts:
             - name: git
               mountPath: /mnt/storage
-            - name: config
-              mountPath: /app/controller/
       containers:
       - name: analytics-operator
         image: {{ template "fn-task-controller.image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}
@@ -69,3 +67,6 @@ spec:
           - name: git
             mountPath: {{ template "fn-task-controller.gitpath" . }}
             subPath: controller
+          - name: destinations
+            mountPath: /app/controller/delivery.json
+            subPath: delivery.json

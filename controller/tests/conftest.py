@@ -271,4 +271,4 @@ def impersonate_request(keycloak_url, keycloak_realm):
 
 @pytest.fixture
 def delivery_open(mocker):
-    return mocker.patch('json.load', return_value={"git": {"repository": "org/repo"}})
+    return mocker.patch('json.load', return_value={"github": {"repository": "org/repo"}})

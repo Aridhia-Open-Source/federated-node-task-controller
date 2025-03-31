@@ -6,6 +6,7 @@ Collection of job and pod watchers.
 
 import base64
 import logging
+import json
 import re
 import subprocess
 from kubernetes.watch import Watch
@@ -27,8 +28,12 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    git_info = crd_spec["results"].get("git", {})
-    other_info = crd_spec["results"].get("other", {})
+    delivery = json.load(open("controller/delivery.json"))
+    # results_path = crd_spec.get("results", {})
+    # git_info = results_path.get("git", {})
+    # other_info = results_path.get("other", {})
+    git_info = delivery.get("github", {})
+    other_info = delivery.get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
 
@@ -50,7 +55,7 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
                         task_id=task_id,
                         repository=git_info.get("repository")
                     )
-                else:
+                elif other_info:
                     auth = {}
                     is_api = True
 
@@ -94,7 +99,8 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
                             )
                         if not resp.ok:
                             raise PodWatcherException("Failed to deliver results")
-
+                else:
+                    raise PodWatcherException("No suitable delivery options available")
                 # Add results annotation to let the controller know
                 # we already handled results
                 KubernetesCRD().patch_crd_annotations(crd_name, annotations)

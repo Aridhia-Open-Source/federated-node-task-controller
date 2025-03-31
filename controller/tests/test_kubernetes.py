@@ -6,11 +6,15 @@ from excpetions import KubernetesException
 
 
 class TestKubernetesHelper:
+
+    @mock.patch("builtins.open", new_callable=mock.mock_open, read_data="data")
     def test_job_pv_creation_exists(
         self,
+        mock_open,
         k8s_client,
         k8s_watch_mock,
-        mock_job_watch
+        mock_job_watch,
+        delivery_open
     ):
         """
         Tests the first step of the CRD lifecycle.

@@ -40,3 +40,10 @@ idp:
 global: {}
   # host:
   # orgAndRepo:
+
+delivery:
+  github: {}
+    # repository:
+  other: {}
+    # url
+    # auth_type

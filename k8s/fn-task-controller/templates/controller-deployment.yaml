@@ -25,6 +25,12 @@ spec:
         - name: git
           persistentVolumeClaim:
             claimName: controller-pv-volclaim
+        - name: destinations
+          configMap:
+            name: controller-delivery-config
+            items:
+            - key: delivery.json
+              path: delivery.json
       initContainers:
         - name: storage-init
           image: {{ include "fn-alpine" . }}
@@ -61,3 +67,6 @@ spec:
           - name: git
             mountPath: {{ template "fn-task-controller.gitpath" . }}
             subPath: controller
+          - name: destinations
+            mountPath: /app/controller/delivery.json
+            subPath: delivery.json

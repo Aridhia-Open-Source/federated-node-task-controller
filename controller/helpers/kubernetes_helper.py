@@ -107,16 +107,14 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
                 share_name=os.getenv("AZURE_SHARE_NAME")
             )
         else:
-            pv_spec.host_path = client.V1PersistentVolumeSpec(
-                storage_class_name="controller-results",
-                host_path=client.V1HostPathVolumeSource(path=MOUNT_PATH),
-                persistent_volume_reclaim_policy="Delete"
+            pv_spec.host_path = client.V1HostPathVolumeSource(
+                path=f"{MOUNT_PATH}/controller/"
             )
 
         pers_vol = client.V1PersistentVolume(
             api_version='v1',
             kind='PersistentVolume',
-            metadata=client.V1ObjectMeta(name=name, namespace=TASK_NAMESPACE),
+            metadata=client.V1ObjectMeta(name=pv_name, namespace=TASK_NAMESPACE),
             spec=pv_spec
         )
 

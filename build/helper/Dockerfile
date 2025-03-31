@@ -7,7 +7,7 @@ ARG USER_GID=1001
 RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
     && adduser -S "${USERNAME}" -G "${USERNAME}" -u "${USER_UID}"
 
-RUN python -m pip install requests
+RUN python -m pip install --no-cache-dir "requests==2.32.3"
 
 COPY idp-init.py /scripts/idp-init.py
 

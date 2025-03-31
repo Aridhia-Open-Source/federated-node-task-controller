@@ -20,7 +20,7 @@ metadata:
   name: idp-initializer
   namespace: {{ include "controller_ns" . }}
   annotations:
-    helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook-weight: "2"
 spec:
   template:
@@ -31,6 +31,7 @@ spec:
       containers:
         - name: idp-initializer
           image: "ghcr.io/aridhia-open-source/fn_task_controller_idp:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: controller-config

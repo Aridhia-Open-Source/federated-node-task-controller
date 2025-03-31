@@ -14,4 +14,4 @@ COPY idp-init.py /scripts/idp-init.py
 WORKDIR /scripts
 USER ${USER_UID}
 
-ENTRYPOINT [ "python3", "config.py" ]
+ENTRYPOINT [ "python3", "idp-init.py" ]

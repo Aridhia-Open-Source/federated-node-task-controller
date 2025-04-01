@@ -1,5 +1,9 @@
 # Releases Changelog
 
+## 0.7.0
+- Fixed an issue on non-microk8s cluster where helper jobs were lacking proper permissions. Added the same account name as the controller.
+- Increased timeout before removing a terminated helper job from 5s to 30s.
+
 ## 0.6.0
 - Changed the way the automatic delivery is performed. There is now only one choice, set as default path. Setting `delivery.github` or `delivery.other` will do so.
 

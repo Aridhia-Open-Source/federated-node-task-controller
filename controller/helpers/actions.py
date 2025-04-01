@@ -104,7 +104,7 @@ def create_retry_job(crd_name:str, annotations:dict):
     cooldown = int(exp(current_try))
 
     cmd = f"sleep {cooldown} && " \
-        f"kubectl get analytics -n analytics {crd_name} -o json |"\
+        f"kubectl get analytics {crd_name} -o json |"\
         f" jq '.metadata.annotations += {{\"{annotation_check}\": \"{current_try}\"}}' | "\
         "kubectl replace -f-"
 

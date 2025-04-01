@@ -84,7 +84,7 @@ class TestKubernetesHelper:
             f"update-annotation-{crd_name}",
             **{
                 "command": "sleep 2 && " \
-                        f"kubectl get analytics -n analytics {crd_name} -o json |"\
+                        f"kubectl get analytics {crd_name} -o json |"\
                         " jq '.metadata.annotations += {\"tasks.federatednode.com/tries\": \"1\"}' | "\
                         "kubectl replace -f-",
                 "run": True,

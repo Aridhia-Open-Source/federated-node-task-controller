@@ -16,9 +16,10 @@ from kubernetes.client.exceptions import ApiException
 
 from excpetions import KubernetesException
 from const import (
-    DOMAIN, NAMESPACE, IMAGE, MOUNT_PATH,
+    NAMESPACE, IMAGE, MOUNT_PATH,
     PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
 )
+from models.crd import Analytics
 
 logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
@@ -29,7 +30,7 @@ class BaseK8s:
     Base k8s client to handle credentials for child classes
     """
     base_label = {
-        f"{DOMAIN}": "fn-controller"
+        f"{Analytics.domain}": "fn-controller"
     }
     def __init__(self, **kwargs):
         """
@@ -62,7 +63,7 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
         # Patch for the client library which somehow doesn't do it itself for the patch
         self.api_client.set_default_header('Content-Type', 'application/json-patch+json')
         self.patch_cluster_custom_object(
-            DOMAIN, "v1", "analytics", name,
+            Analytics.domain, "v1", "analytics", name,
             [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
         )
         logger.info("CRD patched")

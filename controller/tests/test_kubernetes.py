@@ -1,16 +1,13 @@
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
-from const import MAX_RETRIES
+from models.crd import MAX_RETRIES
 from controller import start
 from excpetions import KubernetesException
 
 
 class TestKubernetesHelper:
-
-    @mock.patch("builtins.open", new_callable=mock.mock_open, read_data="data")
     def test_job_pv_creation_exists(
         self,
-        mock_open,
         k8s_client,
         k8s_watch_mock,
         mock_job_watch,
@@ -33,7 +30,8 @@ class TestKubernetesHelper:
         k8s_client,
         k8s_watch_mock,
         job_spec_mock,
-        mock_job_watch
+        mock_job_watch,
+        delivery_open
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -51,7 +49,8 @@ class TestKubernetesHelper:
         create_bare_job_mock,
         k8s_client,
         k8s_watch_mock,
-        mock_job_watch
+        mock_job_watch,
+        delivery_open
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -81,8 +80,8 @@ class TestKubernetesHelper:
         sync_mock.side_effect=KubernetesException('Error')
         start(True)
         create_bare_job_mock.assert_called_with(
-            f"update-annotation-{crd_name}",
             **{
+                "name": f"update-annotation-{crd_name}",
                 "command": "sleep 2 && " \
                         f"kubectl get analytics {crd_name} -o json |"\
                         " jq '.metadata.annotations += {\"tasks.federatednode.com/tries\": \"1\"}' | "\
@@ -115,6 +114,5 @@ class TestKubernetesHelper:
             ["object"]["metadata"]["annotations"] \
                 ["tasks.federatednode.com/tries"] = MAX_RETRIES + 1
 
-        sync_mock.side_effect=KubernetesException('Error')
         start(True)
         create_bare_job_mock.assert_not_called()

@@ -1,21 +1,21 @@
+import json
 import responses
+from pytest import mark
 from unittest import mock
 from unittest.mock import mock_open
 
 from controller import start
-from const import DOMAIN
 
 
 class TestWatcherAzCopyDelivery:
     delivery_content = {"other": {"url": "https://fancyresultsplace.com/api/storage", "auth_type": "AzCopy"}}
 
+    @mark.parametrize('delivery_open', [delivery_content], indirect=True)
     @mock.patch("subprocess.run", return_value=mock.Mock(stdout="Success", stderr=None))
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_get_results_azcopy_delivery(
             self,
             token_mock,
-            open_mock,
             subprocees_mock,
             k8s_client,
             k8s_watch_mock,
@@ -24,13 +24,12 @@ class TestWatcherAzCopyDelivery:
             mock_pod_watch,
             backend_url,
             unencoded_bearer,
-            delivery_open
+            domain
         ):
         """
         Tests that once the task's pod is completed,
         the results are sent through AzCopy to a storage account
         """
-        delivery_open.return_value = self.delivery_content
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:
@@ -45,10 +44,10 @@ class TestWatcherAzCopyDelivery:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/results": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )
@@ -61,13 +60,12 @@ class TestWatcherAzCopyDelivery:
             **{"capture_output":True, "check": False}
         )
 
+    @mark.parametrize('delivery_open', [delivery_content], indirect=True)
     @mock.patch("subprocess.run", return_value=mock.Mock(stdout="In progress", stderr="Failed!"))
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     def test_get_results_azcopy_delivery_fails(
             self,
             token_mock,
-            open_mock,
             subprocees_mock,
             k8s_client,
             k8s_watch_mock,
@@ -77,14 +75,12 @@ class TestWatcherAzCopyDelivery:
             mock_pod_watch,
             backend_url,
             unencoded_bearer,
-            delivery_open
         ):
         """
         Tests that once the task's pod is completed,
         the results fail to be sent through AzCopy to a storage account
         and the retry job is triggered
         """
-        delivery_open.return_value = self.delivery_content
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
         with responses.RequestsMock() as rsps:

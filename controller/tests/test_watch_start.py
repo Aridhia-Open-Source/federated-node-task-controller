@@ -1,11 +1,11 @@
-import os
+import pytest
 import responses
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from unittest.mock import mock_open
 
 from controller import start
-from const import DOMAIN
+from excpetions import CRDException
 
 
 class TestWatcher:
@@ -20,14 +20,13 @@ class TestWatcher:
             "tasks.federatednode.com": "fn-controller"
         }
 
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     def test_sync_user(
         self,
-        open_mock,
         k8s_client,
         k8s_watch_mock,
         mock_job_watch,
-        delivery_open
+        delivery_open,
+        domain
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -38,7 +37,7 @@ class TestWatcher:
             'tasks.federatednode.com', 'v1', 'analytics', 'crd1',
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok"
+                    f"{domain}/user": "ok"
                 }
             }]
         )
@@ -48,7 +47,8 @@ class TestWatcher:
         self,
         wup_mock,
         k8s_client,
-        k8s_watch_mock
+        k8s_watch_mock,
+        delivery_open
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -67,7 +67,8 @@ class TestWatcher:
             fn_task_request,
             crd_name,
             k8s_client,
-            k8s_watch_mock
+            k8s_watch_mock,
+            domain
         ):
         """
         Tests that the task request is sent to the FN
@@ -88,9 +89,9 @@ class TestWatcher:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )
@@ -134,7 +135,8 @@ class TestWatcher:
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            delivery_open
+            delivery_open,
+            domain
         ):
         """
         Tests that once the task's pod is completed,
@@ -154,10 +156,10 @@ class TestWatcher:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/results": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )
@@ -225,7 +227,8 @@ class TestWatcher:
             mocker.patch('helpers.actions.create_task'),
             mocker.patch('helpers.actions.watch_task_pod')
         ]
-        start(True)
+        with pytest.raises(CRDException):
+            start(True)
 
         for call in calls_to_assert:
             call.assert_not_called()
@@ -242,7 +245,8 @@ class TestWatcher:
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            delivery_open
+            delivery_open,
+            domain
         ):
         """
         Tests that a CRD with missing results fields will by default create a github delivery
@@ -263,10 +267,10 @@ class TestWatcher:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/results": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )

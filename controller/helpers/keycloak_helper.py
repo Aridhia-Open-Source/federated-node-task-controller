@@ -12,13 +12,12 @@ import logging
 from excpetions import KeycloakException
 from helpers.kubernetes_helper import KubernetesV1
 from helpers.request_helper import client as requests
-
+from const import KC_USER, KC_HOST
 
 logger = logging.getLogger('keycloak_helper')
 logger.setLevel(logging.INFO)
 
 
-ADMIN_USER = "admin"
 KEYCLOAK_CLIENT = "global"
 REALM = "FederatedNode"
 KC_HOST = os.getenv("KC_HOST")
@@ -49,7 +48,7 @@ def get_admin_token() -> str:
             'client_id': KEYCLOAK_CLIENT,
             'client_secret': get_keycloak_secret(),
             'grant_type': 'password',
-            'username': ADMIN_USER,
+            'username': KC_USER,
             'password': get_keycloak_admin_pass()
         },
         headers = {

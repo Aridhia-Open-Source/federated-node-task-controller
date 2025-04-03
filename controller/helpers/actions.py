@@ -1,120 +1,70 @@
-from copy import deepcopy
 import logging
-import json
-import re
-from math import exp
 
-from const import DOMAIN, MAX_RETRIES
+from excpetions import CRDException
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch
 )
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
 from helpers.task_helper import create_task, get_user_token
+from models.crd import Analytics
+
 
 logging.basicConfig()
 logger = logging.getLogger('actions')
 logger.setLevel(logging.INFO)
 
 
-def create_labels(crds:dict) -> dict:
-    """
-    Given the crd spec dictionary, creates a dictionary
-    to be used as a labels set. Trims each field to
-    64 chars as that's k8s limit
-    """
-    delivery = json.load(open("controller/delivery.json"))
-
-    labels = deepcopy(crds)
-    labels["dataset"] = "-".join(labels["dataset"].values())[:63]
-    labels.update(labels.pop("user"))
-    labels["repository"] = labels["source"]["repository"].replace("/", "-")[:63]
-    labels.pop("source")
-    if delivery.get("github"):
-        labels["repository_results"] = delivery["github"]["repository"].replace("/", "-")[:63]
-    else:
-        labels["results"] = delivery["other"].get("url") or delivery["other"]["auth_type"]
-    labels["image"] = re.sub(r'(\/|:)', '-', labels["image"])[:63]
-    return labels
-
-
-def sync_users(crds: dict, annotations:dict, user:dict):
+def sync_users(crds: Analytics, annotations:dict):
     """
     Ensures that the user is already in keycloak and associated
     with the gihub IdP
     """
-    labels = create_labels(crds["object"]["spec"])
-
     # should trigger the user check
     KubernetesV1Batch().create_helper_job(
-        f"link-user-{"".join(user.values())}",
+        f"link-user-{"".join(crds.user.values())}",
         script="init_container.sh",
         create_volumes=False,
-        labels=labels,
-        repository=crds["object"]["spec"]["source"].get("repository")
+        labels=crds.labels,
+        repository=crds.source["repository"]
     )
 
-    watch_user_pod(crds["object"]["metadata"]["name"], user, labels, annotations)
+    watch_user_pod(crds, annotations)
 
-def trigger_task(user:str, image:str, crd_name:str, proj_name:str, dataset:dict, annotations:dict):
+def trigger_task(crd: Analytics, annotations):
     """
     Common function to setup all the info necessary
     to send a FN API request, and the POST /tasks itself
     """
-    user_token = get_user_token(user)
-    logger.info("Creating task with image %s", image)
+    user_token = get_user_token(crd.user)
+    logger.info("Creating task with image %s", crd.image)
 
-    task_resp = create_task(
-        image,
-        crd_name,
-        proj_name,
-        dataset,
-        user_token
-    )
+    task_resp = create_task(crd, user_token)
 
-    annotations[f"{DOMAIN}/done"] = "true"
+    annotations[f"{crd.domain}/done"] = "true"
     if "task_id" in task_resp:
-        annotations[f"{DOMAIN}/task_id"] = str(task_resp["task_id"])
+        annotations[f"{crd.domain}/task_id"] = str(task_resp["task_id"])
     client = KubernetesCRD()
-    client.patch_crd_annotations(crd_name, annotations)
+    client.patch_crd_annotations(crd.name, annotations)
 
-def handle_results(user:str, crds:dict, crd_name:str, annotations:dict):
+def handle_results(crd: Analytics, annotations:dict):
     """
     Common function to handle a CRD last lifecycle step
     """
     # If we have already triggered a task, check if the pod has completed
     watch_task_pod(
-        crd_name,
-        crds["object"]["spec"],
-        annotations[f"{DOMAIN}/task_id"],
-        get_user_token(user),
+        crd,
+        annotations[f"{Analytics.domain}/task_id"],
+        get_user_token(crd.user),
         annotations
     )
 
-def create_retry_job(crd_name:str, annotations:dict):
+def create_retry_job(crd:Analytics):
     """
     Wrapper to create a job that updates the CRD
     with an increasing delay. It will retry up to
     MAX_RETRIES times.
     """
-    annotation_check = "tasks.federatednode.com/tries"
-    current_try = int(annotations.get(annotation_check, 0)) + 1
-
-    if current_try > MAX_RETRIES:
-        return
-    cooldown = int(exp(current_try))
-
-    cmd = f"sleep {cooldown} && " \
-        f"kubectl get analytics {crd_name} -o json |"\
-        f" jq '.metadata.annotations += {{\"{annotation_check}\": \"{current_try}\"}}' | "\
-        "kubectl replace -f-"
-
-    KubernetesV1Batch().create_bare_job(
-        f"update-annotation-{crd_name}",
-        command=cmd,
-        run=True,
-        labels={
-            "cooldown": f"{cooldown}s",
-            "crd": crd_name
-        },
-        image="alpine/k8s:1.29.4"
-    )
+    try:
+        KubernetesV1Batch().create_bare_job(**crd.prepare_update_job())
+    except CRDException:
+        pass

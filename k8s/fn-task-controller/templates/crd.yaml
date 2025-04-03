@@ -18,7 +18,6 @@ spec:
                 - image
                 - user
                 - project
-                - dataset
                 - source
               properties:
                 image:
@@ -41,6 +40,19 @@ spec:
                       type: integer
                     name:
                       type: string
+                env:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                outputs:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                inputs:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 source:
                   type: object
                   nullable: true

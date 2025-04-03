@@ -1,12 +1,14 @@
 import base64
+import json
 import os
 import pytest
 import responses
 from copy import deepcopy
 from kubernetes import client
-from unittest.mock import MagicMock, Mock
+from unittest import mock
+from unittest.mock import MagicMock, Mock, mock_open
 
-from const import DOMAIN
+from models.crd import Analytics
 
 def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
     """
@@ -24,12 +26,12 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
                     "username": "",
                     "idpId": udpid,
                 },
-                "image": "",
-                "project": "",
+                "image": "some/docker:tag",
+                "project": "project1",
                 "dataset": {
                     "id": ""
                 },
-                "source": {"repository": ""}
+                "source": {"repository": "org/repository"}
             }
         },
         "type" : type
@@ -60,6 +62,10 @@ def job_object_response():
             )
         )
     }
+
+@pytest.fixture
+def domain():
+    return Analytics.domain
 
 @pytest.fixture
 def crd_name():
@@ -96,21 +102,21 @@ def mock_crd(crd_name, user_idp_id):
 @pytest.fixture
 def mock_crd_user_synched(mock_crd):
     mock_crd['type'] = "MODIFIED"
-    mock_crd['object']['metadata']['annotations'][f"{DOMAIN}/user"] = "ok"
+    mock_crd['object']['metadata']['annotations'][f"{Analytics.domain}/user"] = "ok"
     return deepcopy(mock_crd)
 
 @pytest.fixture
 def mock_crd_task_done(mock_crd_user_synched):
     mock_crd_user_synched['object']['metadata']['annotations']\
-            [f"{DOMAIN}/done"] = "true"
+            [f"{Analytics.domain}/done"] = "true"
     mock_crd_user_synched['object']['metadata']['annotations']\
-                [f"{DOMAIN}/task_id"] = "1"
+                [f"{Analytics.domain}/task_id"] = "1"
     return deepcopy(mock_crd_user_synched)
 
 @pytest.fixture
 def mock_crd_done(mock_crd_task_done):
     mock_crd_task_done['object']['metadata']['annotations']\
-            [f"{DOMAIN}/results"] = "true"
+            [f"{Analytics.domain}/results"] = "true"
     return deepcopy(mock_crd_task_done)
 
 @pytest.fixture
@@ -269,6 +275,9 @@ def impersonate_request(keycloak_url, keycloak_realm):
         json={"refresh_token": "refresh_token"}
     )
 
-@pytest.fixture
-def delivery_open(mocker):
-    return mocker.patch('json.load', return_value={"github": {"repository": "org/repo"}})
+@pytest.fixture(autouse=True)
+def delivery_open(request, mocker):
+    file_contents = {"github": {"repository": "org/repo"}}
+    if getattr(request, "param", None):
+        file_contents = request.param
+    return mocker.patch("models.crd.open", mock_open(read_data=json.dumps(file_contents)))

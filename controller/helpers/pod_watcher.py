@@ -40,9 +40,7 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
     for pod in pod_watcher.stream(
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
-        label_selector=f"task_id={task_id}",
-        resource_version='',
-        watch=True
+        label_selector=f"task_id={task_id}"
     ):
         logger.info("Found pod! %s", pod["object"].metadata.name)
         match pod["object"].status.phase:
@@ -52,6 +50,7 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                 if git_info:
                     KubernetesV1Batch().create_helper_job(
                         name=f"task-{task_id}-results",
+                        script="push_to_github.sh",
                         task_id=task_id,
                         repository=git_info.get("repository"),
                         crd_name=crd.name

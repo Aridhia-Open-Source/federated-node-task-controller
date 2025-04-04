@@ -158,7 +158,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             self,
             name:str,
             run:bool=False,
-            script:str="push_to_github.sh",
+            script:str=None,
             labels:dict=None,
             command:str=None,
             image:str=None
@@ -175,15 +175,16 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
 
         if command:
             command = ["/bin/sh", "-c", command]
-        else:
+        elif script:
             command = ["/bin/sh", script]
 
         container = client.V1Container(
             name=name,
             image_pull_policy=PULL_POLICY,
-            image=image or f"{IMAGE}:{TAG}",
-            command=command
+            image=image or f"{IMAGE}:{TAG}"
         )
+        if command:
+            container.command = command
 
         metadata = client.V1ObjectMeta(
             name=name,
@@ -226,7 +227,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             task_id:str=None,
             repository="Federated-Node-Example-App",
             create_volumes:bool=True,
-            script:str="push_to_github.sh",
+            script:str=None,
             labels:dict | None=None,
             command:str=None,
             crd_name:str=None
@@ -266,7 +267,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),
             client.V1EnvVar(name="FULL_REPO", value=repository.replace("/", "-")),
-            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
+            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}" if create_volumes else f"/app/{name}"),
             client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(
                     name=f"{secret_name}",

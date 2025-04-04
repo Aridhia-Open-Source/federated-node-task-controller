@@ -6,7 +6,7 @@ environment variables
 import os
 
 TASK_NAMESPACE = os.getenv("TASK_NAMESPACE")
-NAMESPACE = os.getenv("NAMESPACE", "controller")
+NAMESPACE = os.getenv("NAMESPACE", "fn-controller")
 PUBLIC_URL = os.getenv("PUBLIC_URL")
 BACKEND_HOST = os.getenv("BACKEND_HOST")
 GIT_HOME = os.getenv("GIT_HOME")

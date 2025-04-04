@@ -140,7 +140,9 @@ class TestWatcher:
         ):
         """
         Tests that once the task's pod is completed,
-        a new github job pusher is created
+        a new github job pusher is created. In this case only
+        the CRD won't be patched by the controller itself,
+        but by the result job
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
@@ -152,17 +154,7 @@ class TestWatcher:
             )
             start(True)
 
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{domain}/user": "ok",
-                    f"{domain}/done": "true",
-                    f"{domain}/results": "true",
-                    f"{domain}/task_id": "1"
-                }
-            }]
-        )
+        k8s_client["create_namespaced_job_mock"].assert_called()
 
     def test_ignore_done_crd(
             self,
@@ -262,15 +254,3 @@ class TestWatcher:
             start(True)
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{domain}/user": "ok",
-                    f"{domain}/done": "true",
-                    f"{domain}/results": "true",
-                    f"{domain}/task_id": "1"
-                }
-            }]
-        )

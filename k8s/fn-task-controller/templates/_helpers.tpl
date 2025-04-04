@@ -63,6 +63,9 @@ Create the name of the service account to use
 {{- define "fn-task-controller.image" -}}
 {{- print "ghcr.io/aridhia-open-source/fn_task_controller" -}}
 {{- end }}
+{{- define "fn-task-controller.helper-image" -}}
+{{- print "ghcr.io/aridhia-open-source/fn_task_controller_helper" -}}
+{{- end }}
 {{- define "fn-task-controller.gitpath" -}}
 {{- print "/data/git" -}}
 {{- end }}

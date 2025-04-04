@@ -53,7 +53,8 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                     KubernetesV1Batch().create_helper_job(
                         name=f"task-{task_id}-results",
                         task_id=task_id,
-                        repository=git_info.get("repository")
+                        repository=git_info.get("repository"),
+                        crd_name=crd.name
                     )
                 elif other_info:
                     auth = {}
@@ -99,11 +100,11 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                             )
                         if not resp.ok:
                             raise PodWatcherException("Failed to deliver results")
+                    # Add results annotation to let the controller know
+                    # we already handled results
+                    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
                 else:
                     raise PodWatcherException("No suitable delivery options available")
-                # Add results annotation to let the controller know
-                # we already handled results
-                KubernetesCRD().patch_crd_annotations(crd.name, annotations)
                 break
             case "Failed":
                 raise KubernetesException(

@@ -12,7 +12,7 @@ data:
   MOUNT_PATH: {{ (.Values.storage.local).path }}
   PULL-POLICY: Always
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
-  IMAGE: {{ template "fn-task-controller.image" . }}
+  IMAGE: {{ template "fn-task-controller.helper-image" . }}
   PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}
 {{- if .Values.storage.azure }}
   AZURE_STORAGE_ENABLED: "true"

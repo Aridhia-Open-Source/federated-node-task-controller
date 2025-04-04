@@ -176,7 +176,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         if command:
             command = ["/bin/sh", "-c", command]
         else:
-            command = ["/bin/sh", f"/app/scripts/{script}"]
+            command = ["/bin/sh", script]
 
         container = client.V1Container(
             name=name,
@@ -228,7 +228,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             create_volumes:bool=True,
             script:str="push_to_github.sh",
             labels:dict | None=None,
-            command:str=None
+            command:str=None,
+            crd_name:str=None
         ):
         """
         Creates the job template and submits it to the cluster in the
@@ -258,6 +259,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             )
         ]
         env = [
+            client.V1EnvVar(name="DOMAIN", value=Analytics.domain),
+            client.V1EnvVar(name="CRD_NAME", value=crd_name),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),

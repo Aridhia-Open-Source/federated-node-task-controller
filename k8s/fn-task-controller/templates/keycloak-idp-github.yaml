@@ -30,7 +30,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: idp-initializer
-          image: "ghcr.io/aridhia-open-source/fn_task_controller_idp:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
           imagePullPolicy: Always
           envFrom:
             - configMapRef:

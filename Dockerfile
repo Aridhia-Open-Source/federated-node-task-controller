@@ -3,7 +3,6 @@ FROM python:3.12.2-alpine
 ARG AZCOPY_MAJ_VERSION=10
 
 COPY controller /app/controller
-COPY --chmod=755 scripts/*.sh /app/scripts/
 COPY Pipfile* /app
 
 WORKDIR /app

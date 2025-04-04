@@ -277,6 +277,8 @@ def impersonate_request(keycloak_url, keycloak_realm):
 
 @pytest.fixture(autouse=True)
 def delivery_open(request, mocker):
+    mocker.patch("helpers.task_helper.open", mock_open())
+    mocker.patch("helpers.pod_watcher.open", mock_open())
     file_contents = {"github": {"repository": "org/repo"}}
     if getattr(request, "param", None):
         file_contents = request.param

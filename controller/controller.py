@@ -78,6 +78,5 @@ def start(exit_on_tests=False):
             except Exception:
                 create_retry_job(crd)
                 logger.error("Unknown error: %s", traceback.format_exc())
-    except ProtocolError as pe:
+    except ProtocolError:
         logger.error("Connection expired. Restarting..")
-        logger.info(pe.with_traceback())

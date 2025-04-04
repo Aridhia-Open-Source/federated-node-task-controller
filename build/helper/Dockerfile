@@ -7,6 +7,8 @@ ARG USER_GID=1001
 RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
     && adduser -S "${USERNAME}" -G "${USERNAME}" -u "${USER_UID}"
 
+# Can't find venv-related files
+# hadolint ignore=SC1091
 RUN apk add --no-cache \
         'jq=~1.7' \
         'curl=~8.5' \

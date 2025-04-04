@@ -1,8 +1,14 @@
 # Releases Changelog
 
 ## 0.7.0
+### Bugfixes
 - Fixed an issue on non-microk8s cluster where helper jobs were lacking proper permissions. Added the same account name as the controller.
 - Increased timeout before removing a terminated helper job from 5s to 30s.
+- Fixed an issue where the controller would lose connection after 5 minutes on AKS clusters
+- Refactored the CRD approach so now it's a class, to centralize repeated operations
+- Removed `dataset` field in the CRD as required
+- Aggregated helper scripts in the new docker image `ghcr.io/aridhia-open-source/fn_task_controller_helper`
+
 
 ## 0.6.0
 - Changed the way the automatic delivery is performed. There is now only one choice, set as default path. Setting `delivery.github` or `delivery.other` will do so.

@@ -13,6 +13,11 @@ class BaseControllerException(Exception):
         self.reason = args[0]
         super().__init__(*args)
 
+class CRDException(BaseControllerException):
+    """
+    To be used in the keycloak helper
+    """
+
 class KeycloakException(BaseControllerException):
     """
     To be used in the keycloak helper

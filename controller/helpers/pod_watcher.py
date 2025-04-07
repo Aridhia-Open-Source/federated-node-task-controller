@@ -12,48 +12,48 @@ import subprocess
 from kubernetes.watch import Watch
 from kubernetes.client.models.v1_job_status import V1JobStatus
 
-from const import DOMAIN, TASK_NAMESPACE, NAMESPACE
+from const import TASK_NAMESPACE, NAMESPACE
 from excpetions import KubernetesException, PodWatcherException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
 from helpers.request_helper import client as requests
 from helpers.task_helper import get_results
+from models.crd import Analytics
 
 logging.basicConfig()
 logger = logging.getLogger('pod_watcher')
 logger.setLevel(logging.INFO)
 
 
-def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, annotations:dict):
+def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict):
     """
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    delivery = json.load(open("controller/delivery.json"))
     # results_path = crd_spec.get("results", {})
     # git_info = results_path.get("git", {})
     # other_info = results_path.get("other", {})
-    git_info = delivery.get("github", {})
-    other_info = delivery.get("other", {})
+    git_info = crd.delivery.get("github", {})
+    other_info = crd.delivery.get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
     pod_watcher = Watch()
 
     for pod in pod_watcher.stream(
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
-        label_selector=f"task_id={task_id}",
-        resource_version='',
-        watch=True
+        label_selector=f"task_id={task_id}"
     ):
         logger.info("Found pod! %s", pod["object"].metadata.name)
         match pod["object"].status.phase:
             case "Succeeded":
-                annotations[f"{DOMAIN}/results"] = "true"
+                annotations[f"{crd.domain}/results"] = "true"
                 fp = get_results(task_id, user_token)
                 if git_info:
                     KubernetesV1Batch().create_helper_job(
                         name=f"task-{task_id}-results",
+                        script="push_to_github.sh",
                         task_id=task_id,
-                        repository=git_info.get("repository")
+                        repository=git_info.get("repository"),
+                        crd_name=crd.name
                     )
                 elif other_info:
                     auth = {}
@@ -99,11 +99,11 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
                             )
                         if not resp.ok:
                             raise PodWatcherException("Failed to deliver results")
+                    # Add results annotation to let the controller know
+                    # we already handled results
+                    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
                 else:
                     raise PodWatcherException("No suitable delivery options available")
-                # Add results annotation to let the controller know
-                # we already handled results
-                KubernetesCRD().patch_crd_annotations(crd_name, annotations)
                 break
             case "Failed":
                 raise KubernetesException(
@@ -120,13 +120,13 @@ def watch_task_pod(crd_name:str, crd_spec:dict, task_id:str, user_token:str, ann
     pod_watcher.stop()
 
 
-def watch_user_pod(crd_name:str, user:str, labels:dict, annotations:dict):
+def watch_user_pod(crd: Analytics, annotations:dict):
     """
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
     pod_watcher = Watch()
-    ls = ",".join(f"{lab[0]}={lab[1]}" for lab in labels.items())
+    ls = ",".join(f"{lab[0]}={lab[1]}" for lab in crd.labels.items())
     for job in pod_watcher.stream(
         KubernetesV1Batch().list_namespaced_job,
         NAMESPACE,
@@ -137,10 +137,10 @@ def watch_user_pod(crd_name:str, user:str, labels:dict, annotations:dict):
         logger.info("Found job! %s", job["object"].metadata.name)
         match get_job_status(job["object"].status):
             case "Succeeded":
-                annotations[f"{DOMAIN}/user"] = "ok"
+                annotations[f"{crd.domain}/user"] = "ok"
                 # Add results annotation to let the controller know
                 # we already handled the user
-                KubernetesCRD().patch_crd_annotations(crd_name, annotations)
+                KubernetesCRD().patch_crd_annotations(crd.name, annotations)
                 break
             case "Failed":
                 raise KubernetesException(
@@ -153,7 +153,7 @@ def watch_user_pod(crd_name:str, user:str, labels:dict, annotations:dict):
                     get_job_status( job["object"].status)
                 )
 
-    logger.info("Stopping %s job watcher", " ".join(user.values()))
+    logger.info("Stopping %s job watcher", " ".join(crd.user.values()))
     pod_watcher.stop()
 
 
@@ -166,5 +166,8 @@ def get_job_status(status:V1JobStatus) -> str:
     for state in possible_status:
         if getattr(status, state.lower(), False):
             return state
+    # Mostly for aks clusters
+    if getattr(getattr(status, "uncounted_terminated_pods", V1JobStatus), "succeeded", []):
+        return "Succeeded"
     # Let's assume it's failed if the status is not on what we expect
     return "Failed"

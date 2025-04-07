@@ -49,11 +49,6 @@ spec:
           - configMapRef:
               name: controller-config
         env:
-          - name: KEYCLOAK_ADMIN_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: kc-secrets
-                key: KEYCLOAK_ADMIN_PASSWORD
           - name: KC_USER
             valueFrom:
               configMapKeyRef:

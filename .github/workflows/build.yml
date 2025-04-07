@@ -131,7 +131,7 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.update.outputs.tag }}
-      IMAGE: fn_task_controller_idp
+      IMAGE: fn_task_controller_helper
       BUILD_PATH: build/helper
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}

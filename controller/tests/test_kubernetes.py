@@ -83,9 +83,7 @@ class TestKubernetesHelper:
             **{
                 "name": f"update-annotation-{crd_name}",
                 "command": "sleep 2 && " \
-                        f"kubectl get analytics {crd_name} -o json |"\
-                        " jq '.metadata.annotations += {\"tasks.federatednode.com/tries\": \"1\"}' | "\
-                        "kubectl replace -f-",
+                    f"kubectl annotate --overwrite analytics {crd_name} tasks.federatednode.com/tries=1",
                 "run": True,
                 "labels": {
                     "cooldown": "2s",
@@ -93,6 +91,28 @@ class TestKubernetesHelper:
                 },
                 "image": "alpine/k8s:1.29.4"}
         )
+
+    @mock.patch('controller.sync_users')
+    @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')
+    def test_on_crd_exceptions_doesnt_create_retry_job_if_another_is_running(
+            self,
+            create_bare_job_mock,
+            sync_mock,
+            k8s_client,
+            k8s_watch_mock,
+            mock_job_watch,
+        ):
+        """
+        When an exception occurs during the CRD lifecycle
+        it should be put back in a retry queue with an
+        exponential cooldown. This should not be done, if another
+        update annotation job is in progress for the same CRD
+        """
+        sync_mock.side_effect=KubernetesException('Error')
+        k8s_client["list_namespaced_pod"].return_value.items = [mock.Mock()]
+        start(True)
+
+        create_bare_job_mock.assert_not_called()
 
     @mock.patch('controller.sync_users')
     @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')

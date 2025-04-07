@@ -1,8 +1,10 @@
 import logging
 
+from const import NAMESPACE
 from excpetions import CRDException
 from helpers.kubernetes_helper import (
-    KubernetesCRD, KubernetesV1Batch
+    KubernetesCRD, KubernetesV1Batch,
+    KubernetesV1
 )
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
 from helpers.task_helper import create_task, get_user_token
@@ -23,6 +25,7 @@ def sync_users(crds: Analytics, annotations:dict):
     KubernetesV1Batch().create_helper_job(
         f"link-user-{"".join(crds.user.values())}",
         create_volumes=False,
+        script="init_container.sh",
         labels=crds.labels,
         repository=crds.source["repository"]
     )
@@ -63,7 +66,19 @@ def create_retry_job(crd:Analytics):
     with an increasing delay. It will retry up to
     MAX_RETRIES times.
     """
+    batch_client = KubernetesV1Batch()
+    client = KubernetesV1()
     try:
-        KubernetesV1Batch().create_bare_job(**crd.prepare_update_job())
+        # existing_updates = batch_client.list_namespaced_job(
+        existing_updates = client.list_namespaced_pod(
+            NAMESPACE,
+            label_selector=f"crd={crd.name}",
+            field_selector="status.phase=Pending,status.phase=Running"
+        )
+        if existing_updates.items:
+            logging.info("Anoter annotation update is in progress..")
+            return
+
+        batch_client.create_bare_job(**crd.prepare_update_job())
     except CRDException:
         pass

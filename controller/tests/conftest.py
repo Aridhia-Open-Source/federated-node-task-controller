@@ -176,6 +176,10 @@ def v1_mock(mocker, job_spec_mock, encoded_bearer):
         "list_namespaced_secret": mocker.patch(
             'helpers.pod_watcher.KubernetesV1.list_namespaced_secret',
             return_value=Mock(items=[Mock(data={"auth": encoded_bearer})])
+        ),
+        "list_namespaced_pod": mocker.patch(
+            'helpers.pod_watcher.KubernetesV1.list_namespaced_pod',
+            return_value=Mock(items=[])
         )
     }
 

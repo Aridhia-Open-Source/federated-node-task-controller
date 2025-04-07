@@ -167,7 +167,7 @@ def get_job_status(status:V1JobStatus) -> str:
         if getattr(status, state.lower(), False):
             return state
     # Mostly for aks clusters
-    if getattr(getattr(status, "uncounted_terminated_pods"), "succeeded"):
+    if getattr(getattr(status, "uncounted_terminated_pods", V1JobStatus), "succeeded", []):
         return "Succeeded"
     # Let's assume it's failed if the status is not on what we expect
     return "Failed"

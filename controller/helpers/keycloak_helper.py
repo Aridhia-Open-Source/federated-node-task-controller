@@ -86,7 +86,7 @@ def get_user(email:str=None, username:str=None, idpId:str=None) -> dict:
     if len(user_response.json()):
         return user_response.json()[0]
 
-    raise KeycloakException(f"User {email} not found")
+    raise KeycloakException(f"User {email or idpId or username} not found")
 
 
 def impersonate_user(user_id:str) -> str:

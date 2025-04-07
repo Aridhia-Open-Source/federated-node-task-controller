@@ -108,9 +108,7 @@ class Analytics:
         cooldown = int(exp(current_try))
 
         cmd = f"sleep {cooldown} && " \
-            f"kubectl get analytics {self.name} -o json |"\
-            f" jq '.metadata.annotations += {{\"{annotation_check}\": \"{current_try}\"}}' | "\
-            "kubectl replace -f-"
+            f"kubectl annotate --overwrite analytics {self.name} {annotation_check}={current_try}"
 
         return {
             "name": f"update-annotation-{self.name}",

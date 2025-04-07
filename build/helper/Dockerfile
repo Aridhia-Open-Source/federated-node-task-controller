@@ -7,6 +7,7 @@ ARG USER_GID=1001
 RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
     && adduser -S "${USERNAME}" -G "${USERNAME}" -u "${USER_UID}"
 
+WORKDIR /apps
 # Can't find venv-related files
 # hadolint ignore=SC1091
 RUN apk add --no-cache \
@@ -16,10 +17,10 @@ RUN apk add --no-cache \
         'github-cli=~2.39' \
     && python3 -m venv venv \
     && . venv/bin/activate \
-    && pip install --no-cache-dir "requests==2.32.3"
+    && pip install --no-cache-dir "requests==2.32.3" \
+    && chown "${USER_UID}:${USER_GID}" /apps
 
-COPY . /app/
-WORKDIR /app
+COPY . /apps/
 USER ${USER_UID}
 
 ENTRYPOINT [ "/apps/venv/bin/python3", "idp-init.py" ]

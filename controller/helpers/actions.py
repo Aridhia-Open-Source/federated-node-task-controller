@@ -25,7 +25,7 @@ def sync_users(crds: Analytics, annotations:dict):
     KubernetesV1Batch().create_helper_job(
         f"link-user-{"".join(crds.user.values())}",
         create_volumes=False,
-        script="init_container.sh",
+        script="sync_user.sh",
         labels=crds.labels,
         repository=crds.source["repository"]
     )

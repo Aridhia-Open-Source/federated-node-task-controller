@@ -66,11 +66,8 @@ def create_retry_job(crd:Analytics):
     with an increasing delay. It will retry up to
     MAX_RETRIES times.
     """
-    batch_client = KubernetesV1Batch()
-    client = KubernetesV1()
     try:
-        # existing_updates = batch_client.list_namespaced_job(
-        existing_updates = client.list_namespaced_pod(
+        existing_updates = KubernetesV1().list_namespaced_pod(
             NAMESPACE,
             label_selector=f"crd={crd.name}",
             field_selector="status.phase=Pending,status.phase=Running"
@@ -79,6 +76,6 @@ def create_retry_job(crd:Analytics):
             logging.info("Anoter annotation update is in progress..")
             return
 
-        batch_client.create_bare_job(**crd.prepare_update_job())
+        KubernetesV1Batch().create_bare_job(**crd.prepare_update_job())
     except CRDException:
         pass

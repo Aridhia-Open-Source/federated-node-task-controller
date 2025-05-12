@@ -1,18 +1,7 @@
-## CM + Job template for Identity Provider initialization
+## Job template for Identity Provider initialization
 # on keycloak with GitHub as a partner.
 # If already set, it changes nothing
 
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: idp-init-config
-  namespace: {{ include "controller_ns" . }}
-  annotations:
-    helm.sh/hook-delete-policy: hook-succeeded
-data:
-  config.py: |-
-{{ .Files.Get "scripts/idp-init.py" | indent 4 }}
----
 {{- if (.Values.idp).github }}
 apiVersion: batch/v1
 kind: Job
@@ -20,8 +9,8 @@ metadata:
   name: idp-initializer
   namespace: {{ include "controller_ns" . }}
   annotations:
+    helm.sh/hook: post-install, post-upgrade
     helm.sh/hook-delete-policy: hook-succeeded
-    helm.sh/hook-weight: "2"
 spec:
   template:
     metadata:
@@ -30,8 +19,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: idp-initializer
-          image: "python:3.12.1-slim-bullseye"
-          command: ["/bin/sh", "-c", "python3 -m pip install requests && python3 /scripts/config.py" ]
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: controller-config
@@ -60,14 +49,4 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.idp.github.secret_name }}
                   key: {{ .Values.idp.github.secret_key }}
-          volumeMounts:
-            - name: config
-              mountPath: /scripts/
-      volumes:
-      - name: config
-        configMap:
-          name: idp-init-config
-          items:
-          - key: config.py
-            path: config.py
 {{- end }}

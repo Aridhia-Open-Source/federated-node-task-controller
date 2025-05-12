@@ -1,7 +1,8 @@
+import pytest
 import responses
 from unittest import mock
-from const import DOMAIN
 from controller import start
+from excpetions import CRDException
 
 
 class TestKeycloakRequests:
@@ -47,7 +48,8 @@ class TestKeycloakRequests:
             k8s_watch_mock,
             admin_token_request,
             impersonate_request,
-            fn_task_request
+            fn_task_request,
+            domain
         ):
         """
         Tests that the task request is sent to the FN
@@ -73,9 +75,9 @@ class TestKeycloakRequests:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )
@@ -91,7 +93,8 @@ class TestKeycloakRequests:
             k8s_watch_mock,
             admin_token_request,
             impersonate_request,
-            fn_task_request
+            fn_task_request,
+            domain
         ):
         """
         Tests that the task request is sent to the FN
@@ -117,9 +120,9 @@ class TestKeycloakRequests:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )
@@ -171,7 +174,8 @@ class TestKeycloakRequests:
         mock_crd_user_synched['object']['spec']['user'] = {}
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
 
-        start(True)
+        with pytest.raises(CRDException):
+            start(True)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
         create_task_mock.assert_not_called()

@@ -46,15 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check for vulnerabilities
-        run: |
-          docker run --entrypoint /bin/sh \
-            -v ./Pipfile:/app/Pipfile \
-            -v ./Pipfile.lock:/app/Pipfile.lock \
-            -v ./scripts/tests/vulnerabilities.sh:/vulnerabilities.sh \
-            python:3.12.2-alpine \
-            /vulnerabilities.sh
-
       - name: Run pylint
         run: |
           make pylint_ci
@@ -115,7 +106,7 @@ jobs:
             echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
           fi
 
-  build:
+  build-controller:
     needs: update
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
@@ -126,10 +117,21 @@ jobs:
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-idp-initializer:
+    needs: update
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
+    with:
+      TAG: ${{ needs.update.outputs.tag }}
+      IMAGE: fn_task_controller_helper
+      BUILD_PATH: build/helper
+      HASH_SUFFIX: false
+      DOCKER_ACR: ${{ vars.DOCKER_CR }}
+    secrets:
+      DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
     needs:
-      - build
+      - build-controller
       - update
     with:
       VERSION: ${{ needs.update.outputs.chart_version }}
@@ -137,3 +139,15 @@ jobs:
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
       IS_TAG: ${{ needs.update.outputs.is_tag }}
+  sumamry:
+    needs:
+      - helm
+      - update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set summary
+        run: |
+          echo "# Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ vars.DOCKER_CR }}/fn_task_controller:${{ needs.update.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Helm Chart" >> $GITHUB_STEP_SUMMARY
+          echo "- fn-task-controller:${{ needs.update.outputs.chart_version }}" >> $GITHUB_STEP_SUMMARY

@@ -1,11 +1,11 @@
-import os
+import pytest
 import responses
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from unittest.mock import mock_open
 
 from controller import start
-from const import DOMAIN
+from excpetions import CRDException
 
 
 class TestWatcher:
@@ -20,14 +20,13 @@ class TestWatcher:
             "tasks.federatednode.com": "fn-controller"
         }
 
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     def test_sync_user(
         self,
-        open_mock,
         k8s_client,
         k8s_watch_mock,
         mock_job_watch,
-        delivery_open
+        delivery_open,
+        domain
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -38,7 +37,7 @@ class TestWatcher:
             'tasks.federatednode.com', 'v1', 'analytics', 'crd1',
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok"
+                    f"{domain}/user": "ok"
                 }
             }]
         )
@@ -48,7 +47,8 @@ class TestWatcher:
         self,
         wup_mock,
         k8s_client,
-        k8s_watch_mock
+        k8s_watch_mock,
+        delivery_open
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -67,7 +67,8 @@ class TestWatcher:
             fn_task_request,
             crd_name,
             k8s_client,
-            k8s_watch_mock
+            k8s_watch_mock,
+            domain
         ):
         """
         Tests that the task request is sent to the FN
@@ -88,9 +89,9 @@ class TestWatcher:
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
                 {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/task_id": "1"
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/task_id": "1"
                 }
             }]
         )
@@ -134,11 +135,14 @@ class TestWatcher:
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            delivery_open
+            delivery_open,
+            domain
         ):
         """
         Tests that once the task's pod is completed,
-        a new github job pusher is created
+        a new github job pusher is created. In this case only
+        the CRD won't be patched by the controller itself,
+        but by the result job
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
@@ -150,17 +154,7 @@ class TestWatcher:
             )
             start(True)
 
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
-                }
-            }]
-        )
+        k8s_client["create_namespaced_job_mock"].assert_called()
 
     def test_ignore_done_crd(
             self,
@@ -225,7 +219,8 @@ class TestWatcher:
             mocker.patch('helpers.actions.create_task'),
             mocker.patch('helpers.actions.watch_task_pod')
         ]
-        start(True)
+        with pytest.raises(CRDException):
+            start(True)
 
         for call in calls_to_assert:
             call.assert_not_called()
@@ -242,7 +237,8 @@ class TestWatcher:
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            delivery_open
+            delivery_open,
+            domain
         ):
         """
         Tests that a CRD with missing results fields will by default create a github delivery
@@ -259,14 +255,32 @@ class TestWatcher:
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
 
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{DOMAIN}/user": "ok",
-                    f"{DOMAIN}/done": "true",
-                    f"{DOMAIN}/results": "true",
-                    f"{DOMAIN}/task_id": "1"
-                }
-            }]
-        )
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('controller.create_retry_job')
+    @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
+    def test_watch_timeouts(
+            self,
+            create_retry_job_mock,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            mock_crd_task_done,
+            mock_pod_watch
+        ):
+        """
+        Tests that a CRD with an incorrect task_id (due to the pod manually deleted)
+        raises an exception instead of hanging
+        """
+        import time
+
+        def mock_stream(*args, **kwargs):
+            yield from []
+            time.sleep(kwargs.get('timeout_seconds', 1) + 0.5)
+
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
+        start(True)
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+        create_retry_job_mock.assert_called()

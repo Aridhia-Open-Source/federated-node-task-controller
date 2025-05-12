@@ -39,7 +39,8 @@ gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
     fi
 
     mkdir -p "results/${TASK_ID}"
-    mv ../*.tar.gz "results/${TASK_ID}/${TASK_ID}.tar.gz"
+
+    mv ../*-"${TASK_ID}"-results.tar.gz "results/${TASK_ID}/${TASK_ID}.tar.gz"
 
     git add .
     git commit -am "${TASK_ID} Results"
@@ -49,3 +50,9 @@ gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
 )
 
 rm -rf "${REPO_FOLDER}"
+
+echo "Patching the CRD"
+echo "kubectl annotate \"at/$CRD_NAME\" \"$DOMAIN/results\"=true"
+kubectl annotate "at/$CRD_NAME" "$DOMAIN/results"=true
+sleep 60
+echo "Completed"

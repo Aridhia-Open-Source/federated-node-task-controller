@@ -28,7 +28,7 @@ storage:
 
 resources:
   limits:
-    cpu: 2000m
+    cpu: 200m
     memory: 1Gi
 
 idp:

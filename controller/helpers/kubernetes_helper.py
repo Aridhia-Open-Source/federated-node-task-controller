@@ -16,9 +16,10 @@ from kubernetes.client.exceptions import ApiException
 
 from excpetions import KubernetesException
 from const import (
-    DOMAIN, NAMESPACE, IMAGE, MOUNT_PATH,
+    NAMESPACE, IMAGE, MOUNT_PATH,
     PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
 )
+from models.crd import Analytics
 
 logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
@@ -29,7 +30,7 @@ class BaseK8s:
     Base k8s client to handle credentials for child classes
     """
     base_label = {
-        f"{DOMAIN}": "fn-controller"
+        f"{Analytics.domain}": "fn-controller"
     }
     def __init__(self, **kwargs):
         """
@@ -62,7 +63,7 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
         # Patch for the client library which somehow doesn't do it itself for the patch
         self.api_client.set_default_header('Content-Type', 'application/json-patch+json')
         self.patch_cluster_custom_object(
-            DOMAIN, "v1", "analytics", name,
+            Analytics.domain, "v1", "analytics", name,
             [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
         )
         logger.info("CRD patched")
@@ -157,7 +158,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             self,
             name:str,
             run:bool=False,
-            script:str="push_to_github.sh",
+            script:str=None,
             labels:dict=None,
             command:str=None,
             image:str=None
@@ -174,15 +175,16 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
 
         if command:
             command = ["/bin/sh", "-c", command]
-        else:
-            command = ["/bin/sh", f"/app/scripts/{script}"]
+        elif script:
+            command = ["/bin/sh", script]
 
         container = client.V1Container(
             name=name,
             image_pull_policy=PULL_POLICY,
-            image=image or f"{IMAGE}:{TAG}",
-            command=command
+            image=image or f"{IMAGE}:{TAG}"
         )
+        if command:
+            container.command = command
 
         metadata = client.V1ObjectMeta(
             name=name,
@@ -191,7 +193,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         )
         specs = client.V1PodSpec(
             containers=[container],
-            restart_policy="OnFailure"
+            restart_policy="OnFailure",
+            service_account_name="analytics-operator"
         )
         template = client.V1JobTemplateSpec(
             metadata=metadata,
@@ -199,7 +202,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         )
         specs = client.V1JobSpec(
             template=template,
-            ttl_seconds_after_finished=5
+            ttl_seconds_after_finished=30
         )
         body = client.V1Job(
             api_version='batch/v1',
@@ -224,9 +227,10 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             task_id:str=None,
             repository="Federated-Node-Example-App",
             create_volumes:bool=True,
-            script:str="push_to_github.sh",
+            script:str=None,
             labels:dict | None=None,
-            command:str=None
+            command:str=None,
+            crd_name:str=None
         ):
         """
         Creates the job template and submits it to the cluster in the
@@ -256,12 +260,14 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             )
         ]
         env = [
+            client.V1EnvVar(name="DOMAIN", value=Analytics.domain),
+            client.V1EnvVar(name="CRD_NAME", value=crd_name),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),
             client.V1EnvVar(name="FULL_REPO", value=repository.replace("/", "-")),
-            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}"),
+            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}" if create_volumes else f"/apps/{name}"),
             client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(
                     name=f"{secret_name}",

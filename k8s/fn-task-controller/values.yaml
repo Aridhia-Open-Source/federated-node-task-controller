@@ -11,16 +11,16 @@ namespaces:
 
 storage:
   size: 1Gi
-  azure: {}
+  azure:
     # secretName:
     # storageAccountName:
     # storageAccountKey:
     # shareName:
-  nfs: {}
+  nfs:
     # provisioner:
     # url:
     # path:
-  local: {}
+  local:
     # Local storage that will be shared with the backend
     # path:
     # Local storage that will be shared with the db
@@ -28,7 +28,7 @@ storage:
 
 resources:
   limits:
-    cpu: 2000m
+    cpu: 200m
     memory: 1Gi
 
 idp:
@@ -38,6 +38,13 @@ idp:
     clientid_key:
 
 global:
-  taskReview: true
+  taskReview: false
   # host:
   # orgAndRepo:
+
+delivery:
+  github: {}
+    # repository:
+  other: {}
+    # url
+    # auth_type

@@ -1,12 +1,13 @@
 import base64
+import json
 import os
 import pytest
 import responses
 from copy import deepcopy
 from kubernetes import client
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, mock_open
 
-from const import DOMAIN
+from models.crd import Analytics
 
 def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
     """
@@ -24,13 +25,12 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
                     "username": "",
                     "idpId": udpid,
                 },
-                "image": "",
-                "project": "",
+                "image": "some/docker:tag",
+                "project": "project1",
                 "dataset": {
                     "id": ""
                 },
-                "source": {"repository": ""},
-                "results": {"git": {"repository": ""}},
+                "source": {"repository": "org/repository"}
             }
         },
         "type" : type
@@ -61,6 +61,10 @@ def job_object_response():
             )
         )
     }
+
+@pytest.fixture
+def domain():
+    return Analytics.domain
 
 @pytest.fixture
 def crd_name():
@@ -97,21 +101,45 @@ def mock_crd(crd_name, user_idp_id):
 @pytest.fixture
 def mock_crd_user_synched(mock_crd):
     mock_crd['type'] = "MODIFIED"
-    mock_crd['object']['metadata']['annotations'][f"{DOMAIN}/user"] = "ok"
+    mock_crd['object']['metadata']['annotations'][f"{Analytics.domain}/user"] = "ok"
     return deepcopy(mock_crd)
 
 @pytest.fixture
 def mock_crd_task_done(mock_crd_user_synched):
     mock_crd_user_synched['object']['metadata']['annotations']\
-            [f"{DOMAIN}/done"] = "true"
+            [f"{Analytics.domain}/done"] = "true"
     mock_crd_user_synched['object']['metadata']['annotations']\
-                [f"{DOMAIN}/task_id"] = "1"
+                [f"{Analytics.domain}/task_id"] = "1"
     return deepcopy(mock_crd_user_synched)
 
 @pytest.fixture
 def mock_crd_done(mock_crd_task_done):
     mock_crd_task_done['object']['metadata']['annotations']\
-            [f"{DOMAIN}/results"] = "true"
+            [f"{Analytics.domain}/results"] = "true"
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_azcopy_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth_type": "AzCopy"
+    }}
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_api_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth_type": "Bearer"
+    }}
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_api_basic_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth_type": "Basic"
+    }}
     return deepcopy(mock_crd_task_done)
 
 @pytest.fixture
@@ -171,6 +199,10 @@ def v1_mock(mocker, job_spec_mock, encoded_bearer):
         "list_namespaced_secret": mocker.patch(
             'helpers.pod_watcher.KubernetesV1.list_namespaced_secret',
             return_value=Mock(items=[Mock(data={"auth": encoded_bearer})])
+        ),
+        "list_namespaced_pod": mocker.patch(
+            'helpers.pod_watcher.KubernetesV1.list_namespaced_pod',
+            return_value=Mock(items=[])
         )
     }
 
@@ -271,6 +303,15 @@ def impersonate_request(keycloak_url, keycloak_realm):
         status=200,
         json={"refresh_token": "refresh_token"}
     )
+
+@pytest.fixture(autouse=True)
+def delivery_open(request, mocker):
+    mocker.patch("helpers.task_helper.open", mock_open())
+    mocker.patch("helpers.pod_watcher.open", mock_open())
+    file_contents = {"github": {"repository": "org/repo"}}
+    if getattr(request, "param", None):
+        file_contents = request.param
+    return mocker.patch("models.crd.open", mock_open(read_data=json.dumps(file_contents)))
 
 @pytest.fixture
 def review_env(monkeypatch):

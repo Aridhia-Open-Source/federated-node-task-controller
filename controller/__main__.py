@@ -7,4 +7,5 @@ from .controller import start
 print("Starting the controller")
 
 if __name__ == "__main__":
-    start()
+    while True:
+        start()

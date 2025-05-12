@@ -115,7 +115,7 @@ jobs:
             echo "TAG=${TAG}" >> ${GITHUB_OUTPUT}
           fi
 
-  build:
+  build-controller:
     needs: update
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
@@ -126,10 +126,21 @@ jobs:
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-idp-initializer:
+    needs: update
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
+    with:
+      TAG: ${{ needs.update.outputs.tag }}
+      IMAGE: fn_task_controller_helper
+      BUILD_PATH: build/helper
+      HASH_SUFFIX: false
+      DOCKER_ACR: ${{ vars.DOCKER_CR }}
+    secrets:
+      DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   helm:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
     needs:
-      - build
+      - build-controller
       - update
     with:
       VERSION: ${{ needs.update.outputs.chart_version }}

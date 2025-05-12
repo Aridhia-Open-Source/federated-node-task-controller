@@ -25,6 +25,12 @@ spec:
         - name: git
           persistentVolumeClaim:
             claimName: controller-pv-volclaim
+        - name: destinations
+          configMap:
+            name: controller-delivery-config
+            items:
+            - key: delivery.json
+              path: delivery.json
       initContainers:
         - name: storage-init
           image: {{ include "fn-alpine" . }}
@@ -33,7 +39,7 @@ spec:
             - -c
             - mkdir -p /mnt/storage/controller
           volumeMounts:
-            - name: respv
+            - name: git
               mountPath: /mnt/storage
       containers:
       - name: analytics-operator
@@ -43,11 +49,6 @@ spec:
           - configMapRef:
               name: controller-config
         env:
-          - name: KEYCLOAK_ADMIN_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: kc-secrets
-                key: KEYCLOAK_ADMIN_PASSWORD
           - name: KC_USER
             valueFrom:
               configMapKeyRef:
@@ -61,3 +62,6 @@ spec:
           - name: git
             mountPath: {{ template "fn-task-controller.gitpath" . }}
             subPath: controller
+          - name: destinations
+            mountPath: /app/controller/delivery.json
+            subPath: delivery.json

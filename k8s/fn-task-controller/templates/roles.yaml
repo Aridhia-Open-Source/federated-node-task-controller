@@ -29,6 +29,21 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: analytics-backend-operator
+subjects:
+- kind: ServiceAccount
+  name: analytics-operator
+  namespace: {{ include "controller_ns" . }}
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: backend-role
+  apiGroup: rbac.authorization.k8s.io
+---
+
 apiVersion: v1
 kind: ServiceAccount
 metadata:

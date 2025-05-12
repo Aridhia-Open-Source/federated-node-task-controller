@@ -10,7 +10,7 @@ REPOSITORY = os.getenv('REPOSITORY')
 
 if not REPOSITORY:
     print("REPOSITORY name missing. Skipping IdP setup")
-    sys.exit(0)
+    sys.exit(1)
 
 # Login as admin
 admin_response = requests.post(
@@ -22,7 +22,7 @@ admin_response = requests.post(
         'grant_type':'password',
         'scope':'openid',
         'username':'admin',
-        'password':KEYCLOAK_PASS,
+        'password': KEYCLOAK_PASS,
         'client_id':'admin-cli'
     }
 )

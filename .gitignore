@@ -10,3 +10,4 @@ k8s/fn-task-controller/*.values.yaml
 artifacts/*
 .coverage
 **/__pycache__
+controller/delivery.json

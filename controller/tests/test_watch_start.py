@@ -254,3 +254,34 @@ class TestWatcher:
             start(True)
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('controller.create_retry_job')
+    @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
+    def test_watch_timeouts(
+            self,
+            create_retry_job_mock,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            mock_crd_task_done,
+            mock_pod_watch
+        ):
+        """
+        Tests that a CRD with an incorrect task_id (due to the pod manually deleted)
+        raises an exception instead of hanging
+        """
+        import time
+
+        def mock_stream(*args, **kwargs):
+            yield from []
+            # Optionally, you could simulate a short delay to ensure the timeout is reached
+            time.sleep(kwargs.get('timeout_seconds', 1) + 0.5)
+
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
+        start(True)
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+        create_retry_job_mock.assert_called()

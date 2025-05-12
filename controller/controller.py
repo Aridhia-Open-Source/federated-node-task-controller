@@ -9,7 +9,6 @@ The lifecycle is documented through labels:
     - done: true        -> All done, results pushed successfully
     - tries: <1:5>      -> There is a max of 5 retries with exponential waiting times
 """
-import os
 from copy import deepcopy
 import logging
 import traceback

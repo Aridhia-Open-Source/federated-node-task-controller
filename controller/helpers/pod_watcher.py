@@ -6,7 +6,6 @@ Collection of job and pod watchers.
 
 import base64
 import logging
-import json
 import re
 import subprocess
 from kubernetes.watch import Watch

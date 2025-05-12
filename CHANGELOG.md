@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 0.8.0
+
+
 ## 0.7.0
 ### Bugfixes
 - Fixed an issue on non-microk8s cluster where helper jobs were lacking proper permissions. Added the same account name as the controller.

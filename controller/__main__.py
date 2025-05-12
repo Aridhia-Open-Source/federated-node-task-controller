@@ -1,6 +1,7 @@
 """
 Entrypoint for the FNTC
 """
+
 from .controller import start
 
 print("Starting the controller")

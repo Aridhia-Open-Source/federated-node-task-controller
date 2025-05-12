@@ -258,15 +258,13 @@ def mock_pod_watch(mocker, k8s_client, encoded_bearer):
 
 @pytest.fixture
 def mock_job_watch(mocker, k8s_client):
-    return {
-        "batch": mocker.patch(
-            'helpers.pod_watcher.KubernetesV1Batch',
-        ),
-        "watch": mocker.patch(
-           'helpers.pod_watcher.Watch',
-            return_value=Mock(stream=Mock(return_value=[job_object_response()]))
-        )
-    }
+    mocker.patch(
+        'helpers.pod_watcher.KubernetesV1Batch',
+    )
+    mocker.patch(
+        'helpers.pod_watcher.Watch',
+        return_value=Mock(stream=Mock(return_value=[job_object_response()]))
+    )
 
 @pytest.fixture
 def fn_task_request(backend_url):

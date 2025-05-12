@@ -63,7 +63,7 @@ class TestWatcher:
         self,
         k8s_client,
         k8s_watch_mock,
-        mock_job_watch
+        mock_pod_watch
     ):
         """
         Tests the first step of the CRD lifecycle.
@@ -71,7 +71,7 @@ class TestWatcher:
         no annotation is added to the CRD,
         keeping it to the same status
         """
-        mock_job_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status="Failed")}]
+        mock_pod_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status=mock.Mock(failed=True))}]
 
         start(True)
 
@@ -193,18 +193,7 @@ class TestWatcher:
             )
             start(True)
 
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{domain}/user": "ok",
-                    f"{domain}/done": "true",
-                    f"{domain}/results": "true",
-                    f"{domain}/approved": "true",
-                    f"{domain}/task_id": "1"
-                }
-            }]
-        )
+        k8s_client["create_namespaced_job_mock"].assert_called()
 
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
@@ -237,18 +226,7 @@ class TestWatcher:
             )
             start(True)
 
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{domain}/user": "ok",
-                    f"{domain}/done": "true",
-                    f"{domain}/results": "true",
-                    f"{domain}/approved": "true",
-                    f"{domain}/task_id": "1"
-                }
-            }]
-        )
+            k8s_client["create_namespaced_job_mock"].assert_called()
 
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")

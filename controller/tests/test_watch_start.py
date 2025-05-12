@@ -277,7 +277,6 @@ class TestWatcher:
 
         def mock_stream(*args, **kwargs):
             yield from []
-            # Optionally, you could simulate a short delay to ensure the timeout is reached
             time.sleep(kwargs.get('timeout_seconds', 1) + 0.5)
 
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]

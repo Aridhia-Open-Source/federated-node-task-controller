@@ -22,6 +22,8 @@ logging.basicConfig()
 logger = logging.getLogger('pod_watcher')
 logger.setLevel(logging.INFO)
 
+MAX_TIMEOUT = 60
+
 
 def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict):
     """
@@ -31,6 +33,7 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
     # results_path = crd_spec.get("results", {})
     # git_info = results_path.get("git", {})
     # other_info = results_path.get("other", {})
+    pod = None
     git_info = crd.delivery.get("github", {})
     other_info = crd.delivery.get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
@@ -39,7 +42,8 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
     for pod in pod_watcher.stream(
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
-        label_selector=f"task_id={task_id}"
+        label_selector=f"task_id={task_id}",
+        timeout_seconds=MAX_TIMEOUT
     ):
         logger.info("Found pod! %s", pod["object"].metadata.name)
         match pod["object"].status.phase:
@@ -114,8 +118,9 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                     pod["object"].metadata.name,
                     pod["object"].status.phase
                 )
-
     logger.info("Stopping task %s pod watcher", task_id)
+    if not pod:
+        raise KubernetesException(f"Timeout. Pod for task {task_id} not found")
     pod_watcher.stop()
 
 
@@ -131,7 +136,8 @@ def watch_user_pod(crd: Analytics, annotations:dict):
         NAMESPACE,
         label_selector=ls,
         resource_version='',
-        watch=True
+        watch=True,
+        timeout_seconds=MAX_TIMEOUT
     ):
         logger.info("Found job! %s", job["object"].metadata.name)
         match get_job_status(job["object"].status):

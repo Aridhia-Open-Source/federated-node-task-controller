@@ -64,20 +64,21 @@ def get_user(email:str=None, username:str=None, idpId:str=None) -> dict:
     """
     Method to return a dictionary representing a Keycloak user
     """
+    admin_token = get_admin_token()
     if idpId:
         user_response = requests.get(
             f"{KC_HOST}/admin/realms/{REALM}/users?idpUserId={idpId}",
-            headers={"Authorization": f"Bearer {get_admin_token()}"}
+            headers={"Authorization": f"Bearer {admin_token}"}
         )
     elif email:
         user_response = requests.get(
             f"{KC_HOST}/admin/realms/{REALM}/users?email={email}&exact=true",
-            headers={"Authorization": f"Bearer {get_admin_token()}"}
+            headers={"Authorization": f"Bearer {admin_token}"}
         )
     elif username:
         user_response = requests.get(
             f"{KC_HOST}/admin/realms/{REALM}/users?username={username}&exact=true",
-            headers={"Authorization": f"Bearer {get_admin_token()}"}
+            headers={"Authorization": f"Bearer {admin_token}"}
         )
     else:
         raise KeycloakException("Either email or username are needed")

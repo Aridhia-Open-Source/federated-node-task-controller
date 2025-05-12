@@ -11,6 +11,7 @@
 - Refactored the CRD approach so now it's a class, to centralize repeated operations
 - Removed `dataset` field in the CRD as required
 - Aggregated helper scripts in the new docker image `ghcr.io/aridhia-open-source/fn_task_controller_helper`
+- Added a timeout in case a pod doesn't exist, leaving the controller hanging
 
 
 ## 0.6.0

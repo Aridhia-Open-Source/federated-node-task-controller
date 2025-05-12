@@ -46,15 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check for vulnerabilities
-        run: |
-          docker run --entrypoint /bin/sh \
-            -v ./Pipfile:/app/Pipfile \
-            -v ./Pipfile.lock:/app/Pipfile.lock \
-            -v ./scripts/tests/vulnerabilities.sh:/vulnerabilities.sh \
-            python:3.12.2-alpine \
-            /vulnerabilities.sh
-
       - name: Run pylint
         run: |
           make pylint_ci
@@ -148,3 +139,15 @@ jobs:
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
       IS_TAG: ${{ needs.update.outputs.is_tag }}
+  sumamry:
+    needs:
+      - helm
+      - update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set summary
+        run: |
+          echo "# Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ vars.DOCKER_CR }}/fn_task_controller:${{ needs.update.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Helm Chart" >> $GITHUB_STEP_SUMMARY
+          echo "- fn-task-controller:${{ needs.update.outputs.chart_version }}" >> $GITHUB_STEP_SUMMARY

@@ -4,6 +4,9 @@
 controller:
   tag:
 
+fnalpine:
+  tag:
+
 namespaces:
   controller: fn-controller
   keycloak: keycloak

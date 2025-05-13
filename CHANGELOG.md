@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 0.7.1
+- Added the `fnalpine.tag` to have a more dynamic way to set the docker tag for helper image.
+
 ## 0.7.0
 ### Bugfixes
 - Fixed an issue on non-microk8s cluster where helper jobs were lacking proper permissions. Added the same account name as the controller.

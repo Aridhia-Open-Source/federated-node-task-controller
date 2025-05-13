@@ -82,5 +82,5 @@ Create the name of the service account to use
 {{ randAlphaNum 5 | quote }}
 {{- end -}}
 {{- define "fn-alpine" -}}
-ghcr.io/aridhia-open-source/alpine:3.19
+ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
 {{- end }}

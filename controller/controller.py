@@ -22,7 +22,6 @@ from helpers.actions import create_retry_job, sync_users, trigger_task, handle_r
 from models.crd import Analytics
 
 
-logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 

@@ -88,7 +88,7 @@ class Analytics:
                 "dataset_id": self.dataset.get("id"),
                 "dataset_name": self.dataset.get("name")
             },
-            "query": self.query,
+            "db_query": self.query,
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},

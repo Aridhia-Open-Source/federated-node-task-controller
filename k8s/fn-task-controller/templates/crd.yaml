@@ -63,6 +63,13 @@ spec:
                       type: string
                     repository:
                       type: string
+                db_query:
+                  type: object
+                  properties:
+                    query:
+                      type: string
+                    dialect:
+                      type: string
                 results:
                   type: object
                   properties:

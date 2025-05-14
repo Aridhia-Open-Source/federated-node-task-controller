@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:0.5.1-dev
+IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:0.7.0
 TESTS_IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller_tests
 TEST_CONTAINER ?= fn-controller-tests
 

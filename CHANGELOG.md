@@ -1,5 +1,10 @@
 # Releases Changelog
 
+## 0.7.2
+- Fixed alpine docker image to 3.19
+- Added support on the CRD for database virtualization on the FN (available from Federated Node v1.0.0)
+- Migrated away from python-alpine to python-slim for more consistency
+
 ## 0.7.1
 - Added the `fnalpine.tag` to have a more dynamic way to set the docker tag for helper image.
 

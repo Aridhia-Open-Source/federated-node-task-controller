@@ -1,5 +1,9 @@
 # Releases Changelog
 
+## 0.7.3
+- Set the `kc-secrets` secret and `keycloak-config` configmap as conditional copy. Only if `global` is not empty in the values file.
+    This will be taken care of by the FederatedNode parent chart
+
 ## 0.7.2
 - Fixed alpine docker image to 3.19
 - Added support on the CRD for database virtualization on the FN (available from Federated Node v1.0.0)

@@ -5,7 +5,6 @@ import pytest
 import responses
 from copy import deepcopy
 from kubernetes import client
-from unittest import mock
 from unittest.mock import MagicMock, Mock, mock_open
 
 from models.crd import Analytics
@@ -23,7 +22,7 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
             },
             "spec": {
                 "user": {
-                    "username": "",
+                    "username": "user2",
                     "idpId": udpid,
                 },
                 "image": "some/docker:tag",

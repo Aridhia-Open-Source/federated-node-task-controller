@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 0.7.4
+- Changed the branch naming convention so it will be consistent with the user/task name
+
 ## 0.7.3
 - Set the `kc-secrets` secret and `keycloak-config` configmap as conditional copy. Only if `global` is not empty in the values file.
     This will be taken care of by the FederatedNode parent chart

@@ -57,7 +57,8 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                         script="push_to_github.sh",
                         task_id=task_id,
                         repository=git_info.get("repository"),
-                        crd_name=crd.name
+                        crd_name=crd.name,
+                        user=crd.user
                     )
                 elif other_info:
                     auth = {}

@@ -27,7 +27,8 @@ def sync_users(crds: Analytics, annotations:dict):
         create_volumes=False,
         script="sync_user.sh",
         labels=crds.labels,
-        repository=crds.source["repository"]
+        repository=crds.source["repository"],
+        user=crds.user
     )
 
     watch_user_pod(crds, annotations)

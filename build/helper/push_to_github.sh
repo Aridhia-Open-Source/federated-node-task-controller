@@ -11,6 +11,10 @@ if [ -z "$TASK_ID" ]; then
     echo "TASK ID not provided"
     exit 1
 fi
+if [ -z "$USER_NAME" ]; then
+    echo "USER_NAME not provided"
+    exit 1
+fi
 
 . "$(dirname "$0")/jwt.sh"
 
@@ -28,7 +32,7 @@ gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
     git remote remove origin
     git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/"${GH_REPO}".git
     git fetch
-    BRANCH="${TASK_ID}-results"
+    BRANCH="${USER_NAME}-${CRD_NAME}-results"
 
     echo "Pulling or creating the results branch"
     if git checkout "${BRANCH}"; then

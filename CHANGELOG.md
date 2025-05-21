@@ -1,5 +1,8 @@
 # Releases Changelog
 
+# 1.0.0
+- Version 1.0.0 release. No changes. Only a version bump
+
 ## 0.7.4
 - Changed the branch naming convention so it will be consistent with the user/task name
 

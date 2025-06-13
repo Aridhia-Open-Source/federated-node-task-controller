@@ -1,7 +1,7 @@
 import logging
 
 from const import NAMESPACE
-from excpetions import CRDException
+from exceptions import CRDException
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
     KubernetesV1

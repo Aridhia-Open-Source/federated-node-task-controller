@@ -5,7 +5,7 @@ from unittest import mock
 from unittest.mock import mock_open
 
 from controller import start
-from excpetions import CRDException
+from exceptions import CRDException
 
 
 class TestWatcher:

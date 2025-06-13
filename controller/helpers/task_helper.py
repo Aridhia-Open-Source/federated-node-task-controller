@@ -3,7 +3,7 @@ Collection of functions to assist in performing FN-task-related operations
 """
 import logging
 from const import BACKEND_HOST, GIT_HOME, PUBLIC_URL
-from excpetions import FederatedNodeException
+from exceptions import FederatedNodeException
 from helpers.keycloak_helper import get_user, impersonate_user
 from helpers.request_helper import client as requests
 from models.crd import Analytics

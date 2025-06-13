@@ -9,7 +9,7 @@ Both kubernetes and keycloak standard operations
 import os
 import logging
 
-from excpetions import KeycloakException
+from exceptions import KeycloakException
 from helpers.kubernetes_helper import KubernetesV1
 from helpers.request_helper import client as requests
 from const import KC_USER, KC_HOST

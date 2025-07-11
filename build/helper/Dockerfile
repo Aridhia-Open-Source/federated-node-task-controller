@@ -9,6 +9,7 @@ RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
 
 WORKDIR /apps
 # Can't find venv-related files
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # hadolint ignore=SC1091
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && /root/.local/bin/uv init \

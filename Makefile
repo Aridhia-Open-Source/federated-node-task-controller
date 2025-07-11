@@ -9,6 +9,9 @@ build_container:
 build_test_container:
 	docker build . -f test.Dockerfile -t ${TESTS_IMAGE}
 
+build_helper:
+	docker build build/helper -t ghcr.io/aridhia-open-source/fn_task_controller_helper:1.0.0
+
 run_test_container: cleanup_test_container
 	docker run --name ${TEST_CONTAINER} ${TESTS_IMAGE}
 	docker cp ${TEST_CONTAINER}:/app/artifacts/coverage.xml artifacts/coverage.xml

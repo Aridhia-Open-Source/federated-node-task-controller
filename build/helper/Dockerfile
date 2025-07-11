@@ -1,4 +1,4 @@
-FROM alpine/k8s:1.29.4
+FROM alpine/k8s:1.33.2
 
 ARG USERNAME=fednode
 ARG USER_UID=1001
@@ -11,8 +11,6 @@ WORKDIR /apps
 # Can't find venv-related files
 # hadolint ignore=SC1091
 RUN apk add --no-cache \
-        'jq=~1.7' \
-        'curl=~8.5' \
         'openssl=~3.1' \
         'github-cli=~2.39' \
     && python3 -m venv venv \
@@ -23,4 +21,5 @@ RUN apk add --no-cache \
 COPY . /apps/
 USER ${USER_UID}
 
-ENTRYPOINT [ "/apps/venv/bin/python3", "idp-init.py" ]
+ENV PATH="/apps/venv/bin:$PATH"
+ENTRYPOINT [ "python3", "idp-init.py" ]

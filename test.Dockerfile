@@ -18,5 +18,5 @@ RUN apt-get update \
     && /root/.local/bin/uv sync --extra dev
 
 ENV PYTHONPATH=/app/controller
-ENV PATH="/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH"
 CMD ["/app/scripts/test-entrypoint.sh"]

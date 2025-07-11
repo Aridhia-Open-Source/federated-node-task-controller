@@ -2,7 +2,7 @@ import json
 from math import exp
 import re
 
-from excpetions import CRDException
+from exceptions import CRDException
 
 MAX_RETRIES = 5
 

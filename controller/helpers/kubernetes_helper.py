@@ -14,7 +14,7 @@ from kubernetes import client
 from kubernetes.config import load_kube_config, load_incluster_config
 from kubernetes.client.exceptions import ApiException
 
-from excpetions import KubernetesException
+from exceptions import KubernetesException
 from const import (
     NAMESPACE, IMAGE, MOUNT_PATH,
     PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE

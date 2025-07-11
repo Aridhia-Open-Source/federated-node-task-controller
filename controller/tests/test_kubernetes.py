@@ -2,7 +2,7 @@ from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from models.crd import MAX_RETRIES
 from controller import start
-from excpetions import KubernetesException
+from exceptions import KubernetesException
 
 
 class TestKubernetesHelper:

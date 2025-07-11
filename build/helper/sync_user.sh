@@ -13,7 +13,7 @@ gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
 cd "${REPO_FOLDER}" || exit
 echo "Getting user info"
 AUTHOR_USERNAME=$(gh pr list -B "${BRANCH}" --state merged --json author,mergedAt,mergedBy,headRefName,number | jq -r '.[0].author.login')
-FULL_NAME=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/users/${AUTHOR_USERNAME}" | jq -r '.name')
+FULL_NAME=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/users/${AUTHOR_USERNAME}" | jq -r 'if(.name == null) then .login else .name end')
 USER_ID=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/users/${AUTHOR_USERNAME}" | jq -r '.id')
 EMAILS=$(gh pr list -B "${BRANCH}" --state merged --json author,commits | jq -r "[.[] | .commits[] | .authors[] | select(.name == \"${FULL_NAME}\") | .email] | unique | .[]")
 

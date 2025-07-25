@@ -1,5 +1,15 @@
 # Releases Changelog
 
+# 1.1.0
+- Added support for AWS EFS persistent volume through the csi driver `efs.csi.aws.com`
+    To configure it, set in the values file:
+    ```yaml
+    storage:
+    aws:
+        fileSystemId: <your EFS system ID>
+        accessPointId: <Optional, access point id for better permission and isolation management in the EFS>
+    ```
+
 # 1.0.0
 - Version 1.0.0 release. No changes. Only a version bump
 

@@ -25,6 +25,10 @@ spec:
     shareName: {{ .Values.storage.azure.shareName }}
     readOnly: false
     secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+  {{ else if .Values.storage.aws }}
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: {{ include "awsStorageAccount" . }}
   {{ else if .Values.storage.nfs }}
   {{ end }}
 ---

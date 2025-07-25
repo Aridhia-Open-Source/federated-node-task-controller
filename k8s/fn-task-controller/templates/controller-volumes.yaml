@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: controller-pv
+  name: {{ include "pvName" . }}
 spec:
   storageClassName: controller-results
   accessModes:
     - ReadWriteMany
     - ReadOnlyMany
   capacity:
-    storage: {{ .Values.storage.size }}
+    storage: {{ .Values.storage.capacity }}
   {{ if .Values.storage.local }}
   local:
     path: {{ .Values.storage.local.path }}
@@ -35,13 +35,13 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: controller-pv-volclaim
+  name: {{ include "pvcName" . }}
   namespace: {{ include "controller_ns" . }}
 spec:
   storageClassName: controller-results
-  volumeName: controller-pv
+  volumeName: {{ include "pvName" . }}
   resources:
     requests:
-      storage: {{ .Values.storage.size }}
+      storage: {{ .Values.storage.capacity }}
   accessModes:
     - ReadOnlyMany

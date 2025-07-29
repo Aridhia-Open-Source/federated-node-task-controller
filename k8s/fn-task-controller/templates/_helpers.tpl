@@ -86,10 +86,10 @@ ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
 {{- end }}
 
 {{- define "pvcName" -}}
-{{ printf "controller-%s-pv-volclaim" .Values.storage.capacity | lower }}
+{{ printf "controller-%s-pv-volclaim" (.Values.storage.capacity | default "1Gi") | lower }}
 {{- end }}
 {{- define "pvName" -}}
-{{ printf "controller-%s-pv" .Values.storage.capacity | lower }}
+{{ printf "controller-%s-pv" (.Values.storage.capacity | default "1Gi") | lower }}
 {{- end }}
 
 {{- define "awsStorageAccount" -}}

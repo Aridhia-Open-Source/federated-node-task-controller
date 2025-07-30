@@ -24,7 +24,7 @@ spec:
       volumes:
         - name: git
           persistentVolumeClaim:
-            claimName: controller-pv-volclaim
+            claimName: {{ include "pvcName" . }}
         - name: destinations
           configMap:
             name: controller-delivery-config

@@ -84,3 +84,22 @@ Create the name of the service account to use
 {{- define "fn-alpine" -}}
 ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
 {{- end }}
+
+{{- define "pvcName" -}}
+{{ printf "controller-%s-pv-volclaim" (.Values.storage.capacity | default "1Gi") | lower }}
+{{- end }}
+{{- define "pvName" -}}
+{{ printf "controller-%s-pv" (.Values.storage.capacity | default "1Gi") | lower }}
+{{- end }}
+
+{{- define "awsStorageAccount" -}}
+{{- if .Values.storage.aws }}
+  {{- with .Values.storage.aws }}
+    {{- if .accessPointId }}
+      {{- printf  "%s::%s" .fileSystemId .accessPointId | quote }}
+    {{- else }}
+      {{- .fileSystemId | quote }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end -}}

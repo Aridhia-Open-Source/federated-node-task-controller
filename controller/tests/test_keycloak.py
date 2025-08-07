@@ -2,7 +2,7 @@ import pytest
 import responses
 from unittest import mock
 from controller import start
-from excpetions import CRDException
+from exceptions import CRDException
 
 
 class TestKeycloakRequests:

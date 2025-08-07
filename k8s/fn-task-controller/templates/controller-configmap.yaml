@@ -17,6 +17,11 @@ data:
 {{- end }}
   IMAGE: {{ template "fn-task-controller.helper-image" . }}
   PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}
+{{- if .Values.storage.aws }}
+  AWS_STORAGE_ENABLED: "true"
+  AWS_STORAGE_DRIVER: "efs.csi.aws.com"
+  AWS_FILES_SYSTEM_ID: {{ include "awsStorageAccount" . }}
+{{- end }}
 {{- if .Values.storage.azure }}
   AZURE_STORAGE_ENABLED: "true"
   AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/controller

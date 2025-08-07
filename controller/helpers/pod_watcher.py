@@ -12,7 +12,7 @@ from kubernetes.watch import Watch
 from kubernetes.client.models.v1_job_status import V1JobStatus
 
 from const import TASK_NAMESPACE, NAMESPACE
-from excpetions import KubernetesException, PodWatcherException
+from exceptions import KubernetesException, PodWatcherException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
 from helpers.request_helper import client as requests
 from helpers.task_helper import get_results
@@ -56,7 +56,8 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                         script="push_to_github.sh",
                         task_id=task_id,
                         repository=git_info.get("repository"),
-                        crd_name=crd.name
+                        crd_name=crd.name,
+                        user=crd.user
                     )
                 elif other_info:
                     auth = {}

@@ -1,12 +1,11 @@
 import pytest
 import responses
 from kubernetes.client.exceptions import ApiException
-from responses import matchers
 from unittest import mock
 from unittest.mock import mock_open
 
 from controller import start
-from excpetions import KubernetesException, CRDException
+from exceptions import CRDException
 
 
 class TestWatcher:

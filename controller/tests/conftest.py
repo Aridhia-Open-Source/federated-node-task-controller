@@ -22,7 +22,7 @@ def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
             },
             "spec": {
                 "user": {
-                    "username": "",
+                    "username": "user2",
                     "idpId": udpid,
                 },
                 "image": "some/docker:tag",

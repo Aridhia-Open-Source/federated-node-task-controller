@@ -1,7 +1,7 @@
 import logging
 
 from const import NAMESPACE
-from excpetions import CRDException
+from exceptions import CRDException
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
     KubernetesV1
@@ -27,7 +27,8 @@ def sync_users(crds: Analytics, annotations:dict):
         create_volumes=False,
         script="sync_user.sh",
         labels=crds.labels,
-        repository=crds.source["repository"]
+        repository=crds.source["repository"],
+        user=crds.user
     )
 
     watch_user_pod(crds, annotations)

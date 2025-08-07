@@ -16,13 +16,12 @@ from urllib3.exceptions import MaxRetryError, ProtocolError
 from kubernetes.watch import Watch
 from kubernetes.client.exceptions import ApiException
 
-from excpetions import BaseControllerException
+from exceptions import BaseControllerException
 from helpers.kubernetes_helper import KubernetesCRD
 from helpers.actions import create_retry_job, sync_users, trigger_task, handle_results
 from models.crd import Analytics
 
 
-logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 

@@ -24,7 +24,7 @@ spec:
       volumes:
         - name: git
           persistentVolumeClaim:
-            claimName: controller-pv-volclaim
+            claimName: {{ include "pvcName" . }}
         - name: destinations
           configMap:
             name: controller-delivery-config
@@ -33,7 +33,7 @@ spec:
               path: delivery.json
       initContainers:
         - name: storage-init
-          image: {{ include "fn-alpine" . }}
+          image: ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
           command: ["/bin/sh"]
           args:
             - -c

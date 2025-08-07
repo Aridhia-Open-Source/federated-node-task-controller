@@ -14,7 +14,7 @@ from kubernetes import client
 from kubernetes.config import load_kube_config, load_incluster_config
 from kubernetes.client.exceptions import ApiException
 
-from excpetions import KubernetesException
+from exceptions import KubernetesException
 from const import (
     NAMESPACE, IMAGE, MOUNT_PATH,
     PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
@@ -106,6 +106,11 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
                 read_only=False,
                 secret_name=os.getenv("AZURE_SECRET_NAME"),
                 share_name=os.getenv("AZURE_SHARE_NAME")
+            )
+        elif os.getenv("AWS_STORAGE_ENABLED"):
+            pv_spec.csi=client.V1CSIPersistentVolumeSource(
+                driver=os.getenv("AWS_STORAGE_DRIVER"),
+                volume_handle=os.getenv("AWS_FILES_SYSTEM_ID")
             )
         else:
             pv_spec.host_path = client.V1HostPathVolumeSource(
@@ -230,7 +235,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             script:str=None,
             labels:dict | None=None,
             command:str=None,
-            crd_name:str=None
+            crd_name:str=None,
+            user:dict=None
         ):
         """
         Creates the job template and submits it to the cluster in the
@@ -262,6 +268,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         env = [
             client.V1EnvVar(name="DOMAIN", value=Analytics.domain),
             client.V1EnvVar(name="CRD_NAME", value=crd_name),
+            client.V1EnvVar(name="USER_NAME", value=user.get("username")),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),

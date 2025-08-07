@@ -54,7 +54,7 @@ class TestWatcherAzCopyDelivery:
         subprocees_mock.assert_called_with(
             [
                 "azcopy", "copy",
-                "/data/controller/localhost-1-results.tar.gz",
+                "/data/controller/localhost-1-results.zip",
                 unencoded_bearer
             ],
             **{"capture_output":True, "check": False}
@@ -94,7 +94,7 @@ class TestWatcherAzCopyDelivery:
         subprocees_mock.assert_called_with(
             [
                 "azcopy", "copy",
-                "/data/controller/localhost-1-results.tar.gz",
+                "/data/controller/localhost-1-results.zip",
                 unencoded_bearer
             ],
             **{"capture_output":True, "check": False}

@@ -44,7 +44,7 @@ gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
 
     mkdir -p "results/${TASK_ID}"
 
-    mv ../*-"${TASK_ID}"-results.tar.gz "results/${TASK_ID}/${TASK_ID}.tar.gz"
+    mv ../*-"${TASK_ID}"-results.zip "results/${TASK_ID}/${TASK_ID}.zip"
 
     git add .
     git commit -am "${TASK_ID} Results"

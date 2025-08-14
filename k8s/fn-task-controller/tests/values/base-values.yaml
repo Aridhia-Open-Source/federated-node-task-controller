@@ -1,0 +1,20 @@
+# Default values for fn-task-controller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+storage:
+  capacity: 100Mi
+  local:
+    path: /data/controller
+namespaces:
+  controller: old-controller
+idp:
+  github:
+    secret_name: github-app
+    secret_key: GH_SECRET
+    clientid_key: GH_CLIENT_ID
+    orgAndRepo: Aridhia-Open-Source/Federated-Node-Example-App
+
+delivery:
+  github:
+    repository: Aridhia-Open-Source/Federated-Node-Example-App

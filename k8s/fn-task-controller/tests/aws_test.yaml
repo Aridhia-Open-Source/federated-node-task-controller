@@ -1,0 +1,67 @@
+suite: Storage testing for AWS
+release:
+  namespace: federatednode
+  name: federatednode
+values:
+  - values/base-values.yaml
+kubernetesProvider:
+  scheme:
+    v1/Secret:
+      gvr:
+        version: v1
+        resource: secrets
+      namespaced: true
+    v1/ConfigMap:
+      gvr:
+        version: v1
+        resource: configmaps
+      namespaced: true
+  objects:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: github-app
+        namespace: federatednode
+      type: Opaque
+      data:
+        GH_SECRET: dGVzdA==
+        GH_CLIENT_ID: dGVzdA==
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: kc-secrets
+        namespace: federatednode
+      data:
+        GH_SECRET: dGVzdA==
+        GH_CLIENT_ID: dGVzdA==
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: secret-aws
+        namespace: federatednode
+      data:
+        EMAIL_CERT: dGVzdA==
+        REGION: dGVzdA==
+        ACCOUNT_ID: dGVzdA==
+        ROLE_NAME: dGVzdA==
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: keycloak-config
+        namespace: federatednode
+      data:
+        GH_SECRET: dGVzdA==
+        GH_CLIENT_ID: dGVzdA==
+tests:
+  - it: creates EKS storage
+    set:
+      storage:
+        aws:
+          fileSystemId: fs-12345aef
+          accessPointId: fsap-12345aef
+    template: storageclass.yaml
+    # template: controller-volumes.yaml
+    asserts:
+      - equal:
+          path: parameters.fileSystemId
+          value: fs-12345aef::fs-12345aef

@@ -13,7 +13,7 @@ namespaces:
   tasks: tasks
 
 storage:
-  size: 1Gi
+  capacity: 1Gi
   azure:
     # secretName:
     # storageAccountName:

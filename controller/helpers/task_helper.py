@@ -55,7 +55,7 @@ def get_results(task_id:str, token:str) -> str:
     )
     if not res_resp.ok:
         raise FederatedNodeException(res_resp.json())
-    filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results.tar.gz"
+    filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results.zip"
     with open(filepath, "wb") as file:
         file.write(res_resp.content)
     return filepath

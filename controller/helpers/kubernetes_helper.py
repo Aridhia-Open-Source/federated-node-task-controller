@@ -107,6 +107,11 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
                 secret_name=os.getenv("AZURE_SECRET_NAME"),
                 share_name=os.getenv("AZURE_SHARE_NAME")
             )
+        elif os.getenv("AWS_STORAGE_ENABLED"):
+            pv_spec.csi=client.V1CSIPersistentVolumeSource(
+                driver=os.getenv("AWS_STORAGE_DRIVER"),
+                volume_handle=os.getenv("AWS_FILES_SYSTEM_ID")
+            )
         else:
             pv_spec.host_path = client.V1HostPathVolumeSource(
                 path=f"{MOUNT_PATH}/controller/"

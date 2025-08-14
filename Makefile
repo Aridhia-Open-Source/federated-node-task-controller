@@ -3,7 +3,7 @@ IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:1.2.0
 TESTS_IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller_tests
 TEST_CONTAINER ?= fn-controller-tests
 
-build_container:
+build_docker:
 	docker build . -t "${IMAGE}"
 
 build_test_container:

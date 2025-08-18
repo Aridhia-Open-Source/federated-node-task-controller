@@ -4,8 +4,6 @@
 
 storage:
   capacity: 100Mi
-  local:
-    path: /data/controller
 namespaces:
   controller: old-controller
 idp:

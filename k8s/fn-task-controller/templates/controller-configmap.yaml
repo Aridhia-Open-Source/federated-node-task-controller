@@ -9,7 +9,9 @@ data:
   BACKEND_HOST: http://backend.{{ .Release.Namespace }}.svc.cluster.local:5000
   KC_HOST: http://keycloak.{{ include "kc_ns" . }}.svc.cluster.local
   GIT_HOME: {{ template "fn-task-controller.gitpath" . }}
+{{- if .Values.storage.local }}
   MOUNT_PATH: {{ (.Values.storage.local).path }}
+{{- end }}
   PULL-POLICY: Always
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
   IMAGE: {{ template "fn-task-controller.helper-image" . }}

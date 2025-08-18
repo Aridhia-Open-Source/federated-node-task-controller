@@ -4,6 +4,10 @@ release:
   name: federatednode
 values:
   - values/base-values.yaml
+set:
+  storage:
+    local:
+      path: /data/controller
 kubernetesProvider:
   scheme:
     v1/Secret:
@@ -24,8 +28,8 @@ kubernetesProvider:
         namespace: federatednode
       type: Opaque
       data:
-        GH_SECRET: dGVzdA==
-        GH_CLIENT_ID: dGVzdA==
+        KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
+        KEYCLOAK_GLOBAL_CLIENT_SECRET: dGVzdA==
     - apiVersion: v1
       kind: Secret
       metadata:

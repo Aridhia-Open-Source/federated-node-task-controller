@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:0.7.0
+IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:1.2.0
 TESTS_IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller_tests
 TEST_CONTAINER ?= fn-controller-tests
 
@@ -8,6 +8,9 @@ build_docker:
 
 build_test_container:
 	docker build . -f test.Dockerfile -t ${TESTS_IMAGE}
+
+build_helper:
+	docker build build/helper -t ghcr.io/aridhia-open-source/fn_task_controller_helper:1.0.0
 
 run_test_container: cleanup_test_container
 	docker run --name ${TEST_CONTAINER} ${TESTS_IMAGE}

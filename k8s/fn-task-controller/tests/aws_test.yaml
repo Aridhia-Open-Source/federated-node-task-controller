@@ -4,6 +4,12 @@ release:
   name: federatednode
 values:
   - values/base-values.yaml
+set:
+  storage:
+    local:
+    aws:
+      fileSystemId: fs-12345aef
+      accessPointId: fsap-12345aef
 kubernetesProvider:
   scheme:
     v1/Secret:
@@ -54,14 +60,20 @@ kubernetesProvider:
         GH_CLIENT_ID: dGVzdA==
 tests:
   - it: creates EKS storage
-    set:
-      storage:
-        aws:
-          fileSystemId: fs-12345aef
-          accessPointId: fsap-12345aef
     template: storageclass.yaml
-    # template: controller-volumes.yaml
     asserts:
       - equal:
           path: parameters.fileSystemId
-          value: fs-12345aef::fs-12345aef
+          value: fs-12345aef::fsap-12345aef
+  - it: creates EKS configmap
+    template: controller-configmap.yaml
+    asserts:
+      - equal:
+          path: data["AWS_STORAGE_ENABLED"]
+          value: "true"
+      - equal:
+          path: data["AWS_STORAGE_DRIVER"]
+          value: efs.csi.aws.com
+      - equal:
+          path: data["AWS_FILES_SYSTEM_ID"]
+          value: fs-12345aef::fsap-12345aef

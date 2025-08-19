@@ -40,26 +40,24 @@ kubernetesProvider:
         name: kc-secrets
         namespace: federatednode
       data:
-        GH_SECRET: dGVzdA==
-        GH_CLIENT_ID: dGVzdA==
+        KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
+        KEYCLOAK_GLOBAL_CLIENT_SECRET: dGVzdA==
     - apiVersion: v1
       kind: Secret
       metadata:
         name: azure-secret
         namespace: federatednode
       data:
-        EMAIL_CERT: dGVzdA==
-        REGION: dGVzdA==
-        ACCOUNT_ID: dGVzdA==
-        ROLE_NAME: dGVzdA==
+        SP_SECRET: dGVzdA==
     - apiVersion: v1
       kind: ConfigMap
       metadata:
         name: keycloak-config
         namespace: federatednode
       data:
-        GH_SECRET: dGVzdA==
-        GH_CLIENT_ID: dGVzdA==
+        KEYCLOAK_ADMIN: admin
+        KC_DB_URL_HOST: testhost.com
+        KC_DB_USERNAME: admin_user
 tests:
   - it: creates Azure storage
     template: storageclass.yaml

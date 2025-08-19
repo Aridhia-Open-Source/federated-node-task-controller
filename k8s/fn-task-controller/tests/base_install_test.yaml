@@ -24,7 +24,7 @@ kubernetesProvider:
     - apiVersion: v1
       kind: Secret
       metadata:
-        name: github-app
+        name: kc-secrets
         namespace: federatednode
       type: Opaque
       data:
@@ -33,7 +33,7 @@ kubernetesProvider:
     - apiVersion: v1
       kind: Secret
       metadata:
-        name: kc-secrets
+        name: github-app
         namespace: federatednode
       data:
         GH_SECRET: dGVzdA==
@@ -44,8 +44,9 @@ kubernetesProvider:
         name: keycloak-config
         namespace: federatednode
       data:
-        GH_SECRET: dGVzdA==
-        GH_CLIENT_ID: dGVzdA==
+        KEYCLOAK_ADMIN: admin
+        KC_DB_URL_HOST: testhost.com
+        KC_DB_USERNAME: admin_user
 tests:
   - it: creates a local db deployment
     template: controller-deployment.yaml

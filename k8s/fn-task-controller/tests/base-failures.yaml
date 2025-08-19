@@ -27,8 +27,9 @@ kubernetesProvider:
         name: keycloak-config
         namespace: federatednode
       data:
-        GH_SECRET: dGVzdA==
-        GH_CLIENT_ID: dGVzdA==
+        KEYCLOAK_ADMIN: admin
+        KC_DB_URL_HOST: testhost.com
+        KC_DB_USERNAME: admin_user
 tests:
   - it: missing gh secret causes a failure
     template: copy-secrets-cm.yaml

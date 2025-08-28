@@ -30,5 +30,5 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/"$(grep VERSION_ID
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONPATH=/app/controller
-ENV PATH="/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH"
 CMD ["python3", "-m", "controller"]

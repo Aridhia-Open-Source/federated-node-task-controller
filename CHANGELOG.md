@@ -1,5 +1,7 @@
 # Releases Changelog
 
+# 1.2.0
+- Added a dynamic configuration to `global.taskReview` in the values files. This is only effective when deployed with the federated node. It will hold the result release until approved from the api, which in turns should set the task's CRD annotation `approved` to `"true"` and allowing result delivery. Defaults to `false`.
 # 1.1.0
 - Added support for AWS EFS persistent volume through the csi driver `efs.csi.aws.com`
     To configure it, set in the values file:

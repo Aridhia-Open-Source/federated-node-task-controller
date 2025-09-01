@@ -142,6 +142,30 @@ def mock_crd_api_basic_done(mock_crd_task_done):
     }}
     return deepcopy(mock_crd_task_done)
 
+@pytest.fixture
+def mock_crd_azcopy_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth_type": "AzCopy"
+    }}
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_api_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth_type": "Bearer"
+    }}
+    return deepcopy(mock_crd_task_done)
+
+@pytest.fixture
+def mock_crd_api_basic_done(mock_crd_task_done):
+    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
+        "url": "https://fancyresultsplace.com/api/storage",
+        "auth_type": "Basic"
+    }}
+    return deepcopy(mock_crd_task_done)
+
 @pytest.fixture(autouse=True)
 def k8s_config(mocker):
     mocker.patch('kubernetes.config.load_kube_config', return_value=Mock())
@@ -286,3 +310,7 @@ def delivery_open(request, mocker):
     if getattr(request, "param", None):
         file_contents = request.param
     return mocker.patch("models.crd.open", mock_open(read_data=json.dumps(file_contents)))
+
+@pytest.fixture
+def review_env(monkeypatch):
+    monkeypatch.setenv("TASK_REVIEW", "enabled")

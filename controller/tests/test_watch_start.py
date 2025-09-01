@@ -58,6 +58,24 @@ class TestWatcher:
         start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    def test_sync_user_job_fails_run(
+        self,
+        k8s_client,
+        k8s_watch_mock,
+        mock_pod_watch
+    ):
+        """
+        Tests the first step of the CRD lifecycle.
+        If, for whichever reason, the job fails during execute,
+        no annotation is added to the CRD,
+        keeping it to the same status
+        """
+        mock_pod_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status=mock.Mock(failed=True))}]
+
+        start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+
     def test_post_task_successful(
             self,
             mock_crd_user_synched,
@@ -68,6 +86,7 @@ class TestWatcher:
             crd_name,
             k8s_client,
             k8s_watch_mock,
+            review_env,
             domain
         ):
         """
@@ -104,7 +123,8 @@ class TestWatcher:
             crd_name,
             k8s_client,
             k8s_watch_mock,
-            backend_url
+            backend_url,
+            review_env
         ):
         """
         Tests that no annotations are updated
@@ -123,9 +143,24 @@ class TestWatcher:
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    def test_get_results_not_reviewed(
+            self,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            review_env
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created
+        """
+        k8s_watch_mock.assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results(
+    def test_get_results_approved(
             self,
             token_mock,
             open_mock,
@@ -135,6 +170,7 @@ class TestWatcher:
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
+            review_env,
             delivery_open,
             domain
         ):
@@ -143,6 +179,71 @@ class TestWatcher:
         a new github job pusher is created. In this case only
         the CRD won't be patched by the controller itself,
         but by the result job
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{domain}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        # Mock the request response from the FN API
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"{backend_url}/tasks/1/results",
+                status=200
+            )
+            start(True)
+
+        k8s_client["create_namespaced_job_mock"].assert_called()
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_no_review_required_ignore_annotations(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+            domain
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created without the need
+        of checking for review, or ignoring it
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{domain}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        # Mock the request response from the FN API
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"{backend_url}/tasks/1/results",
+                status=200
+            )
+            start(True)
+
+            k8s_client["create_namespaced_job_mock"].assert_called()
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_no_review_required(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created without the need
+        of checking for review, or ignoring it
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         # Mock the request response from the FN API
@@ -155,6 +256,50 @@ class TestWatcher:
             start(True)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
+
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    def test_get_results_task_fails(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            backend_url,
+            domain
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created
+        """
+        mock_pod_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status=mock.Mock(phase="Failed"))}]
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{domain}/approved"] = "true"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+
+    def test_get_results_blocked(
+            self,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            backend_url,
+            domain
+        ):
+        """
+        Tests that once the task's pod is completed,
+        a new github job pusher is created
+        """
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{domain}/approved"] = "false"
+        k8s_watch_mock.assert_not_called()
+        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     def test_ignore_done_crd(
             self,

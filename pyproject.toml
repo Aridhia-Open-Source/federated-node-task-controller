@@ -1,0 +1,32 @@
+[project]
+name = "federatednode-task-controller"
+version = "1.2.0"
+description = ""
+authors = [
+    {name = "r-casula",email = "riccardo.casula@aridhia.com"}
+]
+maintainers = [
+    {name = "r-casula",email = "riccardo.casula@aridhia.com"}
+]
+license = {text = "GPL-3"}
+readme = "README.md"
+requires-python = ">=3.13"
+
+
+dependencies = [
+    "kubernetes",
+    "urllib3",
+    "requests",
+    "jinja2>=3.1.5"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pylint>=3.0.3",
+    "pycobertura",
+    "pytest",
+    "pytest-mock",
+    "python-dotenv",
+    "pytest-cov",
+    "responses"
+]

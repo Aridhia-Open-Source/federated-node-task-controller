@@ -1,5 +1,6 @@
 import json
 from math import exp
+import os
 import re
 
 from exceptions import CRDException
@@ -45,7 +46,22 @@ class Analytics:
         return self.annotations.get(f"{self.domain}/user") and not self.annotations.get(f"{self.domain}/done")
 
     def can_deliver_results(self) -> bool:
-        return self.annotations.get(f"{self.domain}/done") and not self.annotations.get(f"{self.domain}/results")
+        """
+        Overcomplicated flow control, but there are few requirements to
+        fetch results:
+        - done HAS to be there, which means task pod is done
+        - results HAS NOT to be there, meaning results have not been fetched and delivered yet
+
+        TASK_REVIEW and approved annotation should make the whole check fail when:
+            TASK_REVIEW is set and approved is not "true". So we check for this
+            case, and negate it.
+        """
+        return self.annotations.get(f"{self.domain}/done") and \
+            not self.annotations.get(f"{self.domain}/results") and \
+            not (
+                os.getenv("TASK_REVIEW") is not None and \
+                self.annotations.get(f"{self.domain}/approved", "false").lower() != "true"
+            )
 
     def should_skip(self) -> bool:
         return bool(self.is_delete or self.annotations.get(f"{self.domain}/results"))

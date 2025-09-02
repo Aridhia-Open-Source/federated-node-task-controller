@@ -104,3 +104,7 @@ ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
   {{- end }}
 {{- end }}
 {{- end -}}
+
+{{- define "areWeSubchart" -}}
+{{- not (eq .Release.Name .Chart.Name) -}}
+{{- end -}}

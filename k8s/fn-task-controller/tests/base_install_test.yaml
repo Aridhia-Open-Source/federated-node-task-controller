@@ -1,7 +1,7 @@
 suite: Storage testing for microk8s
 release:
   namespace: federatednode
-  name: federatednode
+  name: fn-task-controller
 values:
   - values/base-values.yaml
 set:
@@ -59,9 +59,8 @@ tests:
       - hasDocuments:
           count: 3
   - it: copies secrets as subchart
-    set:
-      global:
-        host: something.com
+    release:
+      name: federated-node
     template: copy-secrets-cm.yaml
     asserts:
       - hasDocuments:

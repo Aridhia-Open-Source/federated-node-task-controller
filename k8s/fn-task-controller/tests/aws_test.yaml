@@ -1,0 +1,80 @@
+suite: Storage testing for AWS
+release:
+  namespace: federatednode
+  name: federatednode
+values:
+  - values/base-values.yaml
+set:
+  storage:
+    local:
+    aws:
+      fileSystemId: fs-12345aef
+      accessPointId: fsap-12345aef
+kubernetesProvider:
+  scheme:
+    v1/Secret:
+      gvr:
+        version: v1
+        resource: secrets
+      namespaced: true
+    v1/ConfigMap:
+      gvr:
+        version: v1
+        resource: configmaps
+      namespaced: true
+  objects:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: github-app
+        namespace: federatednode
+      type: Opaque
+      data:
+        GH_SECRET: dGVzdA==
+        GH_CLIENT_ID: dGVzdA==
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: kc-secrets
+        namespace: federatednode
+      data:
+        KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
+        KEYCLOAK_GLOBAL_CLIENT_SECRET: dGVzdA==
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: secret-aws
+        namespace: federatednode
+      data:
+        EMAIL_CERT: dGVzdA==
+        REGION: dGVzdA==
+        ACCOUNT_ID: dGVzdA==
+        ROLE_NAME: dGVzdA==
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: keycloak-config
+        namespace: federatednode
+      data:
+        KEYCLOAK_ADMIN: admin
+        KC_DB_URL_HOST: testhost.com
+        KC_DB_USERNAME: admin_user
+tests:
+  - it: creates EKS storage
+    template: storageclass.yaml
+    asserts:
+      - equal:
+          path: parameters.fileSystemId
+          value: fs-12345aef::fsap-12345aef
+  - it: creates EKS configmap
+    template: controller-configmap.yaml
+    asserts:
+      - equal:
+          path: data["AWS_STORAGE_ENABLED"]
+          value: "true"
+      - equal:
+          path: data["AWS_STORAGE_DRIVER"]
+          value: efs.csi.aws.com
+      - equal:
+          path: data["AWS_FILES_SYSTEM_ID"]
+          value: fs-12345aef::fsap-12345aef

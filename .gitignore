@@ -5,6 +5,7 @@ send_mini.sh
 *.pem
 local/
 k8s/fn-task-controller/*.values.yaml
+k8s/fn-task-controller/.debug
 **/*.env
 !artifacts/.keep
 artifacts/*

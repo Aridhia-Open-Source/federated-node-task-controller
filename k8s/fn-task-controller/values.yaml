@@ -19,6 +19,9 @@ storage:
     # storageAccountName:
     # storageAccountKey:
     # shareName:
+  aws:
+    # fileSystemId:
+    # accessPointId:
   nfs:
     # provisioner:
     # url:

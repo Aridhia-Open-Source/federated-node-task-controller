@@ -1,0 +1,93 @@
+suite: Storage testing for microk8s
+release:
+  namespace: federatednode
+  name: fn-task-controller
+values:
+  - values/base-values.yaml
+set:
+  storage:
+    local:
+      path: /data/controller
+kubernetesProvider:
+  scheme:
+    v1/Secret:
+      gvr:
+        version: v1
+        resource: secrets
+      namespaced: true
+    v1/ConfigMap:
+      gvr:
+        version: v1
+        resource: configmaps
+      namespaced: true
+  objects:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: kc-secrets
+        namespace: federatednode
+      type: Opaque
+      data:
+        KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
+        KEYCLOAK_GLOBAL_CLIENT_SECRET: dGVzdA==
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: github-app
+        namespace: federatednode
+      data:
+        GH_SECRET: dGVzdA==
+        GH_CLIENT_ID: dGVzdA==
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: keycloak-config
+        namespace: federatednode
+      data:
+        KEYCLOAK_ADMIN: admin
+        KC_DB_URL_HOST: testhost.com
+        KC_DB_USERNAME: admin_user
+tests:
+  - it: creates a local db deployment
+    template: controller-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: copies secrets as standalone
+    template: copy-secrets-cm.yaml
+    asserts:
+      - hasDocuments:
+          count: 3
+  - it: copies secrets as subchart
+    release:
+      name: federated-node
+    template: copy-secrets-cm.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: creates persistent volumes
+    template: controller-volumes.yaml
+    asserts:
+      - exists:
+          path: spec.local.path
+        documentSelector:
+          path: kind
+          value: PersistentVolume
+  - it: creates storageclass
+    template: storageclass.yaml
+    asserts:
+      - equal:
+          path: provisioner
+          value: Local
+  - it: idp job not created
+    template: keycloak-idp-github.yaml
+    set:
+      idp:
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: simulate reuse-values args
+    template: keycloak-idp-github.yaml
+    asserts:
+      - hasDocuments:
+          count: 1

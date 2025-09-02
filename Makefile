@@ -46,3 +46,6 @@ hadolint:
 
 chart:
 	helm package k8s/fn-task-controller -d artifacts/
+
+helm_tests:
+	./scripts/run_helm_tests.sh

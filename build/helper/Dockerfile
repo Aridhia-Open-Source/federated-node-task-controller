@@ -11,7 +11,11 @@ WORKDIR /apps
 # Can't find venv-related files
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # hadolint ignore=SC1091
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+RUN apk add --no-cache \
+        'jq=~1.8.0' \
+        'openssl=~3.5.2' \
+        'github-cli=~2.72.0' \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && /root/.local/bin/uv init \
     && /root/.local/bin/uv add requests \
     && chown "${USER_UID}:${USER_GID}" /apps

@@ -59,3 +59,17 @@ def get_results(task_id:str, token:str) -> str:
     with open(filepath, "wb") as file:
         file.write(res_resp.content)
     return filepath
+
+def get_logs(task_id:str, token:str):
+    logger.info("Getting task %s logs", task_id)
+
+    logs_resp = requests.get(
+        f"{BACKEND_HOST}/tasks/{task_id}/logs",
+        headers={
+            "Authorization": f"Bearer {token}"
+        }
+    )
+    if not logs_resp.ok:
+        raise FederatedNodeException(logs_resp.json())
+
+    return logs_resp.json()["logs"]

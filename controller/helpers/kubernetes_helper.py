@@ -16,7 +16,7 @@ from kubernetes.client.exceptions import ApiException
 
 from exceptions import KubernetesException
 from const import (
-    NAMESPACE, IMAGE, MOUNT_PATH,
+    NAMESPACE, IMAGE, MOUNT_PATH, PUBLIC_URL,
     PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
 )
 from models.crd import Analytics
@@ -236,7 +236,9 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             labels:dict | None=None,
             command:str=None,
             crd_name:str=None,
-            user:dict=None
+            user:dict=None,
+            pr_num:str=None,
+            logs:str=None
         ):
         """
         Creates the job template and submits it to the cluster in the
@@ -248,6 +250,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         if labels is None:
             labels = {}
         labels.update(self.base_label)
+        username: str = user.get("username")
+        user_id: str = user.get("idpId")
 
         volumes = [
             client.V1Volume(
@@ -268,7 +272,10 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         env = [
             client.V1EnvVar(name="DOMAIN", value=Analytics.domain),
             client.V1EnvVar(name="CRD_NAME", value=crd_name),
-            client.V1EnvVar(name="USER_NAME", value=user.get("username")),
+            client.V1EnvVar(name="FN_HOST", value=PUBLIC_URL),
+            client.V1EnvVar(name="PR_NUM", value=pr_num),
+            client.V1EnvVar(name="USER_ID", value=user_id),
+            client.V1EnvVar(name="USER_NAME", value=username),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
@@ -288,6 +295,9 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
                 )
             ))
         ]
+
+        if logs:
+            env.append(client.V1EnvVar(name="ERROR_LOGS", value=f"@{username} Something went wrong: {logs}"))
 
         if task_id:
             env.append(client.V1EnvVar(name="TASK_ID", value=task_id),)

@@ -33,6 +33,8 @@ spec:
                       type: string
                 project:
                   type: string
+                pr_num:
+                  type: string
                 dataset:
                   type: object
                   properties:

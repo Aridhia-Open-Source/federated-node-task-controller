@@ -29,6 +29,7 @@ class Analytics:
         if not self.proj_name:
             raise CRDException("project field is required")
 
+        self.pr_num = crd_definition["object"]["spec"].get("pr_num", "")
         self.dataset = crd_definition["object"]["spec"].get("dataset", {})
         self.env = crd_definition["object"]["spec"].get("env", {})
         self.outputs = crd_definition["object"]["spec"].get("outputs", {})

@@ -16,22 +16,23 @@ logger = logging.getLogger('actions')
 logger.setLevel(logging.INFO)
 
 
-def sync_users(crds: Analytics, annotations:dict):
+def sync_users(crd: Analytics, annotations:dict):
     """
     Ensures that the user is already in keycloak and associated
     with the gihub IdP
     """
     # should trigger the user check
     KubernetesV1Batch().create_helper_job(
-        f"link-user-{"".join(crds.user.values())}",
+        f"link-user-{"".join(crd.user.values())}",
         create_volumes=False,
         script="sync_user.sh",
-        labels=crds.labels,
-        repository=crds.source["repository"],
-        user=crds.user
+        labels=crd.labels,
+        repository=crd.source["repository"],
+        user=crd.user,
+        pr_num=crd.pr_num
     )
 
-    watch_user_pod(crds, annotations)
+    watch_user_pod(crd, annotations)
 
 def trigger_task(crd: Analytics, annotations):
     """

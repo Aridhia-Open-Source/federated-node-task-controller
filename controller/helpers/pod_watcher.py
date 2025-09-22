@@ -15,7 +15,7 @@ from const import TASK_NAMESPACE, NAMESPACE
 from exceptions import KubernetesException, PodWatcherException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
 from helpers.request_helper import client as requests
-from helpers.task_helper import get_results
+from helpers.task_helper import get_results, get_logs
 from models.crd import Analytics
 
 logging.basicConfig()
@@ -57,7 +57,8 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                         task_id=task_id,
                         repository=git_info.get("repository"),
                         crd_name=crd.name,
-                        user=crd.user
+                        user=crd.user,
+                        pr_num=crd.pr_num
                     )
                 elif other_info:
                     auth = {}
@@ -110,6 +111,17 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                     raise PodWatcherException("No suitable delivery options available")
                 break
             case "Failed":
+                logs = get_logs(task_id, user_token)
+                KubernetesV1Batch().create_helper_job(
+                        name=f"task-{task_id}-results",
+                        script="error_report.sh",
+                        task_id=task_id,
+                        repository=git_info.get("repository"),
+                        crd_name=crd.name,
+                        user=crd.user,
+                        logs=logs,
+                        pr_num=crd.pr_num
+                    )
                 raise KubernetesException(
                     "Pod in failed status. Refreshing annotation on CRD to trigger a restart"
                 )

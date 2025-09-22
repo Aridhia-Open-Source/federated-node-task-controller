@@ -54,6 +54,8 @@ def get_results(task_id:str, token:str) -> str:
         }
     )
     if not res_resp.ok:
+        if res_resp.json().get('status') == "Pending Review":
+            return
         raise FederatedNodeException(res_resp.json())
     filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results.zip"
     with open(filepath, "wb") as file:

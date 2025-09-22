@@ -297,7 +297,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         ]
 
         if logs:
-            env.append(client.V1EnvVar(name="ERROR_LOGS", value=f"@{username} Something went wrong: {logs}"))
+            env.append(client.V1EnvVar(name="ERROR_LOGS", value=logs))
 
         if task_id:
             env.append(client.V1EnvVar(name="TASK_ID", value=task_id),)

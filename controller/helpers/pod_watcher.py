@@ -119,7 +119,7 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                         repository=git_info.get("repository"),
                         crd_name=crd.name,
                         user=crd.user,
-                        logs=logs,
+                        logs="\n".join(logs),
                         pr_num=crd.pr_num
                     )
                 raise KubernetesException(

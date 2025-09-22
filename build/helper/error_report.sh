@@ -16,8 +16,8 @@ echo "Getting GitHub App token"
 . "$(dirname "$0")/jwt.sh"
 
 echo """
-Erorr reported on Task from ${FN_HOST}
-```
+@${USER_NAME} Erorr reported on Task from ${FN_HOST}
+\`\`\`
 ${ERROR_LOGS:-"No logs available, ask the maintainer"}
-```
+\`\`\`
 """ | gh pr comment "${PR_NUM}" -F -

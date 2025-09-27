@@ -1,5 +1,10 @@
 # Releases Changelog
 
+# 1.3.0
+
+## Bugfix
+- Fixed an issue that caused the controller to retry even when the review was pending
+
 # 1.2.0
 - Added a dynamic configuration to `global.taskReview` in the values files. This is only effective when deployed with the federated node. It will hold the result release until approved from the api, which in turns should set the task's CRD annotation `approved` to `"true"` and allowing result delivery. Defaults to `false`.
 

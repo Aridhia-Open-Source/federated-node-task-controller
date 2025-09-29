@@ -17,7 +17,7 @@ from kubernetes.client.exceptions import ApiException
 from exceptions import KubernetesException
 from const import (
     NAMESPACE, IMAGE, MOUNT_PATH,
-    PULL_POLICY, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
+    PULL_POLICY, STORAGE_CLASS, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
 )
 from models.crd import Analytics
 
@@ -99,7 +99,7 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         pv_spec = client.V1PersistentVolumeSpec(
             access_modes=['ReadWriteMany'],
             capacity={"storage": "100Mi"},
-            storage_class_name="controller-results"
+            storage_class_name=STORAGE_CLASS
         )
         if os.getenv("AZURE_STORAGE_ENABLED"):
             pv_spec.azure_file = client.V1AzureFilePersistentVolumeSource(
@@ -136,7 +136,7 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
             spec=client.V1PersistentVolumeClaimSpec(
                 access_modes=['ReadWriteMany'],
                 volume_name=pv_name,
-                storage_class_name="controller-results",
+                storage_class_name=STORAGE_CLASS,
                 resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"})
             )
         )

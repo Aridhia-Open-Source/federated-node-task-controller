@@ -1,9 +1,9 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: analytics.tasks.federatednode.com
+  name: analytics.{{ include "controllerCrdGroup" . }}
 spec:
-  group: tasks.federatednode.com
+  group: {{ include "controllerCrdGroup" . }}
   versions:
     - name: v1
       served: true

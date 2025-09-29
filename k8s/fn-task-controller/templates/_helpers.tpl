@@ -103,3 +103,13 @@ ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
   {{- end }}
 {{- end }}
 {{- end -}}
+
+{{- define "controllerStorageClass" -}}
+{{ .Release.Name }}-controller-results
+{{- end -}}
+{{- define "controllerCrdGroup" -}}
+tasks.{{ .Release.Name }}.com
+{{- end -}}
+{{- define "areWeSubchart" -}}
+{{- not (eq .Release.Name .Chart.Name) -}}
+{{- end -}}

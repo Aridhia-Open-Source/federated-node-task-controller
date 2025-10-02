@@ -3,7 +3,7 @@ kind: PersistentVolume
 metadata:
   name: {{ include "pvControllerName" . }}
 spec:
-  storageClassName: controller-results
+  storageClassName: {{ include "controllerStorageClass" . }}
   accessModes:
     - ReadWriteMany
     - ReadOnlyMany
@@ -38,7 +38,7 @@ metadata:
   name: {{ include "pvcControllerName" . }}
   namespace: {{ include "controller_ns" . }}
 spec:
-  storageClassName: controller-results
+  storageClassName: {{ include "controllerStorageClass" . }}
   volumeName: {{ include "pvControllerName" . }}
   resources:
     requests:

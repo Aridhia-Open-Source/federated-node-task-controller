@@ -12,6 +12,8 @@ data:
   MOUNT_PATH: {{ (.Values.storage.local).path }}
   PULL-POLICY: Always
   TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
+  STORAGE_CLASS: {{ include "controllerStorageClass" . }}
+  CRD_GROUP: {{ include "controllerCrdGroup" . }}
 {{- if .Values.global.taskReview }}
   TASK_REVIEW: enabled
 {{- end }}

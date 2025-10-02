@@ -1,5 +1,10 @@
 # Releases Changelog
 
+# 1.4.0
+- Prefixed all of the cluster-wide resources with the helm release name, granting uniqueness.
+- Parameterized `CRD_GROUP` and `STORAGE_CLASS` in the analytics-operator
+- Moved the controller's specific `ClusterRole` and bindings into namespaced ones
+
 # 1.3.0
 
 ## Bugfix

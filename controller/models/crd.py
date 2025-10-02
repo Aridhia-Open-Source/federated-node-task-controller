@@ -3,13 +3,14 @@ from math import exp
 import os
 import re
 
+from const import CRD_GROUP
 from exceptions import CRDException
 
 MAX_RETRIES = 5
 
 
 class Analytics:
-    domain = "tasks.federatednode.com"
+    domain = CRD_GROUP
 
     def __init__(
             self,
@@ -118,7 +119,7 @@ class Analytics:
         with an increasing delay. It will retry up to
         MAX_RETRIES times.
         """
-        annotation_check = "tasks.federatednode.com/tries"
+        annotation_check = f"{self.domain}/tries"
         current_try = int(self.annotations.get(annotation_check, 0)) + 1
 
         if current_try > MAX_RETRIES:

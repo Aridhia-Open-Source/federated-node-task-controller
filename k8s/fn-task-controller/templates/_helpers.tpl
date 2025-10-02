@@ -93,13 +93,14 @@ ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
 {{- end }}
 
 {{- define "awsStorageAccount" -}}
-{{- if .Values.storage.aws }}
-  {{- with .Values.storage.aws }}
-    {{- if .accessPointId }}
-      {{- printf  "%s::%s" .fileSystemId .accessPointId | quote }}
-    {{- else }}
-      {{- .fileSystemId | quote }}
-    {{- end }}
+{{- with .Values.storage.aws }}
+  {{- if not .fileSystemId }}
+    {{ fail "fileSystemId is necessary" }}
+  {{- end }}
+  {{- if .accessPointId }}
+    {{- printf  "%s::%s" .fileSystemId .accessPointId | quote }}
+  {{- else }}
+    {{- .fileSystemId | quote }}
   {{- end }}
 {{- end }}
 {{- end -}}

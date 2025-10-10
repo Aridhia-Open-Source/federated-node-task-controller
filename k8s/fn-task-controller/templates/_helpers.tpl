@@ -86,20 +86,31 @@ ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
 {{- end }}
 
 {{- define "pvcControllerName" -}}
-{{ printf "controller-%s-pv-volclaim" (.Values.storage.capacity | default "1Gi") | lower }}
+{{ printf "task-controller-%s-pv-volclaim" (.Values.storage.capacity | default "1Gi") | lower }}
 {{- end }}
 {{- define "pvControllerName" -}}
-{{ printf "controller-%s-pv" (.Values.storage.capacity | default "1Gi") | lower }}
+{{ printf "task-controller-%s-pv" (.Values.storage.capacity | default "1Gi") | lower }}
 {{- end }}
 
 {{- define "awsStorageAccount" -}}
-{{- if .Values.storage.aws }}
-  {{- with .Values.storage.aws }}
-    {{- if .accessPointId }}
-      {{- printf  "%s::%s" .fileSystemId .accessPointId | quote }}
-    {{- else }}
-      {{- .fileSystemId | quote }}
-    {{- end }}
+{{- with .Values.storage.aws }}
+  {{- if not .fileSystemId }}
+    {{ fail "fileSystemId is necessary" }}
+  {{- end }}
+  {{- if .accessPointId }}
+    {{- printf  "%s::%s" .fileSystemId .accessPointId | quote }}
+  {{- else }}
+    {{- .fileSystemId | quote }}
   {{- end }}
 {{- end }}
+{{- end -}}
+
+{{- define "controllerStorageClass" -}}
+{{ .Release.Name }}-controller-results
+{{- end -}}
+{{- define "controllerCrdGroup" -}}
+tasks.{{ .Release.Name }}.com
+{{- end -}}
+{{- define "areWeSubchart" -}}
+{{- not (eq .Release.Name .Chart.Name) -}}
 {{- end -}}

@@ -3,13 +3,13 @@ kind: PersistentVolume
 metadata:
   name: {{ include "pvControllerName" . }}
 spec:
-  storageClassName: controller-results
+  storageClassName: {{ include "controllerStorageClass" . }}
   accessModes:
     - ReadWriteMany
     - ReadOnlyMany
   capacity:
     storage: {{ .Values.storage.capacity }}
-  {{ if .Values.storage.local }}
+  {{- if .Values.storage.local }}
   local:
     path: {{ .Values.storage.local.path }}
   nodeAffinity:
@@ -20,17 +20,17 @@ spec:
           operator: In
           values:
           - linux
-  {{ else if .Values.storage.azure }}
+  {{- else if .Values.storage.azure }}
   azureFile:
     shareName: {{ .Values.storage.azure.shareName }}
     readOnly: false
     secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
-  {{ else if .Values.storage.aws }}
+  {{- else if .Values.storage.aws }}
   csi:
     driver: efs.csi.aws.com
     volumeHandle: {{ include "awsStorageAccount" . }}
-  {{ else if .Values.storage.nfs }}
-  {{ end }}
+  {{- else if .Values.storage.nfs }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -38,7 +38,7 @@ metadata:
   name: {{ include "pvcControllerName" . }}
   namespace: {{ include "controller_ns" . }}
 spec:
-  storageClassName: controller-results
+  storageClassName: {{ include "controllerStorageClass" . }}
   volumeName: {{ include "pvControllerName" . }}
   resources:
     requests:

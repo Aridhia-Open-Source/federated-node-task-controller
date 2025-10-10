@@ -1,13 +1,13 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: controller-results
+  name: {{ include "controllerStorageClass" . }}
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 volumeBindingMode: WaitForFirstConsumer
-{{ if .Values.storage.local }}
+{{- if .Values.storage.local }}
 provisioner: Local
-{{- else if .Values.storage.azure -}}
+{{- else if .Values.storage.azure }}
 provisioner: disk.csi.azure.com
 parameters:
   skuname: Premium_LRS
@@ -17,10 +17,10 @@ parameters:
   provisioningMode: efs-ap
   fileSystemId: {{ include "awsStorageAccount" . }}
   directoryPerms: "777"
-{{- else if .Values.storage.nfs -}}
+{{- else if .Values.storage.nfs }}
 provisioner: {{ .Values.storage.nfs.provisioner -}}
 parameters:
   server: {{ .Values.storage.nfs.url -}}
   path: {{ .Values.storage.nfs.path -}}
   readOnly: "false"
-{{- end -}}
+{{- end }}

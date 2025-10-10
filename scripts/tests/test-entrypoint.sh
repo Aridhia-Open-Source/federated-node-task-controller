@@ -18,6 +18,8 @@ export KEYCLOAK_ADMIN_PASSWORD=password1
 export IMAGE=ghcr.io/aridhia-open-source/fn_task_controller
 export TAG=0.0.1
 export MOUNT_PATH=/data/test
+export STORAGE_CLASS=test-class
+export CRD_GROUP=tasks.federatednode.com
 
 pytest -v --cov-report xml:/app/artifacts/coverage.xml --cov=controller .
 pycobertura show /app/artifacts/coverage.xml

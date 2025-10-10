@@ -1,12 +1,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: analytics-operator
+  name: {{ .Release.Name }}-analytics-operator
 rules:
-- apiGroups: ["apiextensions.k8s.io"]
-  resources: ["customresourcedefinitions"]
-  verbs: ["create"]
-- apiGroups: ["tasks.federatednode.com"]
+# - apiGroups: ["apiextensions.k8s.io"]
+#   resources: ["customresourcedefinitions"]
+#   verbs: ["create"]
+- apiGroups: [{{ include "controllerCrdGroup" . | quote }}]
   resources: ["analytics"]
   verbs: ["*"]
 - apiGroups: [""]
@@ -17,7 +17,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: analytics-operator
+  name: {{ .Release.Name }}-analytics-operator-rolebinding
 subjects:
 - kind: ServiceAccount
   name: analytics-operator
@@ -28,11 +28,11 @@ roleRef:
   name: analytics-operator
   apiGroup: rbac.authorization.k8s.io
 ---
-
+{{- if eq (include "areWeSubchart" .) "true" -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: analytics-backend-operator
+  name: {{ .Release.Name }}-analytics-backend-operator-rolebinding
 subjects:
 - kind: ServiceAccount
   name: analytics-operator
@@ -40,8 +40,9 @@ subjects:
   apiGroup: ""
 roleRef:
   kind: ClusterRole
-  name: backend-role
+  name: {{ .Release.Name }}-backend-role
   apiGroup: rbac.authorization.k8s.io
+{{- end }}
 ---
 
 apiVersion: v1

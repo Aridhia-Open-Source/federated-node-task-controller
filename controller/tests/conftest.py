@@ -230,7 +230,7 @@ def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, job_spec
     all_clients.update(v1_batch_mock)
     all_clients.update(v1_crd_mock)
     all_clients["read_namespaced_secret"].return_value.data = {
-        "KEYCLOAK_GLOBAL_CLIENT_SECRET": "YWJjMTIz",
+        "KEYCLOAK_SECRET": "YWJjMTIz",
         "KEYCLOAK_ADMIN_PASSWORD": "YWJjMTIz"
     }
     return all_clients

@@ -28,7 +28,7 @@ def get_keycloak_secret() -> str:
     Simple generalization to get keycloak secret, as it has
     fixed keys in it
     """
-    return KubernetesV1().get_secret('kc-secrets', 'KEYCLOAK_GLOBAL_CLIENT_SECRET')
+    return KubernetesV1().get_secret('kc-secrets', 'KEYCLOAK_SECRET')
 
 def get_keycloak_admin_pass() -> str:
     """

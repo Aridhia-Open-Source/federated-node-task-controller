@@ -34,11 +34,11 @@ spec:
                 secretKeyRef:
                   name: kc-secrets
                   key: KEYCLOAK_ADMIN_PASSWORD
-            - name: KEYCLOAK_GLOBAL_CLIENT_SECRET
+            - name: KEYCLOAK_SECRET
               valueFrom:
                 secretKeyRef:
                   name: kc-secrets
-                  key: KEYCLOAK_GLOBAL_CLIENT_SECRET
+                  key: KEYCLOAK_SECRET
             - name: GITHUB_CLIENTID
               valueFrom:
                 secretKeyRef:

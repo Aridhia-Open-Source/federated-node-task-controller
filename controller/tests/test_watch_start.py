@@ -1,8 +1,11 @@
+import asyncio
+from httpx import Response
+import httpx
 import pytest
 import responses
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
-from unittest.mock import mock_open
+from unittest.mock import AsyncMock, mock_open
 
 from controller import start
 from exceptions import CRDException
@@ -20,7 +23,8 @@ class TestWatcher:
             "tasks.federatednode.com": "fn-controller"
         }
 
-    def test_sync_user(
+    @pytest.mark.asyncio
+    async def test_sync_user(
         self,
         k8s_client,
         k8s_watch_mock,
@@ -32,7 +36,7 @@ class TestWatcher:
         Tests the first step of the CRD lifecycle.
         If has been ADDED, sync the GitHub user in Keycloak
         """
-        start(True)
+        await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', 'crd1',
             [{'op': 'add', 'path': '/metadata/annotations', 'value':
@@ -42,8 +46,9 @@ class TestWatcher:
             }]
         )
 
+    @pytest.mark.asyncio
     @mock.patch('helpers.actions.watch_user_pod', side_effect=ApiException(reason="ImagePullBackOff"))
-    def test_sync_user_fails_create_job(
+    async def test_sync_user_fails_create_job(
         self,
         wup_mock,
         k8s_client,
@@ -58,7 +63,8 @@ class TestWatcher:
         start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
-    def test_sync_user_job_fails_run(
+    @pytest.mark.asyncio
+    async def test_sync_user_job_fails_run(
         self,
         k8s_client,
         k8s_watch_mock,
@@ -72,11 +78,12 @@ class TestWatcher:
         """
         mock_pod_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status=mock.Mock(failed=True))}]
 
-        start(True)
+        await start(True)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
-    def test_post_task_successful(
+    @pytest.mark.asyncio
+    async def test_post_task_successful(
             self,
             mock_crd_user_synched,
             admin_token_request,
@@ -87,6 +94,7 @@ class TestWatcher:
             k8s_client,
             k8s_watch_mock,
             review_env,
+            respx_mock,
             domain
         ):
         """
@@ -94,15 +102,12 @@ class TestWatcher:
         if the user annotation is set.
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
-
-        # Mock the request response from the FN API
-        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-            rsps.add(fn_task_request)
-            rsps.add(get_user_request)
-            rsps.add(admin_token_request)
-            rsps.add(admin_token_request)
-            rsps.add(impersonate_request)
-            start(True)
+        admin_token_request.side_effect = [
+            httpx.Response(status_code=200, json={"access_token": "atoken"}),
+            httpx.Response(status_code=200, json={"access_token": "atoken"}),
+            httpx.Response(status_code=200, json={"refresh_token": "rtoken"})
+        ]
+        await start(True)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
@@ -115,15 +120,16 @@ class TestWatcher:
             }]
         )
 
+    @pytest.mark.asyncio
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_post_task_fails(
+    async def test_post_task_fails(
             self,
             token_mock,
             mock_crd_user_synched,
             crd_name,
             k8s_client,
             k8s_watch_mock,
-            backend_url,
+            fn_task_results_request,
             review_env
         ):
         """
@@ -131,19 +137,12 @@ class TestWatcher:
         in case the post task request fails
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.POST,
-                f"{backend_url}/tasks",
-                status=400,
-                json={"error": 'Something went wrong'}
-            )
-            start(True)
+        await start(True)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
-    def test_get_results_not_reviewed(
+    @pytest.mark.asyncio
+    async def test_get_results_not_reviewed(
             self,
             k8s_client,
             k8s_watch_mock,
@@ -158,9 +157,10 @@ class TestWatcher:
         k8s_watch_mock.assert_not_called()
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_approved(
+    async def test_get_results_approved(
             self,
             token_mock,
             open_mock,
@@ -169,7 +169,7 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url,
+            fn_task_results_request,
             review_env,
             delivery_open,
             domain
@@ -183,20 +183,14 @@ class TestWatcher:
         mock_crd_task_done['object']['metadata']['annotations']\
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            start(True)
+        await start(True)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
+    @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_no_review_required_ignore_annotations(
+    async def test_get_results_no_review_required_ignore_annotations(
             self,
             token_mock,
             open_mock,
@@ -205,7 +199,7 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url,
+            fn_task_results_request,
             domain
         ):
         """
@@ -216,20 +210,14 @@ class TestWatcher:
         mock_crd_task_done['object']['metadata']['annotations']\
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            start(True)
+        await start(True)
 
-            k8s_client["create_namespaced_job_mock"].assert_called()
+        k8s_client["create_namespaced_job_mock"].assert_called()
 
+    @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_no_review_required(
+    async def test_get_results_no_review_required(
             self,
             token_mock,
             open_mock,
@@ -238,7 +226,7 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url,
+            fn_task_results_request
         ):
         """
         Tests that once the task's pod is completed,
@@ -246,20 +234,14 @@ class TestWatcher:
         of checking for review, or ignoring it
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            start(True)
+        await start(True)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
+    @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_get_results_task_fails(
+    async def test_get_results_task_fails(
             self,
             token_mock,
             open_mock,
@@ -279,11 +261,12 @@ class TestWatcher:
         mock_crd_task_done['object']['metadata']['annotations']\
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        start(True)
+        await start(True)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
-    def test_get_results_blocked(
+    @pytest.mark.asyncio
+    async def test_get_results_blocked(
             self,
             k8s_client,
             k8s_watch_mock,
@@ -301,7 +284,8 @@ class TestWatcher:
         k8s_watch_mock.assert_not_called()
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
-    def test_ignore_done_crd(
+    @pytest.mark.asyncio
+    async def test_ignore_done_crd(
             self,
             k8s_client,
             k8s_watch_mock,
@@ -317,15 +301,16 @@ class TestWatcher:
         calls_to_assert =[
             k8s_client["patch_cluster_custom_object_mock"],
             mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
-            mocker.patch('helpers.actions.create_task'),
-            mocker.patch('helpers.actions.watch_task_pod')
+            mocker.patch('helpers.actions.create_fn_task'),
+            mocker.patch("helpers.actions.watch_task_pod", new_callable=AsyncMock)
         ]
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_done]
-        start(True)
+        await start(True)
         for call in calls_to_assert:
             call.assert_not_called()
 
-    def test_deleted_crd_is_ignored(
+    @pytest.mark.asyncio
+    async def test_deleted_crd_is_ignored(
             self,
             k8s_client,
             k8s_watch_mock,
@@ -338,16 +323,17 @@ class TestWatcher:
         calls_to_assert =[
             k8s_client["patch_cluster_custom_object_mock"],
             mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
-            mocker.patch('helpers.actions.create_task'),
-            mocker.patch('helpers.actions.watch_task_pod')
+            mocker.patch('helpers.actions.create_fn_task'),
+            mocker.patch("helpers.actions.watch_task_pod", new_callable=AsyncMock)
         ]
         mock_crd_done["type"] = "DELETED"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_done]
-        start(True)
+        await start(True)
         for call in calls_to_assert:
             call.assert_not_called()
 
-    def test_incomplete_crd_fields(
+    @pytest.mark.asyncio
+    async def test_incomplete_crd_fields(
             self,
             k8s_client,
             k8s_watch_mock,
@@ -361,18 +347,19 @@ class TestWatcher:
         calls_to_assert =[
             k8s_client["patch_cluster_custom_object_mock"],
             mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
-            mocker.patch('helpers.actions.create_task'),
-            mocker.patch('helpers.actions.watch_task_pod')
+            mocker.patch('helpers.actions.create_fn_task'),
+            mocker.patch("helpers.actions.watch_task_pod", new_callable=AsyncMock)
         ]
         with pytest.raises(CRDException):
-            start(True)
+            await start(True)
 
         for call in calls_to_assert:
             call.assert_not_called()
 
+    @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    def test_missing_result_crd_fields(
+    async def test_missing_result_crd_fields(
             self,
             token_mock,
             open_mock,
@@ -381,7 +368,7 @@ class TestWatcher:
             crd_name,
             mock_crd_task_done,
             mock_pod_watch,
-            backend_url,
+            fn_task_results_request,
             delivery_open,
             domain
         ):
@@ -389,22 +376,16 @@ class TestWatcher:
         Tests that a CRD with missing results fields will by default create a github delivery
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        # Mock the request response from the FN API
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                f"{backend_url}/tasks/1/results",
-                status=200
-            )
-            start(True)
+        await start(True)
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
 
+    @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     @mock.patch('controller.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
-    def test_watch_timeouts(
+    async def test_watch_timeouts(
             self,
             create_retry_job_mock,
             token_mock,
@@ -426,6 +407,6 @@ class TestWatcher:
 
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
-        start(True)
+        await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
         create_retry_job_mock.assert_called()

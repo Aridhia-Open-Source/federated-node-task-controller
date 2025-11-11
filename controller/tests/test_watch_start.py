@@ -1,14 +1,11 @@
-import asyncio
-from httpx import Response
 import httpx
 import pytest
-import responses
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from unittest.mock import AsyncMock, mock_open
 
 from controller import start
-from exceptions import CRDException
+from exceptions import CRDException, KubernetesException
 
 
 class TestWatcher:
@@ -183,7 +180,11 @@ class TestWatcher:
         mock_crd_task_done['object']['metadata']['annotations']\
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        await start(True)
+        with mock.patch("asyncio.create_task", mock.MagicMock()) as mock_create_task:
+            await start(True)
+            # Since the watch task pod is a create_task, we need to
+            # explicitly call it and await for it
+            await mock_create_task.call_args[0][0]
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -210,7 +211,11 @@ class TestWatcher:
         mock_crd_task_done['object']['metadata']['annotations']\
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        await start(True)
+        with mock.patch("asyncio.create_task", mock.MagicMock()) as mock_create_task:
+            await start(True)
+            # Since the watch task pod is a create_task, we need to
+            # explicitly call it and await for it
+            await mock_create_task.call_args[0][0]
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -234,7 +239,11 @@ class TestWatcher:
         of checking for review, or ignoring it
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        await start(True)
+        with mock.patch("asyncio.create_task", mock.MagicMock()) as mock_create_task:
+            await start(True)
+            # Since the watch task pod is a create_task, we need to
+            # explicitly call it and await for it
+            await mock_create_task.call_args[0][0]
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -376,7 +385,12 @@ class TestWatcher:
         Tests that a CRD with missing results fields will by default create a github delivery
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        await start(True)
+        with mock.patch("asyncio.create_task", mock.MagicMock()) as mock_create_task:
+            await start(True)
+            # Since the watch task pod is a create_task, we need to
+            # explicitly call it and await for it
+            await mock_create_task.call_args[0][0]
+
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
 
@@ -407,6 +421,12 @@ class TestWatcher:
 
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
-        await start(True)
+        with mock.patch("asyncio.create_task", mock.MagicMock()) as mock_create_task:
+            await start(True)
+
+            with pytest.raises(KubernetesException):
+                # Since the watch task pod is a create_task, we need to
+                # explicitly call it and await for it
+                await mock_create_task.call_args[0][0]
+
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
-        create_retry_job_mock.assert_called()

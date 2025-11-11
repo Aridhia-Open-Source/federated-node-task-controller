@@ -55,11 +55,14 @@ async def handle_results(crd: Analytics, annotations:dict):
     Common function to handle a CRD last lifecycle step
     """
     # If we have already triggered a task, check if the pod has completed
-    await watch_task_pod(
-        crd,
-        annotations[f"{Analytics.domain}/task_id"],
-        await get_user_token(crd.user),
-        annotations
+    # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+    asyncio.create_task(
+        watch_task_pod(
+            crd,
+            annotations[f"{Analytics.domain}/task_id"],
+            await get_user_token(crd.user),
+            annotations
+        )
     )
 
 async def create_retry_job(crd:Analytics):

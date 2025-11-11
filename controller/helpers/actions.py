@@ -56,7 +56,7 @@ async def handle_results(crd: Analytics, annotations:dict):
     """
     # If we have already triggered a task, check if the pod has completed
     # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-    asyncio.create_task(
+    monitor = asyncio.create_task(
         watch_task_pod(
             crd,
             annotations[f"{Analytics.domain}/task_id"],
@@ -64,6 +64,7 @@ async def handle_results(crd: Analytics, annotations:dict):
             annotations
         )
     )
+    await asyncio.gather(monitor)
 
 async def create_retry_job(crd:Analytics):
     """

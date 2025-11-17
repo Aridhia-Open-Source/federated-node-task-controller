@@ -67,22 +67,24 @@ async def get_user(email:str=None, username:str=None, idpId:str=None) -> dict:
     """
     admin_token = await get_admin_token()
     if idpId:
-        args = dict(
-            url=f"{KC_HOST}/admin/realms/{REALM}/users?idpUserId={idpId}",
-            headers={"Authorization": f"Bearer {admin_token}"})
+        params = {"idpUserId": idpId}
     elif email:
-        args = dict(
-            url=f"{KC_HOST}/admin/realms/{REALM}/users?email={email}&exact=true",
-            headers={"Authorization": f"Bearer {admin_token}"}
-        )
+        params={
+            "email": email,
+            "exact": True
+        }
     elif username:
-        args = dict(
-            url=f"{KC_HOST}/admin/realms/{REALM}/users?username={username}&exact=true",
-            headers={"Authorization": f"Bearer {admin_token}"}
-        )
+        params={
+            "email": email,
+            "exact": True
+        }
     else:
         raise KeycloakException("Either email or username are needed")
-    user_response = httpx.get(**args)
+
+    user_response = httpx.get(f"{KC_HOST}/admin/realms/{REALM}/users",
+        params=params,
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
     if user_response.status_code > 299:
         raise KeycloakException(user_response.content.decode())
     if len(user_response.json()):

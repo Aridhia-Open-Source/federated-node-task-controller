@@ -1,6 +1,8 @@
 import os
 import requests
 import sys
+import time
+
 
 KEYCLOAK_URL = os.getenv('KC_HOST')
 KEYCLOAK_PASS = os.getenv('KEYCLOAK_ADMIN_PASSWORD')
@@ -14,10 +16,12 @@ if not REPOSITORY:
 
 # Ready check on backend
 for i in range(10):
-  hc_resp = requests.get(f"{KEYCLOAK_URL}/realms/FederatedNode")
-  if hc_resp.ok:
-    break
-
+  try:
+    hc_resp = requests.get(f"{KEYCLOAK_URL}/realms/FederatedNode")
+    if hc_resp.ok:
+      break
+  except requests.exceptions.ConnectionError:
+    print(f"{i+1}/10 - Failed to connect. Will retry in 10 seconds")
   time.sleep(10)
 
 # Login as admin

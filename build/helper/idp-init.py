@@ -24,8 +24,9 @@ for i in range(10):
     print(f"{i+1}/10 - Failed to connect. Will retry in 10 seconds")
   time.sleep(10)
 
-# Login as admin
-admin_response = requests.post(
+# Login as admin - Wait 10 seconds between retries. The keycloak init job relies on both kc pods to be up
+for i in range(10):
+  admin_response = requests.post(
     f"{KEYCLOAK_URL}/realms/FederatedNode/protocol/openid-connect/token",
     headers={
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -37,11 +38,14 @@ admin_response = requests.post(
         'password': KEYCLOAK_PASS,
         'client_id':'admin-cli'
     }
-)
+  )
 
-if not admin_response.ok:
-    print(admin_response.json())
-    exit(1)
+  if not admin_response.ok:
+    print(f"{i+1}/10 - {admin_response.json()}")
+    time.sleep(10)
+    continue
+
+  break
 
 print("Logged in!")
 admin_token = admin_response.json()["access_token"]

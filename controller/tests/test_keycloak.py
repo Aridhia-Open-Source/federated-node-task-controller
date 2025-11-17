@@ -101,7 +101,7 @@ class TestKeycloakRequests:
         mock_crd_user_synched['object']['spec']['user'] = {"username": user_email}
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
 
-        respx_mock.get(f"{keycloak_url}/admin/realms/{keycloak_realm}/users?username={user_email}&exact=true").mock(
+        respx_mock.get(f"{keycloak_url}/admin/realms/{keycloak_realm}/users").mock(
             return_value=httpx.Response(status_code=200, json=[{"id": "asw84r3184"}])
         )
         await start(True)

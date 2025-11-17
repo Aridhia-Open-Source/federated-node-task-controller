@@ -12,6 +12,14 @@ if not REPOSITORY:
     print("REPOSITORY name missing. Skipping IdP setup")
     sys.exit(1)
 
+# Ready check on backend
+for i in range(10):
+  hc_resp = requests.get(f"{KEYCLOAK_URL}/realms/FederatedNode")
+  if hc_resp.ok:
+    break
+
+  time.sleep(10)
+
 # Login as admin
 admin_response = requests.post(
     f"{KEYCLOAK_URL}/realms/FederatedNode/protocol/openid-connect/token",

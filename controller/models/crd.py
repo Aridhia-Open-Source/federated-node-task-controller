@@ -77,7 +77,7 @@ class Analytics:
         if self.dataset:
             self.labels["dataset"] = "-".join(self.dataset.values())[:63]
 
-        self.labels["user"] = "".join(self.user.values())
+        self.labels.update(self.user)
         self.labels["repository"] = self.source["repository"].replace("/", "-")[:63]
         if self.delivery.get("github"):
             self.labels["repository_results"] = self.delivery["github"]["repository"].replace("/", "-")[:63]

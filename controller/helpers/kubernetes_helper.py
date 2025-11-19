@@ -7,6 +7,7 @@ K8s helpers functions
 import os
 import re
 import base64
+from datetime import datetime
 import logging
 
 from uuid import uuid4
@@ -172,7 +173,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         Creates the job template and submits it to the cluster in the
         same namespace as the controller's
         """
-        name += f"-{uuid4()}"
+        name += f"-{str(datetime.now().timestamp()).replace('.','')}"
         name = name[:62]
         if labels is None:
             labels = {}

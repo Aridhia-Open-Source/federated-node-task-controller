@@ -1,9 +1,13 @@
 # Releases Changelog
 
+# 1.6.0
+- Moved to async API requests to minimise bottleneck in performance
+
 # 1.5.0
 
 ## Bugfix
 - Fixed an issue with link user jobs name which could have ended up with invalid characters
+
 
 # 1.4.0
 - Prefixed all of the cluster-wide resources with the helm release name, granting uniqueness.

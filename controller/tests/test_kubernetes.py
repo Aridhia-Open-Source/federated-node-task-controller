@@ -1,3 +1,4 @@
+import pytest
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from models.crd import MAX_RETRIES
@@ -6,7 +7,8 @@ from exceptions import KubernetesException
 
 
 class TestKubernetesHelper:
-    def test_job_pv_creation_exists(
+    @pytest.mark.asyncio
+    async def test_job_pv_creation_exists(
         self,
         k8s_client,
         k8s_watch_mock,
@@ -19,12 +21,13 @@ class TestKubernetesHelper:
         the CRD in its cycle
         """
         k8s_client["create_persistent_volume_mock"].side_effect = ApiException(status=409)
-        start(True)
+        await start(True)
         k8s_client["create_namespaced_job_mock"].assert_called()
         k8s_client["patch_cluster_custom_object_mock"].assert_called()
 
+    @pytest.mark.asyncio
     @mock.patch('controller.create_retry_job')
-    def test_job_pv_creation_fails(
+    async def test_job_pv_creation_fails(
         self,
         create_bare_job_mock,
         k8s_client,
@@ -39,12 +42,13 @@ class TestKubernetesHelper:
         the CRD in its cycle
         """
         k8s_client["create_persistent_volume_mock"].side_effect = ApiException('Error')
-        start(True)
+        await start(True)
         k8s_client["create_namespaced_job_mock"].assert_not_called()
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    @pytest.mark.asyncio
     @mock.patch('controller.create_retry_job')
-    def test_job_creation_fails(
+    async def test_job_creation_fails(
         self,
         create_bare_job_mock,
         k8s_client,
@@ -58,12 +62,13 @@ class TestKubernetesHelper:
         the CRD in its cycle
         """
         k8s_client["create_namespaced_job_mock"].side_effect = ApiException(http_resp=mock.Mock(data=""))
-        start(True)
+        await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
+    @pytest.mark.asyncio
     @mock.patch('controller.sync_users')
     @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')
-    def test_on_crd_exceptions_create_retry_job(
+    async def test_on_crd_exceptions_create_retry_job(
             self,
             create_bare_job_mock,
             sync_mock,
@@ -78,7 +83,7 @@ class TestKubernetesHelper:
         """
         crd_name = k8s_watch_mock.return_value.stream.return_value[0]["object"]["metadata"]["name"]
         sync_mock.side_effect=KubernetesException('Error')
-        start(True)
+        await start(True)
         create_bare_job_mock.assert_called_with(
             **{
                 "name": f"update-annotation-{crd_name}",
@@ -92,9 +97,10 @@ class TestKubernetesHelper:
                 "image": "alpine/k8s:1.29.4"}
         )
 
+    @pytest.mark.asyncio
     @mock.patch('controller.sync_users')
     @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')
-    def test_on_crd_exceptions_doesnt_create_retry_job_if_another_is_running(
+    async def test_on_crd_exceptions_doesnt_create_retry_job_if_another_is_running(
             self,
             create_bare_job_mock,
             sync_mock,
@@ -110,13 +116,14 @@ class TestKubernetesHelper:
         """
         sync_mock.side_effect=KubernetesException('Error')
         k8s_client["list_namespaced_pod"].return_value.items = [mock.Mock()]
-        start(True)
+        await start(True)
 
         create_bare_job_mock.assert_not_called()
 
+    @pytest.mark.asyncio
     @mock.patch('controller.sync_users')
     @mock.patch('helpers.actions.KubernetesV1Batch.create_bare_job')
-    def test_on_crd_exceptions_create_retry_job_max_retries(
+    async def test_on_crd_exceptions_create_retry_job_max_retries(
             self,
             create_bare_job_mock,
             sync_mock,
@@ -134,5 +141,5 @@ class TestKubernetesHelper:
             ["object"]["metadata"]["annotations"] \
                 ["tasks.federatednode.com/tries"] = MAX_RETRIES + 1
 
-        start(True)
+        await start(True)
         create_bare_job_mock.assert_not_called()

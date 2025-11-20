@@ -23,7 +23,7 @@ def sync_users(crds: Analytics, annotations:dict):
     """
     # should trigger the user check
     KubernetesV1Batch().create_helper_job(
-        f"link-user-{"".join(crds.user.values())}",
+        f"link-user",
         create_volumes=False,
         script="sync_user.sh",
         labels=crds.labels,

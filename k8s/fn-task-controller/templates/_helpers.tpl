@@ -109,7 +109,7 @@ ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
 {{ .Release.Name }}-controller-results
 {{- end -}}
 {{- define "controllerCrdGroup" -}}
-tasks.{{ .Release.Name }}.com
+tasks.federatednode.com
 {{- end -}}
 {{- define "areWeSubchart" -}}
 {{- not (eq .Release.Name .Chart.Name) -}}

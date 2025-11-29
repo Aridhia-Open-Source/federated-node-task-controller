@@ -35,7 +35,7 @@ class Analytics:
         self.outputs = crd_definition["object"]["spec"].get("outputs", {})
         self.inputs = crd_definition["object"]["spec"].get("inputs", {})
         self.source = crd_definition["object"]["spec"].get("source", {})
-        self.query = crd_definition["object"]["spec"].get("db_query", {})
+        self.query = crd_definition["object"]["spec"].get("db_query")
         self.delivery = json.load(open("controller/delivery.json"))
         self.create_labels()
         self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
@@ -91,7 +91,7 @@ class Analytics:
         custom data in it, like a docker image, a user, a project name and the dataset
         to run the task on
         """
-        return {
+        base = {
             "name": self.user.get("username") or self.user.get("email"),
             "executors": [
                 {
@@ -105,13 +105,16 @@ class Analytics:
                 "dataset_id": self.dataset.get("id"),
                 "dataset_name": self.dataset.get("name")
             },
-            "db_query": self.query,
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},
             "description": f"Automated task for {self.proj_name} project",
             "task_controller": True
         }
+        if self.query:
+            base["db_query"] = self.query
+
+        return base
 
     def prepare_update_job(self) -> dict:
         """

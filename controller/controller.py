@@ -26,7 +26,7 @@ logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 
 
-def start(exit_on_tests=False):
+async def start(exit_on_tests=False):
     """
     Effectively the entrypoint of the controller.
     Accepts the `exit_on_tests` argument which is mostly,
@@ -53,13 +53,13 @@ def start(exit_on_tests=False):
                 logger.info("Annotations: %s", new_annotations)
                 if crd.needs_user_sync():
                     logger.info("Synching user")
-                    sync_users(crd, new_annotations)
+                    await sync_users(crd, new_annotations)
                 elif crd.can_trigger_task():
                     logger.info("Triggering task")
-                    trigger_task(crd, new_annotations)
+                    await trigger_task(crd, new_annotations)
                 elif crd.can_deliver_results():
                     logger.info("Getting task results")
-                    handle_results(crd, new_annotations)
+                    await handle_results(crd, new_annotations)
                 if exit_on_tests:
                     watcher.stop()
                     break
@@ -68,14 +68,14 @@ def start(exit_on_tests=False):
                 logger.error(mre.reason)
                 raise mre
             except (BaseControllerException, ApiException) as ke:
-                create_retry_job(crd)
+                await create_retry_job(crd)
                 logger.error(ke.reason)
             except KeyError:
                 # Possibly missing values, it shouldn't crash the pod
                 logger.error(traceback.format_exc())
             # pylint: disable=W0718
             except Exception:
-                create_retry_job(crd)
+                await create_retry_job(crd)
                 logger.error("Unknown error: %s", traceback.format_exc())
     except ProtocolError:
         logger.error("Connection expired. Restarting..")

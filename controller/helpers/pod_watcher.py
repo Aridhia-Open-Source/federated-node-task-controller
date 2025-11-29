@@ -4,10 +4,12 @@ Collection of job and pod watchers.
     - Job watcher is mostly to focus on user sync
 """
 
+import asyncio
 import base64
 import logging
 import re
 import subprocess
+import httpx
 from kubernetes.watch import Watch
 from kubernetes.client.models.v1_job_status import V1JobStatus
 
@@ -25,21 +27,18 @@ logger.setLevel(logging.INFO)
 MAX_TIMEOUT = 60
 
 
-def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict):
+async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict):
     """
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    # results_path = crd_spec.get("results", {})
-    # git_info = results_path.get("git", {})
-    # other_info = results_path.get("other", {})
     pod = None
     git_info = crd.delivery.get("github", {})
     other_info = crd.delivery.get("other", {})
     logger.info("Looking for pod with task_id: %s", task_id)
-    pod_watcher = Watch()
+    pod_watch = Watch()
 
-    for pod in pod_watcher.stream(
+    for pod in pod_watch.stream(
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
         label_selector=f"task_id={task_id}",
@@ -49,7 +48,7 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
         match pod["object"].status.phase:
             case "Succeeded":
                 annotations[f"{crd.domain}/results"] = "true"
-                fp = get_results(task_id, user_token)
+                fp = await get_results(task_id, user_token)
                 if fp is None:
                     logging.info("Task needs a review")
                     # Results to be approved. Waiting. No retries
@@ -100,12 +99,12 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
                             pass
                     if is_api:
                         with open(fp, 'r', encoding="utf-8") as file:
-                            resp = requests.post(
+                            resp = httpx.post(
                                 other_info.get("url"),
                                 files={fp: file},
                                 **auth
                             )
-                        if not resp.ok:
+                        if resp.status_code > 299:
                             raise PodWatcherException("Failed to deliver results")
                     # Add results annotation to let the controller know
                     # we already handled results
@@ -126,17 +125,17 @@ def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict
     logger.info("Stopping task %s pod watcher", task_id)
     if not pod:
         raise KubernetesException(f"Timeout. Pod for task {task_id} not found")
-    pod_watcher.stop()
+    pod_watch.stop()
 
 
-def watch_user_pod(crd: Analytics, annotations:dict):
+async def watch_user_pod(crd: Analytics, annotations:dict):
     """
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
     """
-    pod_watcher = Watch()
+    pod_watch = Watch()
     ls = ",".join(f"{lab[0]}={lab[1]}" for lab in crd.labels.items())
-    for job in pod_watcher.stream(
+    for job in pod_watch.stream(
         KubernetesV1Batch().list_namespaced_job,
         NAMESPACE,
         label_selector=ls,
@@ -145,7 +144,7 @@ def watch_user_pod(crd: Analytics, annotations:dict):
         timeout_seconds=MAX_TIMEOUT
     ):
         logger.info("Found job! %s", job["object"].metadata.name)
-        match get_job_status(job["object"].status):
+        match await get_job_status(job["object"].status):
             case "Succeeded":
                 annotations[f"{crd.domain}/user"] = "ok"
                 # Add results annotation to let the controller know
@@ -160,14 +159,14 @@ def watch_user_pod(crd: Analytics, annotations:dict):
                 logger.info(
                     "%s Status: %s",
                     job["object"].metadata.name,
-                    get_job_status( job["object"].status)
+                    await get_job_status(job["object"].status)
                 )
 
     logger.info("Stopping %s job watcher", " ".join(crd.user.values()))
-    pod_watcher.stop()
+    pod_watch.stop()
 
 
-def get_job_status(status:V1JobStatus) -> str:
+async def get_job_status(status:V1JobStatus) -> str:
     """
     Just a simple mapper as job status objects do not tell you directly
     what the status is, and spreads it across different vars

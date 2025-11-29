@@ -1,6 +1,8 @@
 import os
 import requests
 import sys
+import time
+
 
 KEYCLOAK_URL = os.getenv('KC_HOST')
 KEYCLOAK_PASS = os.getenv('KEYCLOAK_ADMIN_PASSWORD')
@@ -12,8 +14,19 @@ if not REPOSITORY:
     print("REPOSITORY name missing. Skipping IdP setup")
     sys.exit(1)
 
-# Login as admin
-admin_response = requests.post(
+# Ready check on backend
+for i in range(10):
+  try:
+    hc_resp = requests.get(f"{KEYCLOAK_URL}/realms/FederatedNode")
+    if hc_resp.ok:
+      break
+  except requests.exceptions.ConnectionError:
+    print(f"{i+1}/10 - Failed to connect. Will retry in 10 seconds")
+  time.sleep(10)
+
+# Login as admin - Wait 10 seconds between retries. The keycloak init job relies on both kc pods to be up
+for i in range(10):
+  admin_response = requests.post(
     f"{KEYCLOAK_URL}/realms/FederatedNode/protocol/openid-connect/token",
     headers={
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -25,11 +38,14 @@ admin_response = requests.post(
         'password': KEYCLOAK_PASS,
         'client_id':'admin-cli'
     }
-)
+  )
 
-if not admin_response.ok:
-    print(admin_response.json())
-    exit(1)
+  if not admin_response.ok:
+    print(f"{i+1}/10 - {admin_response.json()}")
+    time.sleep(10)
+    continue
+
+  break
 
 print("Logged in!")
 admin_token = admin_response.json()["access_token"]

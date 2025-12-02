@@ -1,10 +1,11 @@
+TAG := $(or $(TAG), 1.0)
 SHELL=/bin/bash
-IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller:1.3.0
+IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller
 TESTS_IMAGE ?= ghcr.io/aridhia-open-source/fn_task_controller_tests
 TEST_CONTAINER ?= fn-controller-tests
 
 build_docker:
-	docker build . -t "${IMAGE}"
+	docker build . -t "${IMAGE}:${TAG}"
 
 build_test_container:
 	docker build . -f test.Dockerfile -t ${TESTS_IMAGE}
@@ -20,7 +21,7 @@ cleanup_test_container:
 	docker rm ${TEST_CONTAINER} || echo "No ${TEST_CONTAINER} container exists"
 
 send_micro: build
-	docker save "${IMAGE}" > fndev.tar
+	docker save "${IMAGE}:${TAG}" > fndev.tar
 	microk8s ctr image import fndev.tar
 	rm fndev.tar
 
@@ -31,7 +32,7 @@ apply:
 	kubectl apply -f k8s/
 
 exec_docker:
-	docker run --rm -it --entrypoint sh ${IMAGE}
+	docker run --rm -it --entrypoint sh ${IMAGE}:${TAG}
 
 tests_local:
 	pytest -v --cov-report xml:artifacts/coverage.xml --cov=controller controller

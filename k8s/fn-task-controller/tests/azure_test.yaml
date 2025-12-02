@@ -41,7 +41,7 @@ kubernetesProvider:
         namespace: federatednode
       data:
         KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
-        KEYCLOAK_GLOBAL_CLIENT_SECRET: dGVzdA==
+        KEYCLOAK_SECRET: dGVzdA==
     - apiVersion: v1
       kind: Secret
       metadata:

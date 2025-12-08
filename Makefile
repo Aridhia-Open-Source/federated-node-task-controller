@@ -11,7 +11,7 @@ build_test_container:
 	docker build . -f test.Dockerfile -t ${TESTS_IMAGE}
 
 build_helper:
-	docker build build/helper -t ghcr.io/aridhia-open-source/fn_task_controller_helper:1.3.0
+	docker build build/helper -t ghcr.io/aridhia-open-source/fn_task_controller_helper:${TAG}
 
 run_test_container: cleanup_test_container
 	docker run --name ${TEST_CONTAINER} ${TESTS_IMAGE}

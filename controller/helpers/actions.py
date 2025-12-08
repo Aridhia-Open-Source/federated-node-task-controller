@@ -8,7 +8,8 @@ from helpers.kubernetes_helper import (
     KubernetesV1
 )
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
-from helpers.task_helper import create_fn_task, get_user_token
+from helpers.keycloak_helper import get_admin_token
+from helpers.task_helper import create_fn_task
 from models.crd import Analytics
 
 
@@ -34,15 +35,15 @@ async def sync_users(crds: Analytics, annotations:dict):
 
     await watch_user_pod(crds, annotations)
 
-async def trigger_task(crd: Analytics, annotations):
+async def trigger_task(crd: Analytics, annotations:dict[str, str]):
     """
     Common function to setup all the info necessary
     to send a FN API request, and the POST /tasks itself
     """
-    user_token = await get_user_token(crd.user)
+    admin_token:str = await get_admin_token()
     logger.info("Creating task with image %s", crd.image)
 
-    task_resp = create_fn_task(crd, user_token)
+    task_resp: dict[str, str] = create_fn_task(crd, admin_token)
 
     annotations[f"{crd.domain}/done"] = "true"
     if "task_id" in task_resp:
@@ -60,7 +61,7 @@ async def handle_results(crd: Analytics, annotations:dict):
         watch_task_pod(
             crd,
             annotations[f"{Analytics.domain}/task_id"],
-            await get_user_token(crd.user),
+            await get_admin_token(),
             annotations
         )
     )

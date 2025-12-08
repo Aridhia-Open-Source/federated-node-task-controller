@@ -1,0 +1,33 @@
+## Job template for Identity Provider initialization
+# on keycloak with GitHub as a partner.
+# If already set, it changes nothing
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: controller-user-init
+  namespace: {{ include "controller_ns" . }}
+  annotations:
+    helm.sh/hook: post-install, post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation, hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: controller-user-init
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          command: ["python3", "-u", "create-controller-user.py"]
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: controller-config
+            - secretRef:
+                name: controller-user-creds
+            - secretRef:
+                name: kc-secrets
+          env:
+            - name: KEYCLOAK_NAMESPACE
+              value: {{ include "kc_ns" . }}

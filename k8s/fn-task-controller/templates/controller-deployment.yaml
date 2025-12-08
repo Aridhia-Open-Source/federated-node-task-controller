@@ -52,8 +52,8 @@ spec:
           - name: KC_USER
             valueFrom:
               configMapKeyRef:
-                name: keycloak-config
-                key: KEYCLOAK_ADMIN
+                name: controller-user-creds
+                key: SYS_USER_EMAIL
         resources:
           limits:
             cpu: {{ .Values.resources.limits.cpu }}

@@ -24,7 +24,7 @@ async def get_user_token(user:dict) -> str:
     user_info = await get_user(**user)
     return await impersonate_user(user_info["id"])
 
-def create_fn_task(crd: Analytics, user_token:str):
+def create_fn_task(crd: Analytics, user_token:str) -> dict[str,str]:
     """
     Wrapper to call the Federated Node /tasks endpoint
     """
@@ -42,6 +42,27 @@ def create_fn_task(crd: Analytics, user_token:str):
     return task_resp.json()
 
 async def get_results(task_id:str, token:str) -> str:
+    """
+    Gets the tar file with the results, raises an exception
+    if the request fails
+    """
+    logger.info("Getting task %s results", task_id)
+    res_resp = httpx.get(
+        f"{BACKEND_HOST}/tasks/{task_id}/results",
+        headers={
+            "Authorization": f"Bearer {token}"
+        }
+    )
+    if res_resp.status_code > 299:
+        if res_resp.json().get('status') == "Pending Review":
+            return
+        raise FederatedNodeException(res_resp.json())
+    filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results.zip"
+    with open(filepath, "wb") as file:
+        file.write(res_resp.content)
+    return filepath
+
+async def create_system_user(task_id:str, token:str) -> str:
     """
     Gets the tar file with the results, raises an exception
     if the request fails

@@ -118,7 +118,7 @@ class TestWatcher:
         )
 
     @pytest.mark.asyncio
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_post_task_fails(
             self,
             token_mock,
@@ -156,7 +156,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_approved(
             self,
             token_mock,
@@ -186,7 +186,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_no_review_required_ignore_annotations(
             self,
             token_mock,
@@ -213,7 +213,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_no_review_required(
             self,
             token_mock,
@@ -237,7 +237,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_task_fails(
             self,
             token_mock,
@@ -355,7 +355,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_missing_result_crd_fields(
             self,
             token_mock,
@@ -380,7 +380,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     @mock.patch('controller.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
     async def test_watch_timeouts(

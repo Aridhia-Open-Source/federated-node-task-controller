@@ -1,3 +1,4 @@
+import logging
 import os
 import requests
 import sys
@@ -10,8 +11,12 @@ GITHUB_SECRET = os.getenv('GITHUB_SECRET')
 GITHUB_CLIENTID = os.getenv('GITHUB_CLIENTID')
 REPOSITORY = os.getenv('REPOSITORY')
 
+logger = logging.getLogger('idp-initializer')
+logger.setLevel(logging.INFO)
+
+
 if not REPOSITORY:
-    print("REPOSITORY name missing. Skipping IdP setup")
+    logging.error("REPOSITORY name missing. Skipping IdP setup")
     sys.exit(1)
 
 # Ready check on backend
@@ -21,7 +26,7 @@ for i in range(10):
     if hc_resp.ok:
       break
   except requests.exceptions.ConnectionError:
-    print(f"{i+1}/10 - Failed to connect. Will retry in 10 seconds")
+    logger.info(f"{i+1}/10 - Failed to connect. Will retry in 10 seconds")
   time.sleep(10)
 
 # Login as admin - Wait 10 seconds between retries. The keycloak init job relies on both kc pods to be up
@@ -41,13 +46,13 @@ for i in range(10):
   )
 
   if not admin_response.ok:
-    print(f"{i+1}/10 - {admin_response.json()}")
+    logger.info(f"{i+1}/10 - {admin_response.json()}")
     time.sleep(10)
     continue
 
   break
 
-print("Logged in!")
+logger.info("Logged in!")
 admin_token = admin_response.json()["access_token"]
 
 idp_alias = REPOSITORY.replace("/", "-")
@@ -81,6 +86,6 @@ idp_create_response = requests.post(
 
 # If it exists (status code == 409) we can ignore the "error"
 if not idp_create_response.ok and idp_create_response.status_code != 409:
-    print(idp_create_response.json())
+    logger.error(idp_create_response.json())
     exit(1)
-print("Idp created or already exists")
+logger.info("Idp created or already exists. All good")

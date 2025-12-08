@@ -117,6 +117,7 @@ class TestKeycloakRequests:
             }]
         )
 
+    @pytest.mark.skip("Not user to double check for users in this version")
     @pytest.mark.asyncio
     @mock.patch('helpers.actions.create_fn_task')
     async def test_user_not_found(

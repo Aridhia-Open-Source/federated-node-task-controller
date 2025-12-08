@@ -13,7 +13,7 @@ class TestWatcherApiDelivery:
 
     @mark.asyncio
     @mark.parametrize('delivery_open', [delivery_content], indirect=True)
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_api_delivery(
             self,
             token_mock,
@@ -55,7 +55,7 @@ class TestWatcherApiDelivery:
 
     @mark.asyncio
     @mark.parametrize('delivery_open', [delivery_content_basic], indirect=True)
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_api_delivery_basic(
             self,
             token_mock,
@@ -101,7 +101,7 @@ class TestWatcherApiDelivery:
 
     @mark.asyncio
     @mark.parametrize('delivery_open', [delivery_content], indirect=True)
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_admin_token', return_value="token")
     async def test_get_results_api_delivery_fails(
             self,
             token_mock,

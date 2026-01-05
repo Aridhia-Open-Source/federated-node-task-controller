@@ -4,7 +4,6 @@ Collection of job and pod watchers.
     - Job watcher is mostly to focus on user sync
 """
 
-import asyncio
 import base64
 import logging
 import re
@@ -16,7 +15,6 @@ from kubernetes.client.models.v1_job_status import V1JobStatus
 from const import TASK_NAMESPACE, NAMESPACE
 from exceptions import KubernetesException, PodWatcherException
 from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
-from helpers.request_helper import client as requests
 from helpers.task_helper import get_results
 from models.crd import Analytics
 
@@ -42,7 +40,7 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
         label_selector=f"task_id={task_id}",
-        timeout_seconds=MAX_TIMEOUT
+        timeout_seconds=MAX_TIMEOUT,
     ):
         logger.info("Found pod! %s", pod["object"].metadata.name)
         match pod["object"].status.phase:
@@ -108,7 +106,8 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                             raise PodWatcherException("Failed to deliver results")
                     # Add results annotation to let the controller know
                     # we already handled results
-                    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
+                    if not crd.schedule:
+                        KubernetesCRD().patch_crd_annotations(crd.name, annotations)
                 else:
                     raise PodWatcherException("No suitable delivery options available")
                 break
@@ -141,7 +140,8 @@ async def watch_user_pod(crd: Analytics, annotations:dict):
         label_selector=ls,
         resource_version='',
         watch=True,
-        timeout_seconds=MAX_TIMEOUT
+        timeout_seconds=MAX_TIMEOUT,
+        async_req=True
     ):
         logger.info("Found job! %s", job["object"].metadata.name)
         match await get_job_status(job["object"].status):

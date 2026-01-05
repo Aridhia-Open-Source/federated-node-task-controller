@@ -53,6 +53,8 @@ spec:
                   items:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                schedule:
+                  type: string
                 source:
                   type: object
                   nullable: true

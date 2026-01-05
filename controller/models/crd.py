@@ -39,6 +39,7 @@ class Analytics:
         self.delivery = json.load(open("controller/delivery.json"))
         self.create_labels()
         self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
+        self.schedule = crd_definition["object"]["spec"].get("schedule")
 
     def needs_user_sync(self) -> bool:
         return not self.annotations.get(f"{self.domain}/user")
@@ -105,11 +106,13 @@ class Analytics:
                 "dataset_id": self.dataset.get("id"),
                 "dataset_name": self.dataset.get("name")
             },
+            "schedule": self.schedule,
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},
             "description": f"Automated task for {self.proj_name} project",
-            "task_controller": True
+            "task_controller": True,
+            "crd_name": self.name
         }
         if self.query:
             base["db_query"] = self.query

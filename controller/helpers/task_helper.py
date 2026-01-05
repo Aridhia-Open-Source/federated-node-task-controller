@@ -57,7 +57,7 @@ async def get_results(task_id:str, token:str) -> str:
         if res_resp.json().get('status') == "Pending Review":
             return
         raise FederatedNodeException(res_resp.json())
-    filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results-{dt.now().strftime("%Y-m-%d-%H-%M-%S")}.zip"
+    filepath = f"{GIT_HOME}/{PUBLIC_URL}-{task_id}-results-{dt.now().strftime("%Y-%m-%d-%H-%M-%S")}.zip"
     with open(filepath, "wb") as file:
         file.write(res_resp.content)
     return filepath

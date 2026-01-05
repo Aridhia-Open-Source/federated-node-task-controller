@@ -2,9 +2,15 @@ import json
 from math import exp
 import os
 import re
+import logging
+import time
 
 from const import CRD_GROUP
 from exceptions import CRDException
+
+logging.basicConfig()
+logger = logging.getLogger('crd handler')
+logger.setLevel(logging.INFO)
 
 MAX_RETRIES = 5
 
@@ -58,6 +64,12 @@ class Analytics:
             TASK_REVIEW is set and approved is not "true". So we check for this
             case, and negate it.
         """
+        last_trigger_date = self.annotations.get(f"{self.domain}/pod_timestamp")
+        # CRONJOBS only: if the last trigger exists and it's within the hour, we can continue
+        if self.schedule is not None and (not last_trigger_date or int(last_trigger_date) + 3600 < int(time.time())):
+            logger.info("CronJob not started yet. Skipping")
+            return False
+
         return self.annotations.get(f"{self.domain}/done") and \
             not self.annotations.get(f"{self.domain}/results") and \
             not (

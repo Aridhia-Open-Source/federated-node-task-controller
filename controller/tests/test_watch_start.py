@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, mock_open
 
 from controller import start
 from exceptions import CRDException
+from models.crd import Analytics
 
 
 class TestWatcher:
@@ -230,6 +231,57 @@ class TestWatcher:
         a new github job pusher is created without the need
         of checking for review, or ignoring it
         """
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        await start(True)
+
+        k8s_client["create_namespaced_job_mock"].assert_called()
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    async def test_get_results_cron_job_waits(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            fn_task_results_request
+        ):
+        """
+        Tests that in case of a cron job, the watcher is not started
+        unless the pod_timestamp annotation has been set
+        """
+        mock_crd_task_done['object']["spec"]["schedule"] = "1 * * * *"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        await start(True)
+
+        k8s_client["create_namespaced_job_mock"].assert_not_called()
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    async def test_get_results_cron_job_triggered(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            fn_task_results_request
+        ):
+        """
+        Tests that in case of a cron job, the watcher is not started
+        unless the pod_timestamp annotation has been set
+        """
+        mock_crd_task_done['object']["spec"]["schedule"] = "1 * * * *"
+        import time
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{Analytics.domain}/pod_timestamp"] = str(int(time.time()))
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
 

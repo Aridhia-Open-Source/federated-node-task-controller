@@ -5,7 +5,8 @@ import re
 import logging
 import time
 
-from const import CRD_GROUP
+from const import CRD_GROUP, NAMESPACE
+from helpers.kubernetes_helper import KubernetesV1, KubernetesV1Batch
 from exceptions import CRDException
 
 logging.basicConfig()
@@ -157,3 +158,24 @@ class Analytics:
             },
             "image": "alpine/k8s:1.29.4"
         }
+
+    async def create_retry_job(self):
+        """
+        Wrapper to create a job that updates the CRD
+        with an increasing delay. It will retry up to
+        MAX_RETRIES times.
+        """
+        try:
+            existing_updates = KubernetesV1().list_namespaced_pod(
+                NAMESPACE,
+                label_selector=f"crd={self.name}",
+                field_selector="status.phase=Pending,status.phase=Running"
+            )
+            if existing_updates.items:
+                logging.info("Anoter annotation update is in progress..")
+                return
+
+            KubernetesV1Batch().create_bare_job(**self.prepare_update_job())
+        except CRDException:
+            pass
+

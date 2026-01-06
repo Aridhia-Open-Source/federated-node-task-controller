@@ -18,7 +18,7 @@ from kubernetes.client.exceptions import ApiException
 
 from exceptions import BaseControllerException
 from helpers.kubernetes_helper import KubernetesCRD
-from helpers.actions import create_retry_job, sync_users, trigger_task, handle_results
+from helpers.actions import sync_users, trigger_task, handle_results
 from models.crd import Analytics
 
 
@@ -58,7 +58,7 @@ async def start(exit_on_tests=False):
                     logger.info("Triggering task")
                     await trigger_task(crd, new_annotations)
                 elif crd.can_deliver_results():
-                    logger.info("Getting task results")
+                    logger.info("Monitoring task and getting results if successful")
                     await handle_results(crd, new_annotations)
                 if exit_on_tests:
                     watcher.stop()
@@ -68,14 +68,14 @@ async def start(exit_on_tests=False):
                 logger.error(mre.reason)
                 raise mre
             except (BaseControllerException, ApiException) as ke:
-                await create_retry_job(crd)
+                await crd.create_retry_job()
                 logger.error(ke.reason)
             except KeyError:
                 # Possibly missing values, it shouldn't crash the pod
                 logger.error(traceback.format_exc())
             # pylint: disable=W0718
             except Exception:
-                await create_retry_job(crd)
+                await crd.create_retry_job()
                 logger.error("Unknown error: %s", traceback.format_exc())
     except ProtocolError:
         logger.error("Connection expired. Restarting..")

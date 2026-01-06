@@ -26,7 +26,7 @@ class TestKubernetesHelper:
         k8s_client["patch_cluster_custom_object_mock"].assert_called()
 
     @pytest.mark.asyncio
-    @mock.patch('controller.create_retry_job')
+    @mock.patch('models.crd.Analytics.create_retry_job')
     async def test_job_pv_creation_fails(
         self,
         create_bare_job_mock,
@@ -47,7 +47,7 @@ class TestKubernetesHelper:
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @pytest.mark.asyncio
-    @mock.patch('controller.create_retry_job')
+    @mock.patch('models.crd.Analytics.create_retry_job')
     async def test_job_creation_fails(
         self,
         create_bare_job_mock,

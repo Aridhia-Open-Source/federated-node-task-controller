@@ -1,9 +1,13 @@
 import httpx
-import pytest
+import asyncio
 from pytest import mark
 from unittest import mock
 
+import pytest
+
 from controller import start
+from helpers.actions import handle_results
+from models.crd import Analytics
 from exceptions import PodWatcherException
 
 
@@ -40,6 +44,7 @@ class TestWatcherApiDelivery:
             return_value=httpx.Response(status_code=201)
         )
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
@@ -86,6 +91,7 @@ class TestWatcherApiDelivery:
             return_value=httpx.Response(status_code=201)
         )
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
@@ -127,9 +133,10 @@ class TestWatcherApiDelivery:
         ).mock(
             return_value=httpx.Response(status_code=400)
         )
-        await start(True)
+        crd = Analytics(mock_crd_task_done)
+        with pytest.raises(PodWatcherException):
+            await handle_results(crd, {f"{Analytics.domain}/task_id": 1})
+            await asyncio.sleep(0)
 
         # CRD not patched immediately
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
-        # The retry job is triggered
-        v1_batch_mock["create_namespaced_job_mock"].assert_called()

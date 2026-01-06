@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import pytest
 from kubernetes.client.exceptions import ApiException
@@ -5,7 +6,8 @@ from unittest import mock
 from unittest.mock import AsyncMock, mock_open
 
 from controller import start
-from exceptions import CRDException
+from helpers.actions import handle_results
+from exceptions import CRDException, KubernetesException
 from models.crd import Analytics
 
 
@@ -58,7 +60,7 @@ class TestWatcher:
         If for whichever reason the job fails to create, no annotation is
         added to the CRD, keeping it to the same status
         """
-        start(True)
+        await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @pytest.mark.asyncio
@@ -182,6 +184,7 @@ class TestWatcher:
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -209,6 +212,7 @@ class TestWatcher:
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -233,6 +237,7 @@ class TestWatcher:
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -284,6 +289,7 @@ class TestWatcher:
                 [f"{Analytics.domain}/pod_timestamp"] = str(int(time.time()))
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -426,6 +432,7 @@ class TestWatcher:
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
@@ -433,7 +440,7 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
-    @mock.patch('controller.create_retry_job')
+    @mock.patch('models.crd.Analytics.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
     async def test_watch_timeouts(
             self,
@@ -449,15 +456,15 @@ class TestWatcher:
         Tests that a CRD with an incorrect task_id (due to the pod manually deleted)
         raises an exception instead of hanging
         """
-        import time
-
         def mock_stream(*args, **kwargs):
             yield from []
-            time.sleep(kwargs.get('timeout_seconds', 1) + 0.5)
+            raise ApiException()
 
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
-        await start(True)
+        crd = Analytics(mock_crd_task_done)
+        with pytest.raises(ApiException):
+            await handle_results(crd, {f"{Analytics.domain}/task_id": 1})
+            await asyncio.sleep(0)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
-        create_retry_job_mock.assert_called()

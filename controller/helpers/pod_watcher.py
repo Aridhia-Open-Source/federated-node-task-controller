@@ -40,7 +40,7 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
         label_selector=f"task_id={task_id}",
-        timeout_seconds=MAX_TIMEOUT,
+        timeout_seconds=MAX_TIMEOUT
     ):
         logger.info("Found pod! %s", pod["object"].metadata.name)
         match pod["object"].status.phase:
@@ -140,8 +140,7 @@ async def watch_user_pod(crd: Analytics, annotations:dict):
         label_selector=ls,
         resource_version='',
         watch=True,
-        timeout_seconds=MAX_TIMEOUT,
-        async_req=True
+        timeout_seconds=MAX_TIMEOUT
     ):
         logger.info("Found job! %s", job["object"].metadata.name)
         match await get_job_status(job["object"].status):

@@ -211,6 +211,11 @@
                     }
                 }
             }]
+        },
+        "installCRDs": {
+            "type": "boolean",
+            "description": "Install the Analytics CRD. Set to false for parallel installations",
+            "default": true
         }
     }
 }

@@ -79,13 +79,6 @@ tests:
       - equal:
           path: provisioner
           value: Local
-  - it: idp job not created
-    template: keycloak-idp-github.yaml
-    set:
-      idp:
-    asserts:
-      - hasDocuments:
-          count: 0
   - it: simulate reuse-values args
     template: keycloak-idp-github.yaml
     asserts:

@@ -19,7 +19,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: idp-initializer
-          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}"
           imagePullPolicy: Always
           envFrom:
             - configMapRef:

@@ -43,7 +43,7 @@ spec:
               mountPath: /mnt/storage
       containers:
       - name: analytics-operator
-        image: {{ template "fn-task-controller.image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}
+        image: {{ template "fn-task-controller.image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}
         imagePullPolicy: Always
         envFrom:
           - configMapRef:

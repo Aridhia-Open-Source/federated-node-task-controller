@@ -13,14 +13,14 @@ data:
   MOUNT_PATH: {{ (.Values.storage.local).path }}
 {{- end }}
   PULL-POLICY: Always
-  TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
+  TAG: {{ (.Values.controller).tag | default .Chart.AppVersion }}
   STORAGE_CLASS: {{ include "controllerStorageClass" . }}
   CRD_GROUP: {{ include "controllerCrdGroup" . }}
-{{- if .Values.global.taskReview }}
+{{- if (.Values.global).taskReview }}
   TASK_REVIEW: enabled
 {{- end }}
   IMAGE: {{ template "fn-task-controller.helper-image" . }}
-  PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}
+  PUBLIC_URL: {{ (.Values.global).host | default "federated-node" }}
 {{- if .Values.storage.aws }}
   AWS_STORAGE_ENABLED: "true"
   AWS_STORAGE_DRIVER: "efs.csi.aws.com"

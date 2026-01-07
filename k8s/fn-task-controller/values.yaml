@@ -16,8 +16,6 @@ storage:
   capacity: 1Gi
   azure:
     # secretName:
-    # storageAccountName:
-    # storageAccountKey:
     # shareName:
   aws:
     # fileSystemId:

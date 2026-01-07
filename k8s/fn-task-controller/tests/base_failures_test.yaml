@@ -49,6 +49,8 @@ tests:
 
   - it: as a standalone, missing kc-secrets causes a failure
     template: copy-secrets-cm.yaml
+    release:
+      name: fn-task-controller
     kubernetesProvider:
       objects:
       - apiVersion: v1
@@ -60,9 +62,17 @@ tests:
         data:
           GH_SECRET: dGVzdA==
           GH_CLIENT_ID: dGVzdA==
-    set:
-      global:
     asserts:
       - failedTemplate:
           errorMessage: Secret kc-secrets not found in namespace federatednode
 
+  - it: idp missing
+    template: keycloak-idp-github.yaml
+    set:
+      idp:
+    asserts:
+     - failedTemplate:
+          errorMessage: |
+            values don't meet the specifications of the schema(s) in the following chart(s):
+            fn-task-controller:
+            - at '': missing property 'idp'

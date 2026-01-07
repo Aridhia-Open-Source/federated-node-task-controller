@@ -1,0 +1,199 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "required": [
+        "idp",
+        "delivery"
+    ],
+    "definitions": {
+        "tag": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(-v[a-z0-9]+)?$"
+        },
+        "host": {
+            "type": "string",
+            "description": "Hostname where the FN can be reached at. Optional, also used to name the results files"
+        },
+        "namespaces": {
+            "type": "object",
+            "properties": {
+                "keycloak": {
+                    "type": "string",
+                    "default": "keycloak"
+                },
+                "tasks": {
+                    "type": "string",
+                    "default": "tasks"
+                },
+                "controller": {
+                    "type": "string",
+                    "default": "fn-controller"
+                }
+            }
+        }
+    },
+    "properties": {
+        "controller": {
+            "type": "object",
+            "properties": {
+                "tag": {
+                    "$ref": "#/definitions/tag"
+                }
+            }
+        },
+        "fnalpine": {
+            "type": "object",
+            "properties": {
+                "tag": {
+                    "$ref": "#/definitions/tag"
+                }
+            }
+        },
+        "namespaces": {
+            "$ref": "#/definitions/namespaces"
+        },
+        "global": {
+            "type": "object",
+            "description": "Shared values across all charts",
+            "properties": {
+                "namespaces": {
+                    "$ref": "#/definitions/namespaces"
+                },
+                "host": {
+                    "$ref": "#/definitions/host"
+                },
+                "taskReview": {
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        },
+        "resources":{
+            "type": "object",
+            "properties": {
+                "limits": {
+                    "type": "object",
+                    "properties": {
+                        "cpu": {
+                            "type": "string",
+                            "default": "200m"
+                        },
+                        "memory": {
+                            "type": "string",
+                            "default": "1Gi"
+                        }
+                    }
+                }
+            }
+        },
+        "delivery":{
+            "type": "object",
+            "description": "Type of results delivery",
+            "oneOf": [{
+                "github": {
+                    "type": "object",
+                    "properties": {
+                        "repository": {
+                            "type": "string",
+                            "description": "Which repository the results will be delivered to"
+                        }
+                    }
+                },
+                "other": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "Url to send the results to"
+                        },
+                        "auth_type": {
+                            "type": "string",
+                            "description": "What type of authentication is used",
+                            "enum": [
+                                "Bearer",
+                                "Basic",
+                                "AzCopy"
+                            ]
+                        }
+                    }
+                }
+            }]
+        },
+        "idp":{
+            "type": "object",
+            "properties": {
+                "github": {
+                    "type": "object",
+                    "required": [
+                        "secret_name",
+                        "secret_key",
+                        "orgAndRepo",
+                        "clientid_key"
+                    ],
+                    "properties": {
+                        "secret_name": {"type": "string", "description": "Secret where the github App credentials are stored in"},
+                        "secret_key": {"type": "string", "description": "Secret key where the Github App secret is"},
+                        "orgAndRepo": {"type": "string", "description": "Full name of the repo from which the IdP will be set to"},
+                        "clientid_key": {"type": "string", "description": "Secret key where Github App client id is"}
+                    }
+                }
+            }
+        },
+        "storage": {
+            "type": "object",
+            "properties": {
+                "capacity": {
+                    "type": "string",
+                    "default": "1Gi",
+                    "description": "How much to reserve for tasks, defaults to 10Gi. Other possible units are Mi, Ti, Ki"
+                }
+            },
+            "oneOf": [{
+                "azure": {
+                    "type": "object",
+                    "description": "If running a cluster on azure, or using an Azure Storage Class, this will be the suggested config",
+                    "properties": {
+                        "secretName": {
+                            "type": "string",
+                            "description": "Secret name where the credentials for the azure storage are saved"
+                        },
+                        "shareName": {
+                            "type": "string",
+                            "description": "Share name within the azure storage account"
+                        }
+                    }
+                },
+                "aws": {
+                    "type": "object",
+                    "description": "If running a cluster on AWS this will be the suggested config",
+                    "properties": {
+                        "fileSystemId": {
+                            "type": "string",
+                            "description": "EFS system id, e.g. fs-xxxxxxxxx"
+                        },
+                        "accessPointId": {
+                            "type": "string",
+                            "description": "Optional, access point id for better permission and isolation management in the EFS"
+                        }
+                    }
+                },
+                "nfs": {
+                    "type": "object",
+                    "description": "If running a cluster off the cloud, this will be the suggested config",
+                    "properties": {
+                        "provisioner": {"type": "string"},
+                        "path": {"type": "string"},
+                        "url": {"type": "string"}
+                    }
+                },
+                "local": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Where to persist files in the host machine"},
+                        "dbpath": {"type": "string"}
+                    }
+                }
+            }]
+        }
+    }
+}

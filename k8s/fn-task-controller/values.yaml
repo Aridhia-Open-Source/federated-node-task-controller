@@ -1,11 +1,11 @@
 # Default values for fn-task-controller.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-controller:
-  tag:
+# controller:
+#   tag:
 
-fnalpine:
-  tag:
+# fnalpine:
+#   tag:
 
 namespaces:
   controller: fn-controller

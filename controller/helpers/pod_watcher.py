@@ -112,9 +112,10 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                     raise PodWatcherException("No suitable delivery options available")
                 break
             case "Failed":
-                raise KubernetesException(
-                    "Pod in failed status. Refreshing annotation on CRD to trigger a restart"
-                )
+                if not crd.schedule:
+                    raise KubernetesException("Pod in failed status. Refreshing annotation on CRD to trigger a restart")
+                else:
+                    logger.warning("Pod in failed status. Will retry at the next job iteration or cron rule trigger")
             case _:
                 logger.info(
                     "%s Status: %s",

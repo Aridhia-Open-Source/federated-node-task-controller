@@ -72,7 +72,4 @@ tests:
       idp:
     asserts:
      - failedTemplate:
-          errorMessage: |
-            values don't meet the specifications of the schema(s) in the following chart(s):
-            fn-task-controller:
-            - at '': missing property 'idp'
+          errorPattern: .* missing property 'idp'

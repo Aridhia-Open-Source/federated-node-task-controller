@@ -32,10 +32,11 @@ class TestWatcherAzCopyDelivery:
         Tests that once the task's pod is completed,
         the results are sent through AzCopy to a storage account
         """
-        now_str = dt.now().strftime("%Y-%m-%d-%H-%M-%S")
-        mocker.patch("datetime.datetime", return_value=mock.Mock(
-            strftime=now_str
-        ))
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = ct.strftime("%Y-%m-%d-%H-%M-%S")
+        mocker.patch("helpers.task_helper.dt", datetime_mock)
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
         await asyncio.sleep(0)
@@ -83,10 +84,11 @@ class TestWatcherAzCopyDelivery:
         the results fail to be sent through AzCopy to a storage account
         and the retry job is triggered
         """
-        now_str = dt.now().strftime("%Y-%m-%d-%H-%M-%S")
-        mocker.patch("datetime.datetime", return_value=mock.Mock(
-            strftime=now_str
-        ))
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = ct.strftime("%Y-%m-%d-%H-%M-%S")
+        mocker.patch("helpers.task_helper.dt", datetime_mock)
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
         await asyncio.sleep(0)

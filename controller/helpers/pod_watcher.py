@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 MAX_TIMEOUT = 60
 
 
-async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotations:dict):
+async def watch_task_pod(crd: Analytics, user_token:str):
     """
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
@@ -35,29 +35,29 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
     pod = None
     git_info = crd.delivery.get("github", {})
     other_info = crd.delivery.get("other", {})
-    logger.info("Looking for pod with task_id: %s", task_id)
+    logger.info("Looking for pod with task_id: %s", crd.status["taskID"])
     pod_watch = Watch()
 
     for pod in pod_watch.stream(
         KubernetesV1().list_namespaced_pod,
         TASK_NAMESPACE,
-        label_selector=f"task_id={task_id}",
+        label_selector=f"task_id={crd.status["taskID"]}",
         timeout_seconds=MAX_TIMEOUT
     ):
         logger.info("Found pod! %s", pod["object"].metadata.name)
         match pod["object"].status.phase:
             case "Succeeded":
-                annotations[f"{crd.domain}/results"] = "true"
-                fp = await get_results(task_id, user_token)
+                crd.status["resultsDelivered"] = True
+                fp = await get_results(crd.status["taskID"], user_token)
                 if fp is None:
                     logging.info("Task needs a review")
                     # Results to be approved. Waiting. No retries
                     break
                 if git_info:
                     KubernetesV1Batch().create_helper_job(
-                        name=f"task-{task_id}-results",
+                        name=f"task-{crd.status["taskID"]}-results",
                         script="push_to_github.sh",
-                        task_id=task_id,
+                        task_id=crd.status["taskID"],
                         repository=git_info.get("repository"),
                         crd_name=crd.name,
                         user=crd.user
@@ -108,7 +108,7 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                             raise PodWatcherException("Failed to deliver results")
                     # Add results annotation to let the controller know
                     # we already handled results
-                    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
+                    KubernetesCRD().patch_crd_status(crd)
                 else:
                     raise PodWatcherException("No suitable delivery options available")
                 break
@@ -122,13 +122,13 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                     pod["object"].metadata.name,
                     pod["object"].status.phase
                 )
-    logger.info("Stopping task %s pod watcher", task_id)
+    logger.info("Stopping task %s pod watcher", crd.status["taskID"])
     if not pod:
-        raise KubernetesException(f"Timeout. Pod for task {task_id} not found")
+        raise KubernetesException(f"Timeout. Pod for task {crd.status["taskID"]} not found")
     pod_watch.stop()
 
 
-async def watch_user_pod(crd: Analytics, annotations:dict):
+async def watch_user_pod(crd: Analytics):
     """
     Given a task id, checks for active pods with
     task_id label, and once completed, trigger the results fetching
@@ -146,10 +146,10 @@ async def watch_user_pod(crd: Analytics, annotations:dict):
         logger.info("Found job! %s", job["object"].metadata.name)
         match await get_job_status(job["object"].status):
             case "Succeeded":
-                annotations[f"{crd.domain}/user"] = "ok"
+                crd.status["userMigrated"] = True
                 # Add results annotation to let the controller know
                 # we already handled the user
-                KubernetesCRD().patch_crd_annotations(crd.name, annotations)
+                KubernetesCRD().patch_crd_status(crd)
                 break
             case "Failed":
                 raise KubernetesException(

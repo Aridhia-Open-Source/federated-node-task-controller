@@ -38,8 +38,9 @@ async def start(exit_on_tests=False):
         for crds in watcher.stream(
             KubernetesCRD().list_cluster_custom_object,
             Analytics.domain,
-            "v1",
-            "analytics"
+            "v2",
+            "analytics",
+            pretty=True
             ):
             crd = Analytics(crds)
             try:
@@ -49,17 +50,17 @@ async def start(exit_on_tests=False):
                     logger.info("CRD already processed")
                     continue
 
-                new_annotations = deepcopy(crd.annotations)
-                logger.info("Annotations: %s", new_annotations)
+                # new_annotations = deepcopy(crd.annotations)
+                logger.info("Status: %s", crd.status)
                 if crd.needs_user_sync():
                     logger.info("Synching user")
-                    await sync_users(crd, new_annotations)
+                    await sync_users(crd)
                 elif crd.can_trigger_task():
                     logger.info("Triggering task")
-                    await trigger_task(crd, new_annotations)
+                    await trigger_task(crd)
                 elif crd.can_deliver_results():
                     logger.info("Getting task results")
-                    await handle_results(crd, new_annotations)
+                    await handle_results(crd)
                 if exit_on_tests:
                     watcher.stop()
                     break

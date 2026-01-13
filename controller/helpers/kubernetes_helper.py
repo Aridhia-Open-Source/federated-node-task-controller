@@ -56,16 +56,15 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
     """
     Custom k8s client wrapper to handle CRD operations
     """
-    def patch_crd_annotations(self, name:str, annotations:dict):
+    def patch_crd_status(self, crd:Analytics):
         """
         Since it's too verbose, and has to get a "patch" dedicated to it
         the annotation update is done here.
         """
         # Patch for the client library which somehow doesn't do it itself for the patch
-        self.api_client.set_default_header('Content-Type', 'application/json-patch+json')
-        self.patch_cluster_custom_object(
-            Analytics.domain, "v1", "analytics", name,
-            [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
+        self.api_client.set_default_header('Content-Type', 'application/merge-patch+json')
+        self.patch_cluster_custom_object_status(
+            Analytics.domain, "v2", "analytics", crd.name, {"status": crd.status}
         )
         logger.info("CRD patched")
 
@@ -278,7 +277,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}" if create_volumes else f"/apps/{name}"),
             client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(
-                    name=f"{secret_name}",
+                    name=secret_name,
                     key="GH_CLIENT_ID"
                 )
             )),

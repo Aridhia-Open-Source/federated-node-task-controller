@@ -17,8 +17,9 @@ class Analytics:
             crd_definition:dict
         ):
         self.name = crd_definition["object"]["metadata"]["name"]
-        self.annotations = crd_definition["object"]["metadata"]["annotations"]
+        self.status = crd_definition["object"].get("status", {})
         self.image = crd_definition["object"]["spec"].get("image", {})
+        self.dict = crd_definition["object"]
         if not self.image:
             raise CRDException("image field is required")
 
@@ -41,10 +42,10 @@ class Analytics:
         self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
 
     def needs_user_sync(self) -> bool:
-        return not self.annotations.get(f"{self.domain}/user")
+        return not self.status.get("userMigrated")
 
     def can_trigger_task(self) -> bool:
-        return self.annotations.get(f"{self.domain}/user") and not self.annotations.get(f"{self.domain}/done")
+        return self.status.get("userMigrated") and not self.status.get("taskID")
 
     def can_deliver_results(self) -> bool:
         """
@@ -57,15 +58,19 @@ class Analytics:
             TASK_REVIEW is set and approved is not "true". So we check for this
             case, and negate it.
         """
-        return self.annotations.get(f"{self.domain}/done") and \
-            not self.annotations.get(f"{self.domain}/results") and \
+        return self.status.get("taskID") and \
+            not self.status.get("resultsDelivered") and \
             not (
                 os.getenv("TASK_REVIEW") is not None and \
-                self.annotations.get(f"{self.domain}/approved", "false").lower() != "true"
+                not self.status.get("approved", False)
             )
 
     def should_skip(self) -> bool:
-        return bool(self.is_delete or self.annotations.get(f"{self.domain}/results"))
+        return bool(self.is_delete or self.status.get("resultsDelivered"))
+
+    def to_dict(self) -> dict:
+        self.dict.update(self.status)
+        return self.dict
 
     def create_labels(self):
         """
@@ -122,15 +127,14 @@ class Analytics:
         with an increasing delay. It will retry up to
         MAX_RETRIES times.
         """
-        annotation_check = f"{self.domain}/tries"
-        current_try = int(self.annotations.get(annotation_check, 0)) + 1
+        current_try = int(self.status.get("retries", 0)) + 1
 
         if current_try > MAX_RETRIES:
             raise CRDException("Max retries reached. Skipping")
         cooldown = int(exp(current_try))
 
         cmd = f"sleep {cooldown} && " \
-            f"kubectl annotate --overwrite analytics {self.name} {annotation_check}={current_try}"
+            f"kubectl patch analytics {self.name} --type=merge --subresource=status -p '{{\"status\": {{\"retries\": {current_try}}}}}'"
 
         return {
             "name": f"update-annotation-{self.name}",

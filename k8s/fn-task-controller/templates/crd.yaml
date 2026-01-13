@@ -8,7 +8,7 @@ spec:
   versions:
     - name: v1
       served: true
-      storage: true
+      storage: false
       schema:
         openAPIV3Schema:
           type: object
@@ -111,7 +111,151 @@ spec:
                               - Bearer
                               - Basic
                               - AzCopy
-
+    - name: v2
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - image
+                - user
+                - project
+                - source
+              properties:
+                image:
+                  type: string
+                user:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    email:
+                      type: string
+                    idpId:
+                      type: string
+                project:
+                  type: string
+                dataset:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                env:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                outputs:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                inputs:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                source:
+                  type: object
+                  nullable: true
+                  required:
+                    - repository
+                  properties:
+                    branch:
+                      type: string
+                    repository:
+                      type: string
+                db_query:
+                  type: object
+                  properties:
+                    query:
+                      type: string
+                    dialect:
+                      type: string
+                results:
+                  type: object
+                  properties:
+                    git:
+                      type: object
+                      nullable: true
+                      required:
+                        - repository
+                      allOf:
+                        - not:
+                            required:
+                              - other
+                      properties:
+                        branch:
+                          type: string
+                        repository:
+                          type: string
+                    other:
+                      type: object
+                      nullable: true
+                      properties:
+                          url:
+                            type: string
+                          auth_type:
+                            type: string
+                      oneOf:
+                      - required:
+                          - url
+                          - auth_type
+                        oneOf:
+                          - not:
+                              required:
+                                - git
+                        properties:
+                          url:
+                          auth_type:
+                            enum:
+                              - Bearer
+                              - Basic
+                              - AzCopy
+            status:
+              type: object
+              properties:
+                userMigrated:
+                  type: boolean
+                  default: false
+                taskID:
+                  type: integer
+                  nullable: true
+                resultsDelivered:
+                  type: boolean
+                  default: false
+                approved:
+                  type: boolean
+                  default: false
+                cronScheduledLast:
+                  type: string
+                  nullable: true
+                retries:
+                  type: integer
+                  default: 0
   scope: Cluster
   names:
     plural: analytics

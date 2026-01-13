@@ -17,7 +17,7 @@ logger = logging.getLogger('actions')
 logger.setLevel(logging.INFO)
 
 
-async def sync_users(crds: Analytics, annotations:dict):
+async def sync_users(crds: Analytics):
     """
     Ensures that the user is already in keycloak and associated
     with the gihub IdP
@@ -32,9 +32,9 @@ async def sync_users(crds: Analytics, annotations:dict):
         user=crds.user
     )
 
-    await watch_user_pod(crds, annotations)
+    await watch_user_pod(crds)
 
-async def trigger_task(crd: Analytics, annotations):
+async def trigger_task(crd: Analytics):
     """
     Common function to setup all the info necessary
     to send a FN API request, and the POST /tasks itself
@@ -44,25 +44,19 @@ async def trigger_task(crd: Analytics, annotations):
 
     task_resp = create_fn_task(crd, user_token)
 
-    annotations[f"{crd.domain}/done"] = "true"
     if "task_id" in task_resp:
-        annotations[f"{crd.domain}/task_id"] = str(task_resp["task_id"])
+       crd.status["taskID"] = task_resp["task_id"]
     client = KubernetesCRD()
-    client.patch_crd_annotations(crd.name, annotations)
+    client.patch_crd_status(crd)
 
-async def handle_results(crd: Analytics, annotations:dict):
+async def handle_results(crd: Analytics):
     """
     Common function to handle a CRD last lifecycle step
     """
     # If we have already triggered a task, check if the pod has completed
     # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     monitor = asyncio.create_task(
-        watch_task_pod(
-            crd,
-            annotations[f"{Analytics.domain}/task_id"],
-            await get_user_token(crd.user),
-            annotations
-        )
+        watch_task_pod(crd, await get_user_token(crd.user))
     )
     await asyncio.gather(monitor)
 

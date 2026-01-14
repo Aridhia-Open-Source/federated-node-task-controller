@@ -1,7 +1,7 @@
 import logging
 import asyncio
 
-from const import NAMESPACE
+from const import NAMESPACE, SKIP_USER_AUTH
 from exceptions import CRDException
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
@@ -9,7 +9,7 @@ from helpers.kubernetes_helper import (
 )
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
 from helpers.keycloak_helper import get_admin_token
-from helpers.task_helper import create_fn_task
+from helpers.task_helper import create_fn_task, get_user_token
 from models.crd import Analytics
 
 
@@ -40,10 +40,14 @@ async def trigger_task(crd: Analytics, annotations:dict[str, str]):
     Common function to setup all the info necessary
     to send a FN API request, and the POST /tasks itself
     """
-    admin_token:str = await get_admin_token()
+    if SKIP_USER_AUTH:
+        token:str = await get_admin_token()
+    else:
+        token = await get_user_token(crd.user)
+
     logger.info("Creating task with image %s", crd.image)
 
-    task_resp: dict[str, str] = create_fn_task(crd, admin_token)
+    task_resp: dict[str, str] = create_fn_task(crd, token)
 
     annotations[f"{crd.domain}/done"] = "true"
     if "task_id" in task_resp:
@@ -55,13 +59,18 @@ async def handle_results(crd: Analytics, annotations:dict):
     """
     Common function to handle a CRD last lifecycle step
     """
+    if SKIP_USER_AUTH:
+        token:str = await get_admin_token()
+    else:
+        token = await get_user_token(crd.user)
+
     # If we have already triggered a task, check if the pod has completed
     # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     monitor = asyncio.create_task(
         watch_task_pod(
             crd,
             annotations[f"{Analytics.domain}/task_id"],
-            await get_admin_token(),
+            token,
             annotations
         )
     )

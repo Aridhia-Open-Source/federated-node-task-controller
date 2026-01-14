@@ -3,7 +3,7 @@ from math import exp
 import os
 import re
 
-from const import CRD_GROUP
+from const import CRD_GROUP, SKIP_USER_AUTH
 from exceptions import CRDException
 
 MAX_RETRIES = 5
@@ -41,10 +41,10 @@ class Analytics:
         self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
 
     def needs_user_sync(self) -> bool:
-        return not self.annotations.get(f"{self.domain}/user")
+        return not (self.annotations.get(f"{self.domain}/user") and SKIP_USER_AUTH)
 
     def can_trigger_task(self) -> bool:
-        return self.annotations.get(f"{self.domain}/user") and not self.annotations.get(f"{self.domain}/done")
+        return (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH) and not self.annotations.get(f"{self.domain}/done")
 
     def can_deliver_results(self) -> bool:
         """

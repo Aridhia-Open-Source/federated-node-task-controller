@@ -10,7 +10,6 @@ import base64
 from datetime import datetime
 import logging
 
-from uuid import uuid4
 from kubernetes import client
 from kubernetes.config import load_kube_config, load_incluster_config
 from kubernetes.client.exceptions import ApiException

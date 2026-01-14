@@ -1,0 +1,29 @@
+{{- if .Values.installCRDs }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: crd-version-migration
+  namespace: {{ include "controller_ns" . }}
+  annotations:
+    helm.sh/hook: post-install, post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: crd-version-migration
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}"
+          command: ["/bin/sh"]
+          args: [
+            "-c",
+            "python",
+            "migrate-crd-v1-to-v2.py"
+          ]
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: controller-config
+{{- end }}

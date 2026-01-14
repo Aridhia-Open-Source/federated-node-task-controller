@@ -2,6 +2,7 @@ import logging
 import asyncio
 
 from const import NAMESPACE
+from helpers.keycloak_helper import get_fn_admin_token
 from exceptions import CRDException
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
@@ -39,7 +40,7 @@ async def trigger_task(crd: Analytics, annotations):
     Common function to setup all the info necessary
     to send a FN API request, and the POST /tasks itself
     """
-    user_token = await get_user_token(crd.user)
+    user_token = await get_fn_admin_token()
     logger.info("Creating task with image %s", crd.image)
 
     task_resp = create_fn_task(crd, user_token)
@@ -60,7 +61,7 @@ async def handle_results(crd: Analytics, annotations:dict):
         watch_task_pod(
             crd,
             annotations[f"{Analytics.domain}/task_id"],
-            await get_user_token(crd.user),
+            await get_fn_admin_token(),
             annotations
         )
     )

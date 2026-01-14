@@ -16,8 +16,6 @@ spec:
               type: object
               required:
                 - image
-                - user
-                - project
                 - source
               properties:
                 image:

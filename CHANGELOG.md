@@ -1,5 +1,7 @@
 # Releases Changelog
 
+# 1.7.0
+
 # 1.6.0
 - Moved to async API requests to minimise bottleneck in performance
 

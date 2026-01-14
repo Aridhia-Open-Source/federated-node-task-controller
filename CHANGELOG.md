@@ -1,6 +1,8 @@
 # Releases Changelog
 
 # 1.7.0
+- Fixed an issue with multiple link-user jobs can be created
+- Optimized the github checkout to depth 1 for link-user jobs
 
 # 1.6.0
 - Moved to async API requests to minimise bottleneck in performance

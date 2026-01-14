@@ -57,7 +57,7 @@ class TestWatcher:
         If for whichever reason the job fails to create, no annotation is
         added to the CRD, keeping it to the same status
         """
-        start(True)
+        await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @pytest.mark.asyncio

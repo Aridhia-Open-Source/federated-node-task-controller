@@ -123,7 +123,6 @@ class TestWatcher:
             self,
             token_mock,
             mock_crd_user_synched,
-            crd_name,
             k8s_client,
             k8s_watch_mock,
             fn_task_results_request,
@@ -143,7 +142,6 @@ class TestWatcher:
             self,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             review_env
         ):
@@ -163,7 +161,6 @@ class TestWatcher:
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,
@@ -193,7 +190,6 @@ class TestWatcher:
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,
@@ -220,7 +216,6 @@ class TestWatcher:
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request
@@ -244,7 +239,6 @@ class TestWatcher:
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
@@ -267,7 +261,6 @@ class TestWatcher:
             self,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             backend_url,
             domain
@@ -356,13 +349,38 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_admin_token', return_value="token")
+    async def test_missing_result_crd_fields_skip_user_auth(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            mock_crd_task_done,
+            mock_pod_watch,
+            fn_task_results_request,
+            delivery_open,
+            domain,
+            mocker
+        ):
+        """
+        Tests that a CRD with missing results fields will by default create a github delivery
+        """
+        mocker.patch("helpers.actions.SKIP_USER_AUTH", True)
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        await start(True)
+
+        requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
+        assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
     async def test_missing_result_crd_fields(
             self,
             token_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,

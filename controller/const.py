@@ -19,4 +19,4 @@ IMAGE = os.getenv("IMAGE")
 TAG = os.getenv("TAG")
 STORAGE_CLASS = os.getenv("STORAGE_CLASS")
 CRD_GROUP = os.getenv("CRD_GROUP")
-SKIP_USER_AUTH = os.getenv("SKIP_USER_AUTH", "false") == True
+SKIP_USER_AUTH = os.getenv("SKIP_USER_AUTH", "false") == "true"

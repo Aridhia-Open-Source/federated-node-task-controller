@@ -3,6 +3,7 @@ import asyncio
 
 from const import NAMESPACE
 from exceptions import CRDException
+from kubernetes.client import V1DeleteOptions
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
     KubernetesV1
@@ -22,8 +23,24 @@ async def sync_users(crds: Analytics, annotations:dict):
     Ensures that the user is already in keycloak and associated
     with the gihub IdP
     """
-    # should trigger the user check
-    KubernetesV1Batch().create_helper_job(
+    kbatch = KubernetesV1Batch()
+    ls = ",".join(f"{lab[0]}={lab[1]}" for lab in crds.labels.items())
+
+    # Delete previous running jobs
+    listJobs = [job.metadata.name for job in kbatch.list_namespaced_job(
+        NAMESPACE,
+        label_selector=ls,
+        resource_version='').items]
+    for job in listJobs:
+        kbatch.delete_namespaced_job(
+            job,
+            NAMESPACE,
+            body=V1DeleteOptions(
+                propagation_policy="Foreground"
+            )
+        )
+    # Trigger the user check
+    kbatch.create_helper_job(
         f"link-user",
         create_volumes=False,
         script="sync_user.sh",

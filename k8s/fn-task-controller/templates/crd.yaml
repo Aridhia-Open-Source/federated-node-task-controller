@@ -18,8 +18,8 @@ spec:
                 - image
                 {{- if not .Values.controller.skipUserAuth }}
                 - user
-                {{- end }}
                 - project
+                {{- end }}
                 - source
               properties:
                 image:

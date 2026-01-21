@@ -91,7 +91,7 @@ class TestWatcherAzCopyDelivery:
     @pytest.mark.asyncio
     @mark.parametrize('delivery_open', [delivery_content], indirect=True)
     @mock.patch("subprocess.run", return_value=mock.Mock(stdout="Success", stderr=None))
-    @mock.patch('helpers.actions.get_admin_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_get_results_azcopy_delivery_skip_user_auth(
             self,
             token_mock,
@@ -137,7 +137,7 @@ class TestWatcherAzCopyDelivery:
     @pytest.mark.asyncio
     @mark.parametrize('delivery_open', [delivery_content], indirect=True)
     @mock.patch("subprocess.run", return_value=mock.Mock(stdout="In progress", stderr="Failed!"))
-    @mock.patch('helpers.actions.get_admin_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_get_results_azcopy_delivery_fails_skip_user_auth(
             self,
             token_mock,

@@ -4,7 +4,7 @@ Collection of functions to assist in performing FN-task-related operations
 import logging
 
 import httpx
-from const import BACKEND_HOST, GIT_HOME, PUBLIC_URL
+from const import BACKEND_HOST, GIT_HOME, PUBLIC_URL, SKIP_USER_AUTH
 from exceptions import FederatedNodeException
 from helpers.keycloak_helper import get_user, impersonate_user
 from models.crd import Analytics
@@ -28,12 +28,16 @@ def create_fn_task(crd: Analytics, user_token:str) -> dict[str,str]:
     """
     Wrapper to call the Federated Node /tasks endpoint
     """
+    headers = {
+            "Authorization": f"Bearer {user_token}"
+        }
+    if SKIP_USER_AUTH:
+        headers["project-name"] = crd.proj_name
+
     task_resp = httpx.post(
         f"{BACKEND_HOST}/tasks",
         json=crd.create_task_body(),
-        headers={
-            "Authorization": f"Bearer {user_token}"
-        }
+        headers=headers
     )
     if task_resp.status_code > 299 and task_resp.status_code != 409:
         raise FederatedNodeException(task_resp.json())

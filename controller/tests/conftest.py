@@ -275,6 +275,12 @@ async def mock_job_watch(mocker, k8s_client):
     )
 
 @pytest_asyncio.fixture
+async def fn_admin_token_request(backend_url, respx_mock):
+    return respx_mock.post(f"{backend_url}/login").mock(
+        return_value=httpx.Response(status_code=200, json={"token": 'token'})
+    )
+
+@pytest_asyncio.fixture
 async def fn_task_request(backend_url, respx_mock):
     return respx_mock.post(f"{backend_url}/tasks").mock(
         return_value=httpx.Response(status_code=200, json={"task_id": '1'})

@@ -23,13 +23,7 @@ class Analytics:
             raise CRDException("image field is required")
 
         self.user = crd_definition["object"]["spec"].get("user", {})
-        if not self.user:
-            raise CRDException("user field is required")
-
         self.proj_name = crd_definition["object"]["spec"].get("project")
-        if not self.proj_name:
-            raise CRDException("project field is required")
-
         self.dataset = crd_definition["object"]["spec"].get("dataset", {})
         self.env = crd_definition["object"]["spec"].get("env", {})
         self.outputs = crd_definition["object"]["spec"].get("outputs", {})
@@ -92,7 +86,7 @@ class Analytics:
         to run the task on
         """
         base = {
-            "name": self.user.get("username") or self.user.get("email"),
+            "name": self.user.get("username") or self.user.get("email") or self.labels['repository'],
             "executors": [
                 {
                     "image": self.image,
@@ -105,6 +99,7 @@ class Analytics:
                 "dataset_id": self.dataset.get("id"),
                 "dataset_name": self.dataset.get("name")
             },
+            "repository": self.source["repository"],
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},

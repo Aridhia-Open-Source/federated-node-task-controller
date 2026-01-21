@@ -32,8 +32,7 @@ def create_fn_task(crd: Analytics, user_token:str) -> dict[str,str]:
         f"{BACKEND_HOST}/tasks",
         json=crd.create_task_body(),
         headers={
-            "Authorization": f"Bearer {user_token}",
-            "project-name": crd.proj_name
+            "Authorization": f"Bearer {user_token}"
         }
     )
     if task_resp.status_code > 299 and task_resp.status_code != 409:

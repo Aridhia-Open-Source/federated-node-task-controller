@@ -1,10 +1,8 @@
 import httpx
-import pytest
 from pytest import mark
 from unittest import mock
 
 from controller import start
-from exceptions import PodWatcherException
 
 
 class TestWatcherApiDelivery:

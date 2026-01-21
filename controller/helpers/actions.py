@@ -7,8 +7,8 @@ from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
     KubernetesV1
 )
+from helpers.keycloak_helper import get_fn_admin_token
 from helpers.pod_watcher import watch_task_pod, watch_user_pod
-from helpers.keycloak_helper import get_admin_token
 from helpers.task_helper import create_fn_task, get_user_token
 from models.crd import Analytics
 
@@ -41,12 +41,11 @@ async def trigger_task(crd: Analytics, annotations:dict[str, str]):
     to send a FN API request, and the POST /tasks itself
     """
     if SKIP_USER_AUTH:
-        token:str = await get_admin_token()
+        token:str = await get_fn_admin_token()
     else:
         token = await get_user_token(crd.user)
 
     logger.info("Creating task with image %s", crd.image)
-
     task_resp: dict[str, str] = create_fn_task(crd, token)
 
     annotations[f"{crd.domain}/done"] = "true"
@@ -60,7 +59,7 @@ async def handle_results(crd: Analytics, annotations:dict):
     Common function to handle a CRD last lifecycle step
     """
     if SKIP_USER_AUTH:
-        token:str = await get_admin_token()
+        token:str = await get_fn_admin_token()
     else:
         token = await get_user_token(crd.user)
 

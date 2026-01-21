@@ -1,6 +1,5 @@
 import httpx
 import pytest
-import responses
 from unittest import mock
 from controller import start
 from exceptions import CRDException

@@ -13,7 +13,7 @@ import httpx
 
 from exceptions import KeycloakException
 from helpers.kubernetes_helper import KubernetesV1
-from const import KC_USER, KC_HOST
+from const import KC_USER, KC_HOST, BACKEND_HOST
 
 logger = logging.getLogger('keycloak_helper')
 logger.setLevel(logging.INFO)
@@ -59,6 +59,25 @@ async def get_admin_token() -> str:
     if admin_resp.status_code > 299:
         raise KeycloakException("Failed to login")
     return admin_resp.json()["access_token"]
+
+async def get_fn_admin_token() -> str:
+    """
+    Simply send a request to Keycloak to get the admin token
+    based on the password fetched from the k8s secret itself
+    """
+    admin_resp = httpx.post(
+        f"{BACKEND_HOST}/login",
+        data={
+            'username': KC_USER,
+            'password': await get_keycloak_admin_pass()
+        },
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    )
+    if admin_resp.status_code > 299:
+        raise KeycloakException("Failed to login")
+    return admin_resp.json()["token"]
 
 
 async def get_user(email:str=None, username:str=None, idpId:str=None) -> dict:

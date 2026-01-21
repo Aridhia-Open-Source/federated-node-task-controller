@@ -83,7 +83,7 @@ class TestWatcher:
     async def test_post_task_successful(
             self,
             mock_crd_user_synched,
-            admin_token_request,
+            fn_admin_token_request,
             impersonate_request,
             get_user_request,
             fn_task_request,
@@ -99,10 +99,10 @@ class TestWatcher:
         if the user annotation is set.
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
-        admin_token_request.side_effect = [
-            httpx.Response(status_code=200, json={"access_token": "atoken"}),
-            httpx.Response(status_code=200, json={"access_token": "atoken"}),
-            httpx.Response(status_code=200, json={"refresh_token": "rtoken"})
+        fn_admin_token_request.side_effect = [
+            httpx.Response(status_code=200, json={"token": "token"}),
+            httpx.Response(status_code=200, json={"token": "token"}),
+            httpx.Response(status_code=200, json={"token": "token"})
         ]
         await start(True)
 

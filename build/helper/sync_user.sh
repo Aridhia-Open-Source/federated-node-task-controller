@@ -9,7 +9,7 @@ echo "Getting GitHub App token"
 . "$(dirname "$0")/jwt.sh"
 
 echo "Cloning repo"
-gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
+gh repo clone "${GH_REPO}" "${REPO_FOLDER}" -- --depth=1
 cd "${REPO_FOLDER}" || exit
 echo "Getting user info"
 AUTHOR_USERNAME=$(gh pr list -B "${BRANCH}" --state merged --json author,mergedAt,mergedBy,headRefName,number | jq -r '.[0].author.login')

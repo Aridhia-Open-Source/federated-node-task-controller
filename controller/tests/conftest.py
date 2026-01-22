@@ -219,6 +219,12 @@ async def v1_batch_mock(mocker):
     return {
         "create_namespaced_job_mock": mocker.patch(
             'helpers.kubernetes_helper.KubernetesV1Batch.create_namespaced_job'
+        ),
+        "list_namespaced_job_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.list_namespaced_job'
+        ),
+        "delete_namespaced_job_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.delete_namespaced_job'
         )
     }
 

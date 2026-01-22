@@ -36,7 +36,7 @@ async def get_keycloak_admin_pass() -> str:
     Simple generalization to get the specific admin key
     for the keycloak secret
     """
-    return KubernetesV1().get_secret('controller-user-creds', 'SYS_USER_EMAIL')
+    return KubernetesV1().get_secret('controller-user-creds', 'SYS_USER_PASS')
 
 async def get_admin_token() -> str:
     """

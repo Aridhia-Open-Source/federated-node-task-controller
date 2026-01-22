@@ -51,7 +51,7 @@ spec:
         env:
           - name: KC_USER
             valueFrom:
-              configMapKeyRef:
+              secretKeyRef:
                 name: controller-user-creds
                 key: SYS_USER_EMAIL
         resources:

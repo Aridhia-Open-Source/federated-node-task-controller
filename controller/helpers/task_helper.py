@@ -29,9 +29,9 @@ def create_fn_task(crd: Analytics, user_token:str) -> dict[str,str]:
     Wrapper to call the Federated Node /tasks endpoint
     """
     headers = {
-            "Authorization": f"Bearer {user_token}"
-        }
-    if SKIP_USER_AUTH:
+        "Authorization": f"Bearer {user_token}"
+    }
+    if not SKIP_USER_AUTH:
         headers["project-name"] = crd.proj_name
 
     task_resp = httpx.post(

@@ -121,7 +121,7 @@ jobs:
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  build-idp-initializer:
+  build-helper-image:
     needs: update
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:

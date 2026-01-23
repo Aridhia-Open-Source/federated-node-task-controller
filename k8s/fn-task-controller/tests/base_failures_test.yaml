@@ -69,6 +69,8 @@ tests:
   - it: idp missing
     template: keycloak-idp-github.yaml
     set:
+      controller:
+        skipUserAuth: false
       idp:
     asserts:
      - failedTemplate:

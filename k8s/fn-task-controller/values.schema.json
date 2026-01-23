@@ -220,5 +220,22 @@
             "description": "Install the Analytics CRD. Set to false for parallel installations",
             "default": true
         }
+    },
+    "if": {
+        "properties": {
+            "controller": {
+                "properties": {
+                    "skipUserAuth": { "const": false }
+                }
+            }
+        }
+    },
+    "then": {
+        "required": ["idp", "delivery"],
+        "properties": {
+            "idp": {
+                "required": ["github"]
+            }
+        }
     }
 }

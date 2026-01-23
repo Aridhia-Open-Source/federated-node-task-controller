@@ -120,3 +120,10 @@ tests:
       - contains:
           path: spec.versions[0].schema.openAPIV3Schema.properties.spec.required
           content: project
+  - it: idp missing doesn't raise an error when skipUserAuth is true (default)
+    template: keycloak-idp-github.yaml
+    set:
+      idp:
+    asserts:
+     - hasDocuments:
+          count: 0

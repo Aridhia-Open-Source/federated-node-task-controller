@@ -219,6 +219,12 @@ async def v1_batch_mock(mocker):
     return {
         "create_namespaced_job_mock": mocker.patch(
             'helpers.kubernetes_helper.KubernetesV1Batch.create_namespaced_job'
+        ),
+        "list_namespaced_job_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.list_namespaced_job'
+        ),
+        "delete_namespaced_job_mock": mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.delete_namespaced_job'
         )
     }
 
@@ -239,7 +245,7 @@ async def k8s_client(mocker, v1_mock, v1_batch_mock, v1_crd_mock, k8s_config, jo
     all_clients.update(v1_crd_mock)
     all_clients["read_namespaced_secret"].return_value.data = {
         "KEYCLOAK_SECRET": "YWJjMTIz",
-        "KEYCLOAK_ADMIN_PASSWORD": "YWJjMTIz"
+        "SYS_USER_PASS": "YWJjMTIz"
     }
     return all_clients
 
@@ -272,6 +278,12 @@ async def mock_job_watch(mocker, k8s_client):
     mocker.patch(
         'helpers.pod_watcher.Watch',
         return_value=Mock(stream=Mock(return_value=[job_object_response()]))
+    )
+
+@pytest_asyncio.fixture
+async def fn_admin_token_request(backend_url, respx_mock):
+    return respx_mock.post(f"{backend_url}/login").mock(
+        return_value=httpx.Response(status_code=200, json={"token": 'token'})
     )
 
 @pytest_asyncio.fixture

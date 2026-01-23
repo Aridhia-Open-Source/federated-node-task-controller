@@ -17,8 +17,10 @@ spec:
               type: object
               required:
                 - image
+                {{- if not .Values.controller.skipUserAuth }}
                 - user
                 - project
+                {{- end }}
                 - source
               properties:
                 image:

@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+set -e
+
 pem=$( cat "$KEY_FILE" ) # file path of the private key as second argument
 
 now=$(date +%s)
@@ -38,8 +40,8 @@ signature=$(
 JWT="${header_payload}"."${signature}"
 
 echo "Getting app info"
-RESP=$(curl --request GET \
-    --url "https://api.github.com/app/installations" \
+RESP=$(curl -4 -L \
+    "https://api.github.com/app/installations" \
     --header "Accept: application/vnd.github+json" \
     --header "Authorization: Bearer ${JWT}" \
     --header "X-GitHub-Api-Version: 2022-11-28" | jq

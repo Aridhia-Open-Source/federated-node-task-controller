@@ -41,6 +41,20 @@ spec:
           volumeMounts:
             - name: git
               mountPath: /mnt/storage
+        - name: controller-user-init
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          command: ["python3", "-u", "create-controller-user.py"]
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: controller-config
+            - secretRef:
+                name: controller-user-creds
+            - secretRef:
+                name: kc-secrets
+          env:
+            - name: KEYCLOAK_NAMESPACE
+              value: {{ include "kc_ns" . }}
       containers:
       - name: analytics-operator
         image: {{ template "fn-task-controller.image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}
@@ -51,9 +65,9 @@ spec:
         env:
           - name: KC_USER
             valueFrom:
-              configMapKeyRef:
-                name: keycloak-config
-                key: KEYCLOAK_ADMIN
+              secretKeyRef:
+                name: controller-user-creds
+                key: SYS_USER_EMAIL
         resources:
           limits:
             cpu: {{ .Values.resources.limits.cpu }}

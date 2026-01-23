@@ -140,8 +140,7 @@ async def watch_user_pod(crd: Analytics, annotations:dict):
         NAMESPACE,
         label_selector=ls,
         resource_version='',
-        watch=True,
-        timeout_seconds=MAX_TIMEOUT
+        watch=True
     ):
         logger.info("Found job! %s", job["object"].metadata.name)
         match await get_job_status(job["object"].status):
@@ -178,5 +177,5 @@ async def get_job_status(status:V1JobStatus) -> str:
     # Mostly for aks clusters
     if getattr(getattr(status, "uncounted_terminated_pods", V1JobStatus), "succeeded", []):
         return "Succeeded"
-    # Let's assume it's failed if the status is not on what we expect
-    return "Failed"
+    # Let's assume it's still running if the status is not on what we expect
+    return "Running"

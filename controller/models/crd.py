@@ -3,7 +3,7 @@ from math import exp
 import os
 import re
 
-from const import CRD_GROUP
+from const import CRD_GROUP, SKIP_USER_AUTH
 from exceptions import CRDException
 
 MAX_RETRIES = 5
@@ -23,11 +23,11 @@ class Analytics:
             raise CRDException("image field is required")
 
         self.user = crd_definition["object"]["spec"].get("user", {})
-        if not self.user:
+        if not self.user and not SKIP_USER_AUTH:
             raise CRDException("user field is required")
 
         self.proj_name = crd_definition["object"]["spec"].get("project")
-        if not self.proj_name:
+        if not self.proj_name and not SKIP_USER_AUTH:
             raise CRDException("project field is required")
 
         self.dataset = crd_definition["object"]["spec"].get("dataset", {})
@@ -41,10 +41,10 @@ class Analytics:
         self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
 
     def needs_user_sync(self) -> bool:
-        return not self.annotations.get(f"{self.domain}/user")
+        return not (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH)
 
     def can_trigger_task(self) -> bool:
-        return self.annotations.get(f"{self.domain}/user") and not self.annotations.get(f"{self.domain}/done")
+        return (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH) and not self.annotations.get(f"{self.domain}/done")
 
     def can_deliver_results(self) -> bool:
         """
@@ -92,7 +92,7 @@ class Analytics:
         to run the task on
         """
         base = {
-            "name": self.user.get("username") or self.user.get("email"),
+            "name": self.user.get("username") or self.user.get("email") or self.labels['repository'],
             "executors": [
                 {
                     "image": self.image,
@@ -105,6 +105,7 @@ class Analytics:
                 "dataset_id": self.dataset.get("id"),
                 "dataset_name": self.dataset.get("name")
             },
+            "repository": self.source["repository"],
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},

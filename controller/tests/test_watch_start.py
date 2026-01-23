@@ -57,7 +57,7 @@ class TestWatcher:
         If for whichever reason the job fails to create, no annotation is
         added to the CRD, keeping it to the same status
         """
-        start(True)
+        await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @pytest.mark.asyncio
@@ -83,6 +83,7 @@ class TestWatcher:
     async def test_post_task_successful(
             self,
             mock_crd_user_synched,
+            fn_admin_token_request,
             admin_token_request,
             impersonate_request,
             get_user_request,
@@ -99,10 +100,10 @@ class TestWatcher:
         if the user annotation is set.
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
-        admin_token_request.side_effect = [
-            httpx.Response(status_code=200, json={"access_token": "atoken"}),
-            httpx.Response(status_code=200, json={"access_token": "atoken"}),
-            httpx.Response(status_code=200, json={"refresh_token": "rtoken"})
+        fn_admin_token_request.side_effect = [
+            httpx.Response(status_code=200, json={"token": "token"}),
+            httpx.Response(status_code=200, json={"token": "token"}),
+            httpx.Response(status_code=200, json={"token": "token"})
         ]
         await start(True)
 
@@ -118,12 +119,11 @@ class TestWatcher:
         )
 
     @pytest.mark.asyncio
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_post_task_fails(
             self,
             token_mock,
             mock_crd_user_synched,
-            crd_name,
             k8s_client,
             k8s_watch_mock,
             fn_task_results_request,
@@ -143,7 +143,6 @@ class TestWatcher:
             self,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             review_env
         ):
@@ -156,14 +155,13 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_get_results_approved(
             self,
             token_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,
@@ -186,14 +184,13 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_get_results_no_review_required_ignore_annotations(
             self,
             token_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,
@@ -213,14 +210,13 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_get_results_no_review_required(
             self,
             token_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request
@@ -237,14 +233,13 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     async def test_get_results_task_fails(
             self,
             token_mock,
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
@@ -267,7 +262,6 @@ class TestWatcher:
             self,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             backend_url,
             domain
@@ -355,6 +349,32 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
+    async def test_missing_result_crd_fields_skip_user_auth(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            mock_crd_task_done,
+            mock_pod_watch,
+            fn_task_results_request,
+            delivery_open,
+            domain,
+            mocker
+        ):
+        """
+        Tests that a CRD with missing results fields will by default create a github delivery
+        """
+        mocker.patch("helpers.actions.SKIP_USER_AUTH", True)
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        await start(True)
+
+        requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
+        assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_user_token', return_value="token")
     async def test_missing_result_crd_fields(
             self,
@@ -362,7 +382,6 @@ class TestWatcher:
             open_mock,
             k8s_client,
             k8s_watch_mock,
-            crd_name,
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,
@@ -380,7 +399,7 @@ class TestWatcher:
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
     @mock.patch('controller.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
     async def test_watch_timeouts(

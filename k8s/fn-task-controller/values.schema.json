@@ -2,7 +2,6 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "type": "object",
     "required": [
-        "idp",
         "delivery"
     ],
     "definitions": {
@@ -48,6 +47,10 @@
             "properties": {
                 "tag": {
                     "$ref": "#/definitions/tag"
+                },
+                "skipUserAuth": {
+                    "type": "boolean",
+                    "default": true
                 }
             }
         },

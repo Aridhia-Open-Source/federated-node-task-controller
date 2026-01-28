@@ -8,7 +8,6 @@
     Another consequence, with `skipUserAuth` set to `true` the Analytics CRD will not have users as a required fields
 
 # 1.7.0
-
 - Fixed an issue with multiple link-user jobs can be created
 - Optimized the github checkout to depth 1 for link-user jobs
 

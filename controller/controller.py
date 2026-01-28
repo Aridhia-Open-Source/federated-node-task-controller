@@ -50,7 +50,7 @@ async def start(exit_on_tests=False):
                     continue
 
                 new_annotations = deepcopy(crd.annotations)
-                logger.info("Annotations: %s", new_annotations)
+                # logger.info("Annotations: %s", new_annotations)
                 if crd.needs_user_sync():
                     logger.info("Synching user")
                     await sync_users(crd, new_annotations)

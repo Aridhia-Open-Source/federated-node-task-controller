@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -302,7 +302,6 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "kubernetes" },
-    { name = "requests" },
     { name = "urllib3" },
 ]
 
@@ -334,7 +333,6 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-mock", marker = "extra == 'dev'" },
     { name = "python-dotenv", marker = "extra == 'dev'" },
-    { name = "requests" },
     { name = "responses", marker = "extra == 'dev'" },
     { name = "respx", marker = "extra == 'dev'" },
     { name = "urllib3" },

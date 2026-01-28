@@ -1,4 +1,4 @@
-suite: Storage testing for microk8s
+suite: Storage testing for local clusters
 release:
   namespace: federatednode
   name: fn-task-controller
@@ -86,8 +86,37 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: simulate reuse-values args
+  - it: set skipUser to true renders idp init
     template: keycloak-idp-github.yaml
     asserts:
       - hasDocuments:
+          count: 0
+  - it: set skipUser to false doesn't render idp init
+    template: keycloak-idp-github.yaml
+    set:
+      controller:
+        skipUserAuth: false
+    asserts:
+      - hasDocuments:
           count: 1
+  - it: set skipUser to true (default) doesn't set user and project as required fields on the crd
+    template: crd.yaml
+    asserts:
+      - contains:
+          path: spec.versions[0].schema.openAPIV3Schema.properties.spec.required
+          content: image
+      - contains:
+          path: spec.versions[0].schema.openAPIV3Schema.properties.spec.required
+          content: source
+  - it: set skipUser to false sets user and project as required fields on the crd
+    template: crd.yaml
+    set:
+      controller:
+        skipUserAuth: false
+    asserts:
+      - contains:
+          path: spec.versions[0].schema.openAPIV3Schema.properties.spec.required
+          content: user
+      - contains:
+          path: spec.versions[0].schema.openAPIV3Schema.properties.spec.required
+          content: project

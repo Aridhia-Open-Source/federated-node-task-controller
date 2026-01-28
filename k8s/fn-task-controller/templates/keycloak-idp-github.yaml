@@ -1,7 +1,7 @@
+{{- if not (.Values.controller).skipUserAuth }}
 ## Job template for Identity Provider initialization
 # on keycloak with GitHub as a partner.
 # If already set, it changes nothing
-
 {{- if (.Values.idp).github }}
 apiVersion: batch/v1
 kind: Job
@@ -49,4 +49,5 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.idp.github.secret_name }}
                   key: {{ .Values.idp.github.secret_key }}
+{{- end }}
 {{- end }}

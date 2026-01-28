@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 controller:
   tag:
+  skipUserAuth: true
 
 fnalpine:
   tag:

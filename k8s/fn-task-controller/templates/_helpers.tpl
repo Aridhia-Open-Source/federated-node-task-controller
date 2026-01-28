@@ -81,9 +81,6 @@ Create the name of the service account to use
 {{- define "rollMe" -}}
 {{ randAlphaNum 5 | quote }}
 {{- end -}}
-{{- define "fn-alpine" -}}
-ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
-{{- end }}
 
 {{- define "pvcControllerName" -}}
 {{ printf "task-controller-%s-pv-volclaim" (.Values.storage.capacity | default "1Gi") | lower }}

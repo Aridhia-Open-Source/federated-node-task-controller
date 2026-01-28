@@ -1,12 +1,14 @@
 # Releases Changelog
 
+# 1.9.0
+- Added values schema for the helm chart
+
 # 1.8.0
 - Added a `controller.skipUserAuth` field to skip keycloak authentication from a github user and its sync. Defaults to `false` so the existing behaviour is kept unless is desired.
 
     With this set to `true` you will truest that anything that argoCD detects on a git server, will be allowed to run.
 
     Another consequence, with `skipUserAuth` set to `true` the Analytics CRD will not have users as a required fields
-- Added values schema for the helm chart
 
 # 1.7.0
 

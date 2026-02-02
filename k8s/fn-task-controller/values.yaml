@@ -45,6 +45,7 @@ idp:
     clientid_key:
 
 global:
+  copySecretsWithTemplate: true
   taskReview: false
   # host:
   # orgAndRepo:

@@ -20,6 +20,7 @@ export TAG=0.0.1
 export MOUNT_PATH=/data/test
 export STORAGE_CLASS=test-class
 export CRD_GROUP=tasks.federatednode.com
+export DAGSTER_GRAPHQL_API=http://some.dagster.url
 
 pytest -v --cov-report xml:/app/artifacts/coverage.xml --cov=controller .
 pycobertura show /app/artifacts/coverage.xml

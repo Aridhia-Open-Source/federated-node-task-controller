@@ -10,6 +10,7 @@ data:
   KC_HOST: http://keycloak.{{ include "kc_ns" . }}.svc.cluster.local
   GIT_HOME: {{ template "fn-task-controller.gitpath" . }}
   SKIP_USER_AUTH: {{ .Values.controller.skipUserAuth | default false | quote }}
+  DAGSTER_GRAPHQL_API: http://dagster.{{ .Release.Namespace }}
 {{- if .Values.storage.local }}
   MOUNT_PATH: {{ (.Values.storage.local).path }}
 {{- end }}

@@ -18,7 +18,7 @@ from kubernetes.client.exceptions import ApiException
 
 from exceptions import BaseControllerException
 from helpers.kubernetes_helper import KubernetesCRD
-from helpers.actions import create_retry_job, sync_users, trigger_task, handle_results
+from helpers.actions import create_retry_job, sync_users, trigger_dagster_task, trigger_task, handle_results
 from models.crd import Analytics
 
 
@@ -56,7 +56,10 @@ async def start(exit_on_tests=False):
                     await sync_users(crd, new_annotations)
                 elif crd.can_trigger_task():
                     logger.info("Triggering task")
-                    await trigger_task(crd, new_annotations)
+                    if crd.is_ml:
+                        await trigger_dagster_task(crd, new_annotations)
+                    else:
+                        await trigger_task(crd, new_annotations)
                 elif crd.can_deliver_results():
                     logger.info("Getting task results")
                     await handle_results(crd, new_annotations)

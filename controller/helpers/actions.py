@@ -1,8 +1,10 @@
 import logging
 import asyncio
 
+import httpx
+
 from const import NAMESPACE, SKIP_USER_AUTH
-from exceptions import CRDException
+from exceptions import CRDException, FederatedNodeException
 from kubernetes.client import V1DeleteOptions
 from helpers.kubernetes_helper import (
     KubernetesCRD, KubernetesV1Batch,
@@ -68,8 +70,27 @@ async def trigger_task(crd: Analytics, annotations:dict[str, str]):
     annotations[f"{crd.domain}/done"] = "true"
     if "task_id" in task_resp:
         annotations[f"{crd.domain}/task_id"] = str(task_resp["task_id"])
-    client = KubernetesCRD()
-    client.patch_crd_annotations(crd.name, annotations)
+    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
+
+async def trigger_dagster_task(crd: Analytics, annotations: dict):
+    """
+    Common function to send a request to dagster, in a fire and forget manner.
+    Results will be handled by dagster itself.
+    """
+    task_resp = httpx.post(**crd.create_dagster_request())
+    json_task_resp = task_resp.json()
+    if task_resp.status_code > 299:
+        raise FederatedNodeException(json_task_resp)
+
+    if json_task_resp["data"]["launchRun"].get("__typename") == "PythonError":
+        raise FederatedNodeException(json_task_resp["data"]["launchRun"]["message"])
+
+    logger.info("Task created")
+
+    annotations[f"{crd.domain}/task_id"] = json_task_resp["data"]["launchRun"]["runId"]
+    annotations[f"{crd.domain}/done"] = "true"
+    annotations[f"{crd.domain}/results"] = "ok"
+    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
 
 async def handle_results(crd: Analytics, annotations:dict):
     """

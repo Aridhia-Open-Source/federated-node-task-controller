@@ -8,7 +8,7 @@ from copy import deepcopy
 from kubernetes import client
 from unittest.mock import MagicMock, Mock, mock_open
 
-from const import KC_USER
+from const import KC_USER, DAGSTER_GRAPHQL_API
 from helpers.keycloak_helper import KEYCLOAK_CLIENT
 from models.crd import Analytics
 
@@ -323,6 +323,38 @@ async def get_user_request(respx_mock, user_idp_id, keycloak_url, keycloak_realm
 async def impersonate_request(respx_mock, keycloak_url, keycloak_realm):
     return respx_mock.post(f"{keycloak_url}/realms/{keycloak_realm}/protocol/openid-connect/token").mock(
         return_value=httpx.Response(status_code=200, json={"refresh_token": "refresh_token"})
+    )
+
+@pytest_asyncio.fixture
+async def dagster_graphql_mock(respx_mock, keycloak_url, keycloak_realm):
+    return respx_mock.post(DAGSTER_GRAPHQL_API).mock(
+        return_value=httpx.Response(
+            status_code=200,
+            json={
+                "data": {
+                    "launchRun": {
+                        "__typename": "LaunchRunSuccess",
+                        "runId": "uuid"
+                    }
+                }
+            }
+        )
+    )
+
+@pytest_asyncio.fixture
+async def dagster_graphql_fail_mock(respx_mock, keycloak_url, keycloak_realm):
+    return respx_mock.post(DAGSTER_GRAPHQL_API).mock(
+        return_value=httpx.Response(
+            status_code=200,
+            json={
+                "data": {
+                    "launchRun": {
+                        "__typename": "PythonError",
+                        "message": "Something went wrong"
+                    }
+                }
+            }
+        )
     )
 
 @pytest.fixture(autouse=True)

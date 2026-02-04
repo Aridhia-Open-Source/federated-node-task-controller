@@ -3,7 +3,7 @@ from math import exp
 import os
 import re
 
-from const import CRD_GROUP, SKIP_USER_AUTH
+from const import CRD_GROUP, DAGSTER_GRAPHQL_API, SKIP_USER_AUTH
 from exceptions import CRDException
 
 MAX_RETRIES = 5
@@ -16,9 +16,9 @@ class Analytics:
             self,
             crd_definition:dict
         ):
-        self.name = crd_definition["object"]["metadata"]["name"]
-        self.annotations = crd_definition["object"]["metadata"]["annotations"]
-        self.image = crd_definition["object"]["spec"].get("image", {})
+        self.name: str = crd_definition["object"]["metadata"]["name"]
+        self.annotations: dict  = crd_definition["object"]["metadata"]["annotations"]
+        self.image: dict  = crd_definition["object"]["spec"].get("image", {})
         if not self.image:
             raise CRDException("image field is required")
 
@@ -30,15 +30,17 @@ class Analytics:
         if not self.proj_name and not SKIP_USER_AUTH:
             raise CRDException("project field is required")
 
-        self.dataset = crd_definition["object"]["spec"].get("dataset", {})
-        self.env = crd_definition["object"]["spec"].get("env", {})
-        self.outputs = crd_definition["object"]["spec"].get("outputs", {})
-        self.inputs = crd_definition["object"]["spec"].get("inputs", {})
-        self.source = crd_definition["object"]["spec"].get("source", {})
-        self.query = crd_definition["object"]["spec"].get("db_query")
-        self.delivery = json.load(open("controller/delivery.json"))
+        self.dataset: dict  = crd_definition["object"]["spec"].get("dataset", {})
+        self.env: dict  = crd_definition["object"]["spec"].get("env", {})
+        self.outputs: dict  = crd_definition["object"]["spec"].get("outputs", {})
+        self.inputs: dict = crd_definition["object"]["spec"].get("inputs", {})
+        self.source: dict = crd_definition["object"]["spec"].get("source", {})
+        self.query: str | None = crd_definition["object"]["spec"].get("db_query")
+        self.is_ml: bool = crd_definition["object"]["spec"].get("ml", False)
+        self.ml_params: dict = crd_definition["object"]["spec"].get("params", {})
+        self.delivery: dict = json.load(open("controller/delivery.json"))
         self.create_labels()
-        self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
+        self.is_delete: bool = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
 
     def needs_user_sync(self) -> bool:
         return not (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH)
@@ -85,6 +87,9 @@ class Analytics:
             self.labels["results"] = self.delivery["other"].get("url") or self.delivery["other"]["auth_type"]
         self.labels["image"] = re.sub(r'(\/|:)', '-', self.image)[:63]
 
+    def create_task_name(self):
+        return self.user.get("username") or self.user.get("email") or self.labels['repository']
+
     def create_task_body(self) -> dict:
         """
         The task body is fairly strict, so we are going to inject few
@@ -92,7 +97,7 @@ class Analytics:
         to run the task on
         """
         base = {
-            "name": self.user.get("username") or self.user.get("email") or self.labels['repository'],
+            "name": self.create_task_name(),
             "executors": [
                 {
                     "image": self.image,
@@ -116,6 +121,18 @@ class Analytics:
             base["db_query"] = self.query
 
         return base
+
+    def create_dagster_request(self) -> dict:
+        """
+        Prepares the args to be passed to an async request
+        """
+        return {
+            "url": DAGSTER_GRAPHQL_API,
+            "json": {
+                "query": "mutation { launchPipelineExecution(executionParams: { selector: { jobName: \"$job_name\", repositoryName: \"__repository__\", repositoryLocationName: \"dagster-fn\" }, runConfigData: { ops: { k8s_pipes_op: { config: { image: \"$image\" } } } } }) { __typename ... on LaunchPipelineRunSuccess { run { runId } } ... on PythonError { message } } }",
+                "variables": {"job_name": self.create_task_name(), "image": self.image}
+            }
+        }
 
     def prepare_update_job(self) -> dict:
         """

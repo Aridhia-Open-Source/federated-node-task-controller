@@ -2,3 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ include "controller_ns" . }}
+  {{- if .Release.IsInstall }}
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-5"
+  {{- end }}

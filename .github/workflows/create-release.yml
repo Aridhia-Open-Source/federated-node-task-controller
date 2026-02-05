@@ -1,0 +1,42 @@
+name: Create Release
+run-name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      majorVersion:
+        description: 'Bump the major version, i.e. 1.0.0 -> 2.0.0'
+        required: false
+        default: false
+        type: boolean
+      minorVersion:
+        description: 'Bump the minor version, i.e. 0.1.0 -> 0.2.0'
+        required: false
+        default: true
+        type: boolean
+      patchVersion:
+        description: 'Bump the patch version, i.e. 0.0.1 -> 0.0.2'
+        required: false
+        default: false
+        type: boolean
+      dryRun:
+        description: 'Dry run, no changes committed. Shows the new Chart.yaml contents'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/create-release.yml@main
+    with:
+      chartPath: k8s/fn-task-controller
+      majorVersion: ${{ inputs.majorVersion }}
+      minorVersion: ${{ inputs.minorVersion }}
+      patchVersion: ${{ inputs.patchVersion }}
+      dryRun: ${{ inputs.dryRun }}
+      stagingBranch: develop
+      BUMP_APP_ID: ${{ vars.BUMP_APP_ID }}
+    secrets:
+      BUMP_APP_SECRET: ${{ secrets.BUMP_APP_SECRET }}

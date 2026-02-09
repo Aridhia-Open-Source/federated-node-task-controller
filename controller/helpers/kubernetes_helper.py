@@ -17,8 +17,8 @@ from kubernetes.client.exceptions import ApiException
 
 from exceptions import KubernetesException
 from const import (
-    NAMESPACE, IMAGE, MOUNT_PATH,
-    PULL_POLICY, STORAGE_CLASS, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
+    HELPER_IMAGE, NAMESPACE, MOUNT_PATH,
+    PULL_POLICY, STORAGE_CLASS, KC_USER, KC_HOST, TASK_NAMESPACE
 )
 from models.crd import Analytics
 
@@ -187,7 +187,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         container = client.V1Container(
             name=name,
             image_pull_policy=PULL_POLICY,
-            image=image or f"{IMAGE}:{TAG}"
+            image=image or HELPER_IMAGE
         )
         if command:
             container.command = command

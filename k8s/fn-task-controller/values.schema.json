@@ -54,14 +54,6 @@
                 }
             }
         },
-        "fnalpine": {
-            "type": "object",
-            "properties": {
-                "tag": {
-                    "$ref": "#/definitions/tag"
-                }
-            }
-        },
         "namespaces": {
             "$ref": "#/definitions/namespaces"
         },

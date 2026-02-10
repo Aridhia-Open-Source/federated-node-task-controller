@@ -86,7 +86,7 @@ Create the name of the service account to use
 {{ printf "task-controller-%s-pv-volclaim" (.Values.storage.capacity | default "1Gi") | lower }}
 {{- end }}
 {{- define "pvControllerName" -}}
-{{ printf "task-controller-%s-pv" (.Values.storage.capacity | default "1Gi") | lower }}
+{{ printf "%s-task-controller-%s-pv" .Release.Name (.Values.storage.capacity | default "1Gi") | lower }}
 {{- end }}
 
 {{- define "awsStorageAccount" -}}

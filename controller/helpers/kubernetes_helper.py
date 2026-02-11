@@ -10,7 +10,6 @@ import base64
 from datetime import datetime
 import logging
 
-from uuid import uuid4
 from kubernetes import client
 from kubernetes.config import load_kube_config, load_incluster_config
 from kubernetes.client.exceptions import ApiException
@@ -24,6 +23,10 @@ from models.crd import Analytics
 
 logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
+
+
+def get_a_date_formatted():
+    return str(datetime.now().timestamp()).replace('.','')
 
 
 class BaseK8s:
@@ -173,7 +176,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         Creates the job template and submits it to the cluster in the
         same namespace as the controller's
         """
-        name += f"-{str(datetime.now().timestamp()).replace('.','')}"
+        name += f"-{get_a_date_formatted()}"
         name = name[:62]
         if labels is None:
             labels = {}
@@ -269,7 +272,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         env = [
             client.V1EnvVar(name="DOMAIN", value=Analytics.domain),
             client.V1EnvVar(name="CRD_NAME", value=crd_name),
-            client.V1EnvVar(name="USER_NAME", value=user.get("username")),
+            client.V1EnvVar(name="USER_NAME", value=user.get("username", get_a_date_formatted())),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),

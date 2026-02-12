@@ -1,12 +1,14 @@
 import logging
 import os
 import requests
+import sys
 import time
 
 
 KEYCLOAK_URL = os.getenv('KC_HOST')
 KEYCLOAK_PASS = os.getenv('KEYCLOAK_ADMIN_PASSWORD')
 
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger('idp-initializer')
 logger.setLevel(logging.INFO)
 
@@ -19,6 +21,9 @@ for i in range(10):
   except requests.exceptions.ConnectionError:
     logger.info(f"{i+1}/10 - Failed to connect. Will retry in 10 seconds")
   time.sleep(10)
+
+if i >= 9:
+   raise Exception("Could not connect to keycloak after 10 tries. Exiting")
 
 # Login as admin - Wait 10 seconds between retries. The keycloak init job relies on both kc pods to be up
 for i in range(10):
@@ -42,6 +47,10 @@ for i in range(10):
     continue
 
   break
+
+if i >= 9:
+   logger.info(admin_response.json())
+   raise Exception("Could not login to keycloak after 10 tries. Exiting.")
 
 logger.info("Logged in!")
 admin_token = admin_response.json()["access_token"]

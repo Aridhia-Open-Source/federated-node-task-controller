@@ -33,7 +33,7 @@ spec:
               path: delivery.json
       initContainers:
         - name: storage-init
-          image: ghcr.io/aridhia-open-source/alpine:{{ .Values.fnalpine.tag | default "3.19" }}
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
           command: ["/bin/sh"]
           args:
             - -c
@@ -57,7 +57,7 @@ spec:
               value: {{ include "kc_ns" . }}
       containers:
       - name: analytics-operator
-        image: {{ template "fn-task-controller.image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}
+        image: {{ template "fn-task-controller.image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}
         imagePullPolicy: Always
         envFrom:
           - configMapRef:

@@ -3,7 +3,7 @@ from math import exp
 import os
 import re
 
-from const import CRD_GROUP, SKIP_USER_AUTH
+from const import CRD_GROUP, HELPER_IMAGE, SKIP_USER_AUTH
 from exceptions import CRDException
 
 MAX_RETRIES = 5
@@ -141,5 +141,5 @@ class Analytics:
                 "cooldown": f"{cooldown}s",
                 "crd": self.name
             },
-            "image": "alpine/k8s:1.29.4"
+            "image": HELPER_IMAGE
         }

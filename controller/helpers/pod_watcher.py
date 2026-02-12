@@ -4,7 +4,6 @@ Collection of job and pod watchers.
     - Job watcher is mostly to focus on user sync
 """
 
-import asyncio
 import base64
 import logging
 import re
@@ -112,12 +111,9 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                     raise PodWatcherException("No suitable delivery options available")
                 break
             case "Failed":
-                annotations.pop(f"{crd.domain}/task_id")
-                annotations.pop(f"{crd.domain}/done")
-                KubernetesCRD().patch_crd_annotations(crd.name, annotations)
-                raise KubernetesException(
-                    "Pod in failed status. Refreshing annotation on CRD to trigger a new task"
-                )
+                crd.reset_task = True
+                await KubernetesV1Batch().create_retry_job(crd)
+                break
             case _:
                 logger.info(
                     "%s Status: %s",

@@ -27,41 +27,45 @@ class TestKubernetesHelper:
         k8s_client["patch_cluster_custom_object_mock"].assert_called()
 
     @pytest.mark.asyncio
-    @mock.patch('controller.create_retry_job')
     async def test_job_pv_creation_fails(
         self,
-        create_bare_job_mock,
         k8s_client,
         k8s_watch_mock,
         job_spec_mock,
         mock_job_watch,
-        delivery_open
+        delivery_open,
+        mocker
     ):
         """
         Tests the first step of the CRD lifecycle.
         If the kubernetes PV can't be created it will not progress
         the CRD in its cycle
         """
+        mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job'
+        )
         k8s_client["create_persistent_volume_mock"].side_effect = ApiException('Error')
         await start(True)
         k8s_client["create_namespaced_job_mock"].assert_not_called()
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
 
     @pytest.mark.asyncio
-    @mock.patch('controller.create_retry_job')
     async def test_job_creation_fails(
         self,
-        create_bare_job_mock,
         k8s_client,
         k8s_watch_mock,
         mock_job_watch,
-        delivery_open
+        delivery_open,
+        mocker
     ):
         """
         Tests the first step of the CRD lifecycle.
         If the kubernetes user sync job can't be created it will not progress
         the CRD in its cycle
         """
+        mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job'
+        )
         k8s_client["create_namespaced_job_mock"].side_effect = ApiException(http_resp=mock.Mock(data=""))
         await start(True)
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()

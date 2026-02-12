@@ -235,8 +235,10 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
+    @mock.patch('helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job', return_value="token")
     async def test_get_results_task_fails(
             self,
+            create_retry_job_mock,
             token_mock,
             open_mock,
             k8s_client,
@@ -258,16 +260,7 @@ class TestWatcher:
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
-            [{'op': 'add', 'path': '/metadata/annotations', 'value':
-                {
-                    f"{domain}/user": "ok",
-                    f"{domain}/approved": "true"
-                }
-            }]
-        )
+        create_retry_job_mock.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_results_blocked(
@@ -412,8 +405,8 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
-    @mock.patch('controller.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
+    @mock.patch('helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job', return_value="token")
     async def test_watch_timeouts(
             self,
             create_retry_job_mock,
@@ -444,11 +437,9 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
-    @mock.patch('controller.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
     async def test_watch_timeouts_long_running_task(
             self,
-            create_retry_job_mock,
             token_mock,
             open_mock,
             k8s_client,

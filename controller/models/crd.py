@@ -1,9 +1,10 @@
 import json
+import logging
 from math import exp
 import os
 import re
 
-from const import CRD_GROUP, HELPER_IMAGE, SKIP_USER_AUTH
+from const import CRD_GROUP, HELPER_IMAGE, NAMESPACE, SKIP_USER_AUTH
 from exceptions import CRDException
 
 MAX_RETRIES = 5
@@ -11,6 +12,7 @@ MAX_RETRIES = 5
 
 class Analytics:
     domain = CRD_GROUP
+    reset_task = False
 
     def __init__(
             self,
@@ -96,6 +98,7 @@ class Analytics:
             "executors": [
                 {
                     "image": self.image,
+                    "command": ["exit", "1"],
                     "env": self.env
                 }
             ],
@@ -126,12 +129,17 @@ class Analytics:
         annotation_check = f"{self.domain}/tries"
         current_try = int(self.annotations.get(annotation_check, 0)) + 1
 
+        annotations_cmd = f"{annotation_check}={current_try}"
+
+        if self.reset_task:
+            annotations_cmd += f" {self.domain}/task_id- {self.domain}/done-"
+
         if current_try > MAX_RETRIES:
             raise CRDException("Max retries reached. Skipping")
         cooldown = int(exp(current_try))
 
         cmd = f"sleep {cooldown} && " \
-            f"kubectl annotate --overwrite analytics {self.name} {annotation_check}={current_try}"
+            f"kubectl annotate --overwrite analytics {self.name} {annotations_cmd}"
 
         return {
             "name": f"update-annotation-{self.name}",

@@ -133,7 +133,7 @@ jobs:
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   helm:
-    uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
+    uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@test
     needs:
       - build-controller
       - update

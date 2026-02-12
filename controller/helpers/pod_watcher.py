@@ -50,7 +50,9 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                 if fp is None:
                     logging.info("Task needs a review")
                     # Results to be approved. Waiting. No retries
-                    break
+                    pod_watch.stop()
+                    return
+
                 if git_info:
                     KubernetesV1Batch().create_helper_job(
                         name=f"task-{task_id}-results",

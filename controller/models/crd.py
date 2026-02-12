@@ -98,7 +98,6 @@ class Analytics:
             "executors": [
                 {
                     "image": self.image,
-                    "command": ["exit", "1"],
                     "env": self.env
                 }
             ],

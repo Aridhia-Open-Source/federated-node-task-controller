@@ -1,6 +1,7 @@
 import pytest
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
+from const import HELPER_IMAGE
 from models.crd import MAX_RETRIES
 from controller import start
 from exceptions import KubernetesException
@@ -94,7 +95,7 @@ class TestKubernetesHelper:
                     "cooldown": "2s",
                     "crd": crd_name
                 },
-                "image": "alpine/k8s:1.29.4"}
+                "image": HELPER_IMAGE}
         )
 
     @pytest.mark.asyncio

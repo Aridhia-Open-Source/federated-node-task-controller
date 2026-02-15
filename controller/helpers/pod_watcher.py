@@ -126,7 +126,8 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
     if not pod:
         raise KubernetesException(f"Timeout. Pod for task {task_id} not found")
 
-    if pod["object"].status.phase == "Running":
+    # If the timeout occurs, but the pod is either init or running
+    if pod["object"].status.phase in ["Running", "Pending"]:
         logger.info("Long-running task: %s. Retrying...", task_id)
         annotations[f"{crd.domain}/still-running"] = get_a_date_formatted()
         KubernetesCRD().patch_crd_annotations(crd.name, annotations)

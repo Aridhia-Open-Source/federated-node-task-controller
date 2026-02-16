@@ -1,5 +1,6 @@
 import httpx
 import pytest
+from datetime import datetime as dt
 from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from unittest.mock import AsyncMock, mock_open
@@ -234,8 +235,10 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
+    @mock.patch('helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job', return_value="token")
     async def test_get_results_task_fails(
             self,
+            create_retry_job_mock,
             token_mock,
             open_mock,
             k8s_client,
@@ -243,19 +246,21 @@ class TestWatcher:
             mock_crd_task_done,
             mock_pod_watch,
             backend_url,
-            domain
+            domain,
+            crd_name,
+            mocker
         ):
         """
         Tests that once the task's pod is completed,
         a new github job pusher is created
         """
+        mocker.patch("helpers.actions.SKIP_USER_AUTH", True)
         mock_pod_watch["watch"].return_value.stream.return_value = [{"object": mock.Mock(status=mock.Mock(phase="Failed"))}]
         mock_crd_task_done['object']['metadata']['annotations']\
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
+        create_retry_job_mock.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_results_blocked(
@@ -311,7 +316,7 @@ class TestWatcher:
         """
         Tests that a deleted CRD it's plain ignored.
         """
-        calls_to_assert =[
+        calls_to_assert = [
             k8s_client["patch_cluster_custom_object_mock"],
             mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),
             mocker.patch('helpers.actions.create_fn_task'),
@@ -400,8 +405,8 @@ class TestWatcher:
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
     @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
-    @mock.patch('controller.create_retry_job')
     @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
+    @mock.patch('helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job', return_value="token")
     async def test_watch_timeouts(
             self,
             create_retry_job_mock,
@@ -428,3 +433,51 @@ class TestWatcher:
 
         k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
         create_retry_job_mock.assert_called()
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
+    @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
+    async def test_watch_timeouts_long_running_task(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            mock_crd_task_done,
+            mock_pod_watch,
+            mocker,
+            domain,
+            crd_name
+        ):
+        """
+        Tests that a CRD with an incorrect task_id (due to the pod manually deleted)
+        raises an exception instead of hanging
+        """
+        mocker.patch("helpers.actions.SKIP_USER_AUTH", True)
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = str(ct.timestamp()).replace('.','')
+        mocker.patch("helpers.kubernetes_helper.datetime", datetime_mock)
+        import time
+
+        def mock_stream(*args, **kwargs):
+            yield from [{"object": mock.Mock(status=mock.Mock(phase="Running"))}]
+            time.sleep(kwargs.get('timeout_seconds', 1) + 0.5)
+
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
+        await start(True)
+
+        k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', crd_name,
+            [{'op': 'add', 'path': '/metadata/annotations', 'value':
+                {
+                    f"{domain}/user": "ok",
+                    f"{domain}/done": "true",
+                    f"{domain}/task_id": "1",
+                    f"{domain}/still-running": now_str
+                }
+            }]
+        )

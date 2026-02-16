@@ -91,23 +91,3 @@ async def handle_results(crd: Analytics, annotations:dict):
         )
     )
     await asyncio.gather(monitor)
-
-async def create_retry_job(crd:Analytics):
-    """
-    Wrapper to create a job that updates the CRD
-    with an increasing delay. It will retry up to
-    MAX_RETRIES times.
-    """
-    try:
-        existing_updates = KubernetesV1().list_namespaced_pod(
-            NAMESPACE,
-            label_selector=f"crd={crd.name}",
-            field_selector="status.phase=Pending,status.phase=Running"
-        )
-        if existing_updates.items:
-            logging.info("Anoter annotation update is in progress..")
-            return
-
-        KubernetesV1Batch().create_bare_job(**crd.prepare_update_job())
-    except CRDException:
-        pass

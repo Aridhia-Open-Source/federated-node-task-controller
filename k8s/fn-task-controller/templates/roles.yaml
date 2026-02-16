@@ -3,9 +3,6 @@ kind: ClusterRole
 metadata:
   name: {{ .Release.Name }}-analytics-operator
 rules:
-# - apiGroups: ["apiextensions.k8s.io"]
-#   resources: ["customresourcedefinitions"]
-#   verbs: ["create"]
 - apiGroups: [{{ include "controllerCrdGroup" . | quote }}]
   resources: ["analytics"]
   verbs: ["*"]
@@ -28,7 +25,8 @@ roleRef:
   name: analytics-operator
   apiGroup: rbac.authorization.k8s.io
 ---
-{{- if eq (include "areWeSubchart" .) "true" -}}
+
+{{- if eq (include "areWeSubchart" .) "true" }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

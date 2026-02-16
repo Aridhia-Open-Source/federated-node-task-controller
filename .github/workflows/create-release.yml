@@ -29,6 +29,7 @@ permissions:
 
 jobs:
   release:
+    if: ${{inputs.majorVersion == 'true'}} || ${{inputs.minorVersion == 'true'}} || ${{inputs.patchVersion == 'true'}}
     uses: Aridhia-Open-Source/pipelines/.github/workflows/create-release.yml@main
     with:
       chartPath: k8s/fn-task-controller

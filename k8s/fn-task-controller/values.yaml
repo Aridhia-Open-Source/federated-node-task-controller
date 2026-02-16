@@ -5,9 +5,6 @@ controller:
   tag:
   skipUserAuth: true
 
-fnalpine:
-  tag:
-
 namespaces:
   controller: fn-controller
   keycloak: keycloak
@@ -17,8 +14,6 @@ storage:
   capacity: 1Gi
   azure:
     # secretName:
-    # storageAccountName:
-    # storageAccountKey:
     # shareName:
   aws:
     # fileSystemId:
@@ -55,3 +50,4 @@ delivery:
   other: {}
     # url
     # auth_type
+installCRDs: true

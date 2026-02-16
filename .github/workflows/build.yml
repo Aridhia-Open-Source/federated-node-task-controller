@@ -121,7 +121,7 @@ jobs:
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
       DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  build-idp-initializer:
+  build-helper-image:
     needs: update
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
@@ -143,6 +143,8 @@ jobs:
       PATH_BUILD: k8s/fn-task-controller
       CHART_NAME: fn-task-controller
       IS_TAG: ${{ needs.update.outputs.is_tag }}
+    secrets:
+      CHART_APP_SECRET: ${{ secrets.CHART_APP_SECRET }}
   sumamry:
     needs:
       - helm

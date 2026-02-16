@@ -14,14 +14,18 @@ from kubernetes import client
 from kubernetes.config import load_kube_config, load_incluster_config
 from kubernetes.client.exceptions import ApiException
 
-from exceptions import KubernetesException
+from exceptions import CRDException, KubernetesException
 from const import (
-    NAMESPACE, IMAGE, MOUNT_PATH, CRD_GROUP,
-    PULL_POLICY, STORAGE_CLASS, TAG, KC_USER, KC_HOST, TASK_NAMESPACE
+    HELPER_IMAGE, NAMESPACE, MOUNT_PATH, CRD_GROUP,
+    PULL_POLICY, STORAGE_CLASS, KC_USER, KC_HOST, TASK_NAMESPACE
 )
 
 logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
+
+
+def get_a_date_formatted():
+    return str(datetime.now().timestamp()).replace('.','')
 
 
 class BaseK8s:
@@ -171,7 +175,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         Creates the job template and submits it to the cluster in the
         same namespace as the controller's
         """
-        name += f"-{str(datetime.now().timestamp()).replace('.','')}"
+        name += f"-{get_a_date_formatted()}"
         name = name[:62]
         if labels is None:
             labels = {}
@@ -185,7 +189,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         container = client.V1Container(
             name=name,
             image_pull_policy=PULL_POLICY,
-            image=image or f"{IMAGE}:{TAG}"
+            image=image or HELPER_IMAGE
         )
         if command:
             container.command = command
@@ -267,7 +271,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         env = [
             client.V1EnvVar(name="DOMAIN", value=CRD_GROUP),
             client.V1EnvVar(name="CRD_NAME", value=crd_name),
-            client.V1EnvVar(name="USER_NAME", value=user.get("username")),
+            client.V1EnvVar(name="USER_NAME", value=user.get("username", get_a_date_formatted())),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
             client.V1EnvVar(name="KC_USER", value=KC_USER),
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
@@ -318,3 +322,23 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             )
         except ApiException as exc:
             raise KubernetesException(exc.body) from exc
+
+    async def create_retry_job(self, crd):
+        """
+        Wrapper to create a job that updates the CRD
+        with an increasing delay. It will retry up to
+        MAX_RETRIES times.
+        """
+        try:
+            existing_updates = KubernetesV1().list_namespaced_pod(
+                NAMESPACE,
+                label_selector=f"crd={crd.name}",
+                field_selector="status.phase=Pending,status.phase=Running"
+            )
+            if existing_updates.items:
+                logging.info("Anoter annotation update is in progress..")
+                return
+
+            self.create_bare_job(**crd.prepare_update_job())
+        except CRDException:
+            pass

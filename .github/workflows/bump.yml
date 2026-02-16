@@ -1,5 +1,5 @@
-name: Helm Chart Version Bump
-run-name: Chart Bump
+name: Version bump
+run-name: Version bump
 on:
   workflow_dispatch:
     inputs:

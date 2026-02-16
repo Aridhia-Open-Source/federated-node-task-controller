@@ -4,6 +4,7 @@
 
 storage:
   capacity: 100Mi
+
 namespaces:
   controller: old-controller
 idp:

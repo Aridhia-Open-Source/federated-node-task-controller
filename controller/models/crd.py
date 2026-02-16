@@ -1,11 +1,12 @@
 import json
+import logging
 from math import exp
 import os
 import re
 import logging
 import time
 
-from const import CRD_GROUP, NAMESPACE
+from const import CRD_GROUP, HELPER_IMAGE, NAMESPACE, SKIP_USER_AUTH
 from helpers.kubernetes_helper import KubernetesV1, KubernetesV1Batch
 from exceptions import CRDException
 
@@ -18,6 +19,7 @@ MAX_RETRIES = 5
 
 class Analytics:
     domain = CRD_GROUP
+    reset_task = False
 
     def __init__(
             self,
@@ -30,11 +32,11 @@ class Analytics:
             raise CRDException("image field is required")
 
         self.user = crd_definition["object"]["spec"].get("user", {})
-        if not self.user:
+        if not self.user and not SKIP_USER_AUTH:
             raise CRDException("user field is required")
 
         self.proj_name = crd_definition["object"]["spec"].get("project")
-        if not self.proj_name:
+        if not self.proj_name and not SKIP_USER_AUTH:
             raise CRDException("project field is required")
 
         self.dataset = crd_definition["object"]["spec"].get("dataset", {})
@@ -49,10 +51,10 @@ class Analytics:
         self.schedule = crd_definition["object"]["spec"].get("schedule")
 
     def needs_user_sync(self) -> bool:
-        return not self.annotations.get(f"{self.domain}/user")
+        return not (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH)
 
     def can_trigger_task(self) -> bool:
-        return self.annotations.get(f"{self.domain}/user") and not self.annotations.get(f"{self.domain}/done")
+        return (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH) and not self.annotations.get(f"{self.domain}/done")
 
     def can_deliver_results(self) -> bool:
         """
@@ -106,7 +108,7 @@ class Analytics:
         to run the task on
         """
         base = {
-            "name": self.user.get("username") or self.user.get("email"),
+            "name": self.user.get("username") or self.user.get("email") or self.labels['repository'],
             "executors": [
                 {
                     "image": self.image,
@@ -120,6 +122,7 @@ class Analytics:
                 "dataset_name": self.dataset.get("name")
             },
             "schedule": self.schedule,
+            "repository": self.source["repository"],
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},
@@ -141,12 +144,17 @@ class Analytics:
         annotation_check = f"{self.domain}/tries"
         current_try = int(self.annotations.get(annotation_check, 0)) + 1
 
+        annotations_cmd = f"{annotation_check}={current_try}"
+
+        if self.reset_task:
+            annotations_cmd += f" {self.domain}/task_id- {self.domain}/done-"
+
         if current_try > MAX_RETRIES:
             raise CRDException("Max retries reached. Skipping")
         cooldown = int(exp(current_try))
 
         cmd = f"sleep {cooldown} && " \
-            f"kubectl annotate --overwrite analytics {self.name} {annotation_check}={current_try}"
+            f"kubectl annotate --overwrite analytics {self.name} {annotations_cmd}"
 
         return {
             "name": f"update-annotation-{self.name}",
@@ -156,7 +164,7 @@ class Analytics:
                 "cooldown": f"{cooldown}s",
                 "crd": self.name
             },
-            "image": "alpine/k8s:1.29.4"
+            "image": HELPER_IMAGE
         }
 
     async def create_retry_job(self):

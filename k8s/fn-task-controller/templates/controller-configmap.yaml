@@ -9,18 +9,19 @@ data:
   BACKEND_HOST: http://backend.{{ .Release.Namespace }}.svc.cluster.local:5000
   KC_HOST: http://keycloak.{{ include "kc_ns" . }}.svc.cluster.local
   GIT_HOME: {{ template "fn-task-controller.gitpath" . }}
+  SKIP_USER_AUTH: {{ .Values.controller.skipUserAuth | default false | quote }}
 {{- if .Values.storage.local }}
   MOUNT_PATH: {{ (.Values.storage.local).path }}
 {{- end }}
   PULL-POLICY: Always
-  TAG: {{ .Values.controller.tag | default .Chart.AppVersion }}
+  TAG: {{ (.Values.controller).tag | default .Chart.AppVersion }}
   STORAGE_CLASS: {{ include "controllerStorageClass" . }}
   CRD_GROUP: {{ include "controllerCrdGroup" . }}
-{{- if .Values.global.taskReview }}
+{{- if (.Values.global).taskReview }}
   TASK_REVIEW: enabled
 {{- end }}
   IMAGE: {{ template "fn-task-controller.helper-image" . }}
-  PUBLIC_URL: {{ .Values.global.host | default "federated-node" }}
+  PUBLIC_URL: {{ (.Values.global).host | default "federated-node" }}
 {{- if .Values.storage.aws }}
   AWS_STORAGE_ENABLED: "true"
   AWS_STORAGE_DRIVER: "efs.csi.aws.com"

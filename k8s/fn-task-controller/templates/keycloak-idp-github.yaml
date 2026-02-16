@@ -1,7 +1,7 @@
+{{- if not (.Values.controller).skipUserAuth }}
 ## Job template for Identity Provider initialization
 # on keycloak with GitHub as a partner.
 # If already set, it changes nothing
-
 {{- if (.Values.idp).github }}
 apiVersion: batch/v1
 kind: Job
@@ -19,7 +19,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: idp-initializer
-          image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
+          image: "{{ include "fn-task-controller.helper-image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}"
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
@@ -49,4 +49,5 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.idp.github.secret_name }}
                   key: {{ .Values.idp.github.secret_key }}
+{{- end }}
 {{- end }}

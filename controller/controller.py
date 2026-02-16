@@ -17,7 +17,7 @@ from kubernetes.watch import Watch
 from kubernetes.client.exceptions import ApiException
 
 from exceptions import BaseControllerException
-from helpers.kubernetes_helper import KubernetesCRD
+from helpers.kubernetes_helper import KubernetesCRD, KubernetesV1Batch
 from helpers.actions import sync_users, trigger_task, handle_results
 from models.crd import Analytics
 
@@ -50,7 +50,7 @@ async def start(exit_on_tests=False):
                     continue
 
                 new_annotations = deepcopy(crd.annotations)
-                logger.info("Annotations: %s", new_annotations)
+                # logger.info("Annotations: %s", new_annotations)
                 if crd.needs_user_sync():
                     logger.info("Synching user")
                     await sync_users(crd, new_annotations)
@@ -68,14 +68,14 @@ async def start(exit_on_tests=False):
                 logger.error(mre.reason)
                 raise mre
             except (BaseControllerException, ApiException) as ke:
-                await crd.create_retry_job()
+                await KubernetesV1Batch().create_retry_job(crd)
                 logger.error(ke.reason)
             except KeyError:
                 # Possibly missing values, it shouldn't crash the pod
                 logger.error(traceback.format_exc())
             # pylint: disable=W0718
             except Exception:
-                await crd.create_retry_job()
+                await KubernetesV1Batch().create_retry_job(crd)
                 logger.error("Unknown error: %s", traceback.format_exc())
     except ProtocolError:
         logger.error("Connection expired. Restarting..")

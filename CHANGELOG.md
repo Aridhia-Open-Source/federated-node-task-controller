@@ -1,5 +1,13 @@
 # Releases Changelog
 
+# 1.9.0
+- Added values schema for the helm chart
+
+### Bugfixes
+- Long running tasks were not retried to monitor their status.
+- When a task pod fails, it will be retried with a fresh request
+- Fixed an issue with github delivery where the branch name relied on the user info. As a backup now, a timestamp will be used
+
 # 1.8.0
 - Added a `controller.skipUserAuth` field to skip keycloak authentication from a github user and its sync. Defaults to `false` so the existing behaviour is kept unless is desired.
 
@@ -8,6 +16,7 @@
     Another consequence, with `skipUserAuth` set to `true` the Analytics CRD will not have users as a required fields
 
 # 1.7.0
+
 - Fixed an issue with multiple link-user jobs can be created
 - Optimized the github checkout to depth 1 for link-user jobs
 

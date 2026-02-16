@@ -17,8 +17,8 @@ from kubernetes.watch import Watch
 from kubernetes.client.exceptions import ApiException
 
 from exceptions import BaseControllerException
-from helpers.kubernetes_helper import KubernetesCRD
-from helpers.actions import create_retry_job, sync_users, trigger_task, handle_results
+from helpers.kubernetes_helper import KubernetesCRD, KubernetesV1Batch
+from helpers.actions import sync_users, trigger_task, handle_results
 from models.crd import Analytics
 
 
@@ -68,14 +68,14 @@ async def start(exit_on_tests=False):
                 logger.error(mre.reason)
                 raise mre
             except (BaseControllerException, ApiException) as ke:
-                await create_retry_job(crd)
+                await KubernetesV1Batch().create_retry_job(crd)
                 logger.error(ke.reason)
             except KeyError:
                 # Possibly missing values, it shouldn't crash the pod
                 logger.error(traceback.format_exc())
             # pylint: disable=W0718
             except Exception:
-                await create_retry_job(crd)
+                await KubernetesV1Batch().create_retry_job(crd)
                 logger.error("Unknown error: %s", traceback.format_exc())
     except ProtocolError:
         logger.error("Connection expired. Restarting..")

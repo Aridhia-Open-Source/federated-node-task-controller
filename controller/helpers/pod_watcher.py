@@ -4,7 +4,6 @@ Collection of job and pod watchers.
     - Job watcher is mostly to focus on user sync
 """
 
-import asyncio
 import base64
 import logging
 import re
@@ -15,8 +14,7 @@ from kubernetes.client.models.v1_job_status import V1JobStatus
 
 from const import TASK_NAMESPACE, NAMESPACE
 from exceptions import KubernetesException, PodWatcherException
-from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1
-from helpers.request_helper import client as requests
+from helpers.kubernetes_helper import KubernetesV1Batch, KubernetesCRD, KubernetesV1, get_a_date_formatted
 from helpers.task_helper import get_results
 from models.crd import Analytics
 
@@ -52,7 +50,9 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                 if fp is None:
                     logging.info("Task needs a review")
                     # Results to be approved. Waiting. No retries
-                    break
+                    pod_watch.stop()
+                    return
+
                 if git_info:
                     KubernetesV1Batch().create_helper_job(
                         name=f"task-{task_id}-results",
@@ -113,9 +113,9 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                     raise PodWatcherException("No suitable delivery options available")
                 break
             case "Failed":
-                raise KubernetesException(
-                    "Pod in failed status. Refreshing annotation on CRD to trigger a restart"
-                )
+                crd.reset_task = True
+                await KubernetesV1Batch().create_retry_job(crd)
+                break
             case _:
                 logger.info(
                     "%s Status: %s",
@@ -125,6 +125,13 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
     logger.info("Stopping task %s pod watcher", task_id)
     if not pod:
         raise KubernetesException(f"Timeout. Pod for task {task_id} not found")
+
+    # If the timeout occurs, but the pod is either init or running
+    if pod["object"].status.phase in ["Running", "Pending"]:
+        logger.info("Long-running task: %s. Retrying...", task_id)
+        annotations[f"{crd.domain}/still-running"] = get_a_date_formatted()
+        KubernetesCRD().patch_crd_annotations(crd.name, annotations)
+
     pod_watch.stop()
 
 

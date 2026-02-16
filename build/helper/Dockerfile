@@ -24,4 +24,6 @@ COPY . /apps/
 USER ${USER_UID}
 
 ENV PATH="/apps/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
 ENTRYPOINT [ "python3", "idp-init.py" ]

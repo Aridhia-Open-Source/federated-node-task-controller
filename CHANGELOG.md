@@ -3,6 +3,11 @@
 # 1.9.0
 - Added values schema for the helm chart
 
+### Bugfixes
+- Long running tasks were not retried to monitor their status.
+- When a task pod fails, it will be retried with a fresh request
+- Fixed an issue with github delivery where the branch name relied on the user info. As a backup now, a timestamp will be used
+
 # 1.8.0
 - Added a `controller.skipUserAuth` field to skip keycloak authentication from a github user and its sync. Defaults to `false` so the existing behaviour is kept unless is desired.
 

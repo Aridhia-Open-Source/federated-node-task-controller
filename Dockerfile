@@ -1,9 +1,13 @@
 FROM python:3.13.5-slim
 
-COPY controller /app/controller
-COPY pyproject.toml /app
+ARG USERNAME=fednode
+ARG USER_UID=1001
+ARG USER_GID=1001
 
 WORKDIR /app
+
+COPY pyproject.toml /app
+COPY uv.lock /app
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONIOENCODING=UTF-8
@@ -28,6 +32,12 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/"$(grep VERSION_ID
     && rm packages-microsoft-prod.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -g "$USER_GID" "$USERNAME" \
+    && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" \
+    && chown -R "$USERNAME":"$USERNAME" /app
+
+COPY controller /app/controller
 
 ENV PYTHONPATH=/app/controller
 ENV PATH="/app/.venv/bin:$PATH"

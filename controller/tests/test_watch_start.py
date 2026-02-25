@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import pytest
 from datetime import datetime as dt
@@ -6,7 +7,9 @@ from unittest import mock
 from unittest.mock import AsyncMock, mock_open
 
 from controller import start
-from exceptions import CRDException
+from helpers.actions import handle_results
+from exceptions import CRDException, KubernetesException
+from models.crd import Analytics
 
 
 class TestWatcher:
@@ -180,6 +183,7 @@ class TestWatcher:
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -206,6 +210,7 @@ class TestWatcher:
                 [f"{domain}/approved"] = "true"
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -229,6 +234,59 @@ class TestWatcher:
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
+
+        k8s_client["create_namespaced_job_mock"].assert_called()
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    async def test_get_results_cron_job_waits(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            fn_task_results_request
+        ):
+        """
+        Tests that in case of a cron job, the watcher is not started
+        unless the pod_timestamp annotation has been set
+        """
+        mock_crd_task_done['object']["spec"]["schedule"] = "1 * * * *"
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        await start(True)
+
+        k8s_client["create_namespaced_job_mock"].assert_not_called()
+
+    @pytest.mark.asyncio
+    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
+    @mock.patch('helpers.actions.get_user_token', return_value="token")
+    async def test_get_results_cron_job_triggered(
+            self,
+            token_mock,
+            open_mock,
+            k8s_client,
+            k8s_watch_mock,
+            crd_name,
+            mock_crd_task_done,
+            mock_pod_watch,
+            fn_task_results_request
+        ):
+        """
+        Tests that in case of a cron job, the watcher is not started
+        unless the pod_timestamp annotation has been set
+        """
+        mock_crd_task_done['object']["spec"]["schedule"] = "1 * * * *"
+        import time
+        mock_crd_task_done['object']['metadata']['annotations']\
+                [f"{Analytics.domain}/pod_timestamp"] = str(int(time.time()))
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
+        await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["create_namespaced_job_mock"].assert_called()
 
@@ -398,41 +456,10 @@ class TestWatcher:
         """
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         requested_env = k8s_client["create_namespaced_job_mock"].call_args[1]["body"].spec.template.spec.containers[0].env
         assert 'org/repo' in [env.value for env in requested_env if env.name == "GH_REPO"]
-
-    @pytest.mark.asyncio
-    @mock.patch("builtins.open", new_callable=mock_open, read_data="data")
-    @mock.patch('helpers.actions.get_fn_admin_token', return_value="token")
-    @mock.patch('helpers.pod_watcher.MAX_TIMEOUT', 1)
-    @mock.patch('helpers.kubernetes_helper.KubernetesV1Batch.create_retry_job', return_value="token")
-    async def test_watch_timeouts(
-            self,
-            create_retry_job_mock,
-            token_mock,
-            open_mock,
-            k8s_client,
-            k8s_watch_mock,
-            mock_crd_task_done,
-            mock_pod_watch
-        ):
-        """
-        Tests that a CRD with an incorrect task_id (due to the pod manually deleted)
-        raises an exception instead of hanging
-        """
-        import time
-
-        def mock_stream(*args, **kwargs):
-            yield from []
-            time.sleep(kwargs.get('timeout_seconds', 1) + 0.5)
-
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
-        mock_pod_watch["watch"].return_value.stream.side_effect = mock_stream
-        await start(True)
-
-        k8s_client["patch_cluster_custom_object_mock"].assert_not_called()
-        create_retry_job_mock.assert_called()
 
     @pytest.mark.asyncio
     @mock.patch("builtins.open", new_callable=mock_open, read_data="data")

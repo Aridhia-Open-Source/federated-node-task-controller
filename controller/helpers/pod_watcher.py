@@ -108,14 +108,18 @@ async def watch_task_pod(crd: Analytics, task_id:str, user_token:str, annotation
                             raise PodWatcherException("Failed to deliver results")
                     # Add results annotation to let the controller know
                     # we already handled results
-                    KubernetesCRD().patch_crd_annotations(crd.name, annotations)
+                    if not crd.schedule:
+                        KubernetesCRD().patch_crd_annotations(crd.name, annotations)
                 else:
                     raise PodWatcherException("No suitable delivery options available")
                 break
             case "Failed":
-                crd.reset_task = True
-                await KubernetesV1Batch().create_retry_job(crd)
-                break
+                if not crd.schedule:
+                    raise KubernetesException("Pod in failed status. Refreshing annotation on CRD to trigger a restart")
+                else:
+                    crd.reset_task = True
+                    await KubernetesV1Batch().create_retry_job(crd)
+                    break
             case _:
                 logger.info(
                     "%s Status: %s",

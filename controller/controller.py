@@ -58,7 +58,7 @@ async def start(exit_on_tests=False):
                     logger.info("Triggering task")
                     await trigger_task(crd, new_annotations)
                 elif crd.can_deliver_results():
-                    logger.info("Getting task results")
+                    logger.info("Monitoring task and getting results if successful")
                     await handle_results(crd, new_annotations)
                 if exit_on_tests:
                     watcher.stop()

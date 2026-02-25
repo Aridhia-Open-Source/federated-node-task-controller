@@ -1,6 +1,8 @@
+import asyncio
 import pytest
 from pytest import mark
 from unittest import mock
+from datetime import datetime as dt
 
 from controller import start
 
@@ -23,14 +25,21 @@ class TestWatcherAzCopyDelivery:
             mock_pod_watch,
             fn_task_results_request,
             unencoded_bearer,
-            domain
+            domain,
+            mocker
         ):
         """
         Tests that once the task's pod is completed,
         the results are sent through AzCopy to a storage account
         """
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = ct.strftime("%Y-%m-%d-%H-%M-%S")
+        mocker.patch("helpers.task_helper.dt", datetime_mock)
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         k8s_client["patch_cluster_custom_object_mock"].assert_called_with(
             'tasks.federatednode.com', 'v1', 'analytics', crd_name,
@@ -46,7 +55,7 @@ class TestWatcherAzCopyDelivery:
         subprocees_mock.assert_called_with(
             [
                 "azcopy", "copy",
-                "/data/controller/localhost-1-results.zip",
+                f"/data/controller/localhost-1-results-{now_str}.zip",
                 unencoded_bearer
             ],
             **{"capture_output":True, "check": False}
@@ -66,20 +75,27 @@ class TestWatcherAzCopyDelivery:
             mock_crd_task_done,
             mock_pod_watch,
             fn_task_results_request,
-            unencoded_bearer
+            unencoded_bearer,
+            mocker
         ):
         """
         Tests that once the task's pod is completed,
         the results fail to be sent through AzCopy to a storage account
         and the retry job is triggered
         """
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = ct.strftime("%Y-%m-%d-%H-%M-%S")
+        mocker.patch("helpers.task_helper.dt", datetime_mock)
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
+        await asyncio.sleep(0)
 
         subprocees_mock.assert_called_with(
             [
                 "azcopy", "copy",
-                "/data/controller/localhost-1-results.zip",
+                f"/data/controller/localhost-1-results-{now_str}.zip",
                 unencoded_bearer
             ],
             **{"capture_output":True, "check": False}
@@ -110,6 +126,11 @@ class TestWatcherAzCopyDelivery:
         Tests that once the task's pod is completed,
         the results are sent through AzCopy to a storage account
         """
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = ct.strftime("%Y-%m-%d-%H-%M-%S")
+        mocker.patch("helpers.task_helper.dt", datetime_mock)
         mocker.patch("helpers.actions.SKIP_USER_AUTH", True)
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
@@ -128,7 +149,7 @@ class TestWatcherAzCopyDelivery:
         subprocees_mock.assert_called_with(
             [
                 "azcopy", "copy",
-                "/data/controller/localhost-1-results.zip",
+                f"/data/controller/localhost-1-results-{now_str}.zip",
                 unencoded_bearer
             ],
             **{"capture_output":True, "check": False}
@@ -156,6 +177,11 @@ class TestWatcherAzCopyDelivery:
         the results fail to be sent through AzCopy to a storage account
         and the retry job is triggered
         """
+        datetime_mock = mock.Mock(spec=dt)
+        ct = dt.now()
+        datetime_mock.now.return_value = ct
+        now_str = ct.strftime("%Y-%m-%d-%H-%M-%S")
+        mocker.patch("helpers.task_helper.dt", datetime_mock)
         mocker.patch("helpers.actions.SKIP_USER_AUTH", True)
         k8s_watch_mock.return_value.stream.return_value = [mock_crd_task_done]
         await start(True)
@@ -163,7 +189,7 @@ class TestWatcherAzCopyDelivery:
         subprocees_mock.assert_called_with(
             [
                 "azcopy", "copy",
-                "/data/controller/localhost-1-results.zip",
+                f"/data/controller/localhost-1-results-{now_str}.zip",
                 unencoded_bearer
             ],
             **{"capture_output":True, "check": False}

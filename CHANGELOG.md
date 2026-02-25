@@ -1,5 +1,8 @@
 # Releases Changelog
 
+# 1.10.0
+- Added support for cronjobs by specifying `schedule` in the CRD spec field.
+
 # 1.9.0
 - Added values schema for the helm chart
 

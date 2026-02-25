@@ -16,10 +16,9 @@ from kubernetes.client.exceptions import ApiException
 
 from exceptions import CRDException, KubernetesException
 from const import (
-    HELPER_IMAGE, NAMESPACE, MOUNT_PATH,
+    HELPER_IMAGE, NAMESPACE, MOUNT_PATH, CRD_GROUP,
     PULL_POLICY, STORAGE_CLASS, KC_USER, KC_HOST, TASK_NAMESPACE
 )
-from models.crd import Analytics
 
 logger = logging.getLogger('k8s_helpers')
 logger.setLevel(logging.INFO)
@@ -34,7 +33,7 @@ class BaseK8s:
     Base k8s client to handle credentials for child classes
     """
     base_label = {
-        f"{Analytics.domain}": "fn-controller"
+        f"{CRD_GROUP}": "fn-controller"
     }
     def __init__(self, **kwargs):
         """
@@ -67,7 +66,7 @@ class KubernetesCRD(BaseK8s, client.CustomObjectsApi):
         # Patch for the client library which somehow doesn't do it itself for the patch
         self.api_client.set_default_header('Content-Type', 'application/json-patch+json')
         self.patch_cluster_custom_object(
-            Analytics.domain, "v1", "analytics", name,
+            CRD_GROUP, "v1", "analytics", name,
             [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
         )
         logger.info("CRD patched")
@@ -270,7 +269,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             )
         ]
         env = [
-            client.V1EnvVar(name="DOMAIN", value=Analytics.domain),
+            client.V1EnvVar(name="DOMAIN", value=CRD_GROUP),
             client.V1EnvVar(name="CRD_NAME", value=crd_name),
             client.V1EnvVar(name="USER_NAME", value=user.get("username", get_a_date_formatted())),
             client.V1EnvVar(name="KC_HOST", value=KC_HOST),
@@ -324,7 +323,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         except ApiException as exc:
             raise KubernetesException(exc.body) from exc
 
-    async def create_retry_job(self, crd:Analytics):
+    async def create_retry_job(self, crd):
         """
         Wrapper to create a job that updates the CRD
         with an increasing delay. It will retry up to

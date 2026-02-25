@@ -3,9 +3,16 @@ import logging
 from math import exp
 import os
 import re
+import logging
+import time
 
 from const import CRD_GROUP, HELPER_IMAGE, NAMESPACE, SKIP_USER_AUTH
+from helpers.kubernetes_helper import KubernetesV1, KubernetesV1Batch
 from exceptions import CRDException
+
+logging.basicConfig()
+logger = logging.getLogger('crd handler')
+logger.setLevel(logging.INFO)
 
 MAX_RETRIES = 5
 
@@ -41,6 +48,7 @@ class Analytics:
         self.delivery = json.load(open("controller/delivery.json"))
         self.create_labels()
         self.is_delete = (crd_definition["type"] == "DELETED" or crd_definition["object"]["metadata"].get("deletionTimestamp"))
+        self.schedule = crd_definition["object"]["spec"].get("schedule")
 
     def needs_user_sync(self) -> bool:
         return not (self.annotations.get(f"{self.domain}/user") or SKIP_USER_AUTH)
@@ -59,6 +67,12 @@ class Analytics:
             TASK_REVIEW is set and approved is not "true". So we check for this
             case, and negate it.
         """
+        last_trigger_date = self.annotations.get(f"{self.domain}/pod_timestamp")
+        # CRONJOBS only: if the last trigger exists and it's within the hour, we can continue
+        if self.schedule is not None and (not last_trigger_date or int(last_trigger_date) + 3600 < int(time.time())):
+            logger.info("CronJob not started yet. Skipping")
+            return False
+
         return self.annotations.get(f"{self.domain}/done") and \
             not self.annotations.get(f"{self.domain}/results") and \
             not (
@@ -107,12 +121,14 @@ class Analytics:
                 "dataset_id": self.dataset.get("id"),
                 "dataset_name": self.dataset.get("name")
             },
+            "schedule": self.schedule,
             "repository": self.source["repository"],
             "inputs": self.inputs,
             "outputs": self.outputs,
             "volumes": {},
             "description": f"Automated task for {self.proj_name} project",
-            "task_controller": True
+            "task_controller": True,
+            "crd_name": self.name
         }
         if self.query:
             base["db_query"] = self.query
@@ -150,3 +166,24 @@ class Analytics:
             },
             "image": HELPER_IMAGE
         }
+
+    async def create_retry_job(self):
+        """
+        Wrapper to create a job that updates the CRD
+        with an increasing delay. It will retry up to
+        MAX_RETRIES times.
+        """
+        try:
+            existing_updates = KubernetesV1().list_namespaced_pod(
+                NAMESPACE,
+                label_selector=f"crd={self.name}",
+                field_selector="status.phase=Pending,status.phase=Running"
+            )
+            if existing_updates.items:
+                logging.info("Anoter annotation update is in progress..")
+                return
+
+            KubernetesV1Batch().create_bare_job(**self.prepare_update_job())
+        except CRDException:
+            pass
+

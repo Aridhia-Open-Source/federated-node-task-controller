@@ -81,7 +81,6 @@ async def handle_results(crd: Analytics, annotations:dict):
         token = await get_user_token(crd.user)
 
     # If we have already triggered a task, check if the pod has completed
-    # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     monitor = asyncio.create_task(
         watch_task_pod(
             crd,
@@ -90,4 +89,6 @@ async def handle_results(crd: Analytics, annotations:dict):
             annotations
         )
     )
+    monitor.add_done_callback(lambda t: t.exception())
     await asyncio.gather(monitor)
+    return monitor

@@ -11,38 +11,8 @@ from unittest.mock import MagicMock, Mock, mock_open
 from const import KC_USER
 from helpers.keycloak_helper import KEYCLOAK_CLIENT
 from models.crd import Analytics
+from tests.fixtures.cdr_fixtures import *
 
-def base_crd_object(name:str, type:str="ADDED", udpid:str=""):
-    """
-    Basic Custom Resource Definition body returned
-    by the watcher
-    """
-    return {
-        "object": {
-            "metadata": {
-                "name": name,
-                "annotations": {}
-            },
-            "spec": {
-                "user": {
-                    "username": "user2",
-                    "idpId": udpid,
-                },
-                "image": "some/docker:tag",
-                "project": "project1",
-                "dataset": {
-                    "id": ""
-                },
-                "source": {"repository": "org/repository"}
-            }
-        },
-        "type" : type
-    }
-
-@pytest_asyncio.fixture
-def crd_object_mock(crd_name, user_idp_id):
-    crd_obj= base_crd_object(name=crd_name, udpid=user_idp_id)
-    return Analytics(crd_obj)
 
 def pod_object_response():
     return {
@@ -102,77 +72,6 @@ async def unencoded_basic():
 async def encoded_basic(unencoded_basic):
     return base64.b64encode(unencoded_basic.encode()).decode()
 
-@pytest_asyncio.fixture
-async def mock_crd(crd_name, user_idp_id):
-    return deepcopy(base_crd_object(name=crd_name, udpid=user_idp_id))
-
-@pytest_asyncio.fixture
-async def mock_crd_user_synched(mock_crd):
-    mock_crd['type'] = "MODIFIED"
-    mock_crd['object']['metadata']['annotations'][f"{Analytics.domain}/user"] = "ok"
-    return deepcopy(mock_crd)
-
-@pytest_asyncio.fixture
-async def mock_crd_task_done(mock_crd_user_synched):
-    mock_crd_user_synched['object']['metadata']['annotations']\
-            [f"{Analytics.domain}/done"] = "true"
-    mock_crd_user_synched['object']['metadata']['annotations']\
-                [f"{Analytics.domain}/task_id"] = "1"
-    return deepcopy(mock_crd_user_synched)
-
-@pytest_asyncio.fixture
-async def mock_crd_done(mock_crd_task_done):
-    mock_crd_task_done['object']['metadata']['annotations']\
-            [f"{Analytics.domain}/results"] = "true"
-    return deepcopy(mock_crd_task_done)
-
-@pytest_asyncio.fixture
-async def mock_crd_azcopy_done(mock_crd_task_done):
-    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "url": "https://fancyresultsplace.com/api/storage",
-        "auth_type": "AzCopy"
-    }}
-    return deepcopy(mock_crd_task_done)
-
-@pytest_asyncio.fixture
-async def mock_crd_api_done(mock_crd_task_done):
-    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "url": "https://fancyresultsplace.com/api/storage",
-        "auth_type": "Bearer"
-    }}
-    return deepcopy(mock_crd_task_done)
-
-@pytest_asyncio.fixture
-async def mock_crd_api_basic_done(mock_crd_task_done):
-    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "url": "https://fancyresultsplace.com/api/storage",
-        "auth_type": "Basic"
-    }}
-    return deepcopy(mock_crd_task_done)
-
-@pytest_asyncio.fixture
-async def mock_crd_azcopy_done(mock_crd_task_done):
-    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "url": "https://fancyresultsplace.com/api/storage",
-        "auth_type": "AzCopy"
-    }}
-    return deepcopy(mock_crd_task_done)
-
-@pytest_asyncio.fixture
-async def mock_crd_api_done(mock_crd_task_done):
-    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "url": "https://fancyresultsplace.com/api/storage",
-        "auth_type": "Bearer"
-    }}
-    return deepcopy(mock_crd_task_done)
-
-@pytest_asyncio.fixture
-async def mock_crd_api_basic_done(mock_crd_task_done):
-    mock_crd_task_done["object"]["spec"]["results"] = {"other": {
-        "url": "https://fancyresultsplace.com/api/storage",
-        "auth_type": "Basic"
-    }}
-    return deepcopy(mock_crd_task_done)
 
 @pytest.fixture(autouse=True)
 def k8s_config(mocker):
@@ -183,7 +82,7 @@ def k8s_config(mocker):
 async def k8s_watch_mock(mocker):
     return mocker.patch(
         'controller.Watch',
-        return_value=Mock(stream=Mock(return_value=[base_crd_object("crd1")]))
+        return_value=Mock(stream=Mock(return_value=[user_crd_object("crd1")]))
     )
 
 @pytest_asyncio.fixture

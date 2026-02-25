@@ -47,15 +47,11 @@ spec:
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
                 outputs:
-                  type: array
-                  items:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 inputs:
-                  type: array
-                  items:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 schedule:
                   type: string
                 source:
@@ -75,47 +71,6 @@ spec:
                       type: string
                     dialect:
                       type: string
-                results:
-                  type: object
-                  properties:
-                    git:
-                      type: object
-                      nullable: true
-                      required:
-                        - repository
-                      allOf:
-                        - not:
-                            required:
-                              - other
-                      properties:
-                        branch:
-                          type: string
-                        repository:
-                          type: string
-                    other:
-                      type: object
-                      nullable: true
-                      properties:
-                          url:
-                            type: string
-                          auth_type:
-                            type: string
-                      oneOf:
-                      - required:
-                          - url
-                          - auth_type
-                        oneOf:
-                          - not:
-                              required:
-                                - git
-                        properties:
-                          url:
-                          auth_type:
-                            enum:
-                              - Bearer
-                              - Basic
-                              - AzCopy
-
   scope: Cluster
   names:
     plural: analytics

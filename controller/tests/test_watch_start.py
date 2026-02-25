@@ -391,13 +391,13 @@ class TestWatcher:
             self,
             k8s_client,
             k8s_watch_mock,
-            mock_crd_done,
+            mock_crd_base_synched,
             mocker
         ):
         """
         Tests that a CRD with missing expected fields it's not parsed.
         """
-        k8s_watch_mock.return_value.stream.return_value[0]["object"]["spec"].pop("user")
+        k8s_watch_mock.return_value.stream.return_value[0] = mock_crd_base_synched
         calls_to_assert =[
             k8s_client["patch_cluster_custom_object_mock"],
             mocker.patch('helpers.actions.KubernetesV1Batch.create_helper_job'),

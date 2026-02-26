@@ -1,5 +1,8 @@
 # Releases Changelog
 
+# 1.10.0
+- Fixed a mismatch from the CRD to the FN API format for outputs and inputs
+
 # 1.9.0
 - Added values schema for the helm chart
 

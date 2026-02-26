@@ -150,7 +150,7 @@ class TestKeycloakRequests:
     async def test_no_user_provided_in_crd(
             self,
             create_task_mock,
-            mock_crd_user_synched,
+            mock_crd_base_synched,
             k8s_client,
             k8s_watch_mock,
         ):
@@ -158,8 +158,7 @@ class TestKeycloakRequests:
         Tests that the task request is not sent to the FN
         if the CRD does not have any user info
         """
-        mock_crd_user_synched['object']['spec']['user'] = {}
-        k8s_watch_mock.return_value.stream.return_value = [mock_crd_user_synched]
+        k8s_watch_mock.return_value.stream.return_value = [mock_crd_base_synched]
 
         with pytest.raises(CRDException):
             await start(True)

@@ -15,6 +15,7 @@ storage:
   azure:
     # secretName:
     # shareName:
+    # provisioner: defaults to disk.csi.azure.com
   aws:
     # fileSystemId:
     # accessPointId:

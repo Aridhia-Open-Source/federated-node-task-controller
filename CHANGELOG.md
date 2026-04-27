@@ -1,4 +1,6 @@
 # Releases Changelog
+# 1.13.0
+- Added provisioner option to azure storage configuration
 
 # 1.10.0
 - Fixed a mismatch from the CRD to the FN API format for outputs and inputs

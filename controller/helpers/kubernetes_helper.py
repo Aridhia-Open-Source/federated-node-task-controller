@@ -308,7 +308,8 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             vol_mounts.append(
                 client.V1VolumeMount(
                     mount_path="/mnt/results/",
-                    name="results"
+                    name="results",
+                    sub_path="controller" if os.getenv("AWS_STORAGE_ENABLED") else None
                 )
             )
         base_job.spec.template.spec.volumes = volumes

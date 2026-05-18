@@ -18,6 +18,7 @@ KC_USER = os.getenv("KC_USER")
 IMAGE = os.getenv("IMAGE")
 TAG = os.getenv("TAG")
 STORAGE_CLASS = os.getenv("STORAGE_CLASS")
+MOUNT_OPTIONS = os.getenv("MOUNT_OPTIONS")
 CRD_GROUP = os.getenv("CRD_GROUP")
 SKIP_USER_AUTH = os.getenv("SKIP_USER_AUTH", "false") == "true"
 HELPER_IMAGE = f"{IMAGE}:{TAG}"

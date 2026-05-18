@@ -31,4 +31,5 @@ data:
   AZURE_STORAGE_ENABLED: "true"
   AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/controller
   AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+  MOUNT_OPTIONS: {{ join "," .Values.storage.mountOptions | quote }}
 {{- end }}

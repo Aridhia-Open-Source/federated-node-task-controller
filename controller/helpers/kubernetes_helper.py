@@ -104,7 +104,7 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         pv_spec = client.V1PersistentVolumeSpec(
             access_modes=['ReadWriteMany'],
             capacity={"storage": "100Mi"},
-            storage_class_name=STORAGE_CLASS
+            storage_class_name=STORAGE_CLASS,
             mount_options=MOUNT_OPTIONS.split(",") if MOUNT_OPTIONS else None
         )
         if os.getenv("AZURE_STORAGE_ENABLED"):

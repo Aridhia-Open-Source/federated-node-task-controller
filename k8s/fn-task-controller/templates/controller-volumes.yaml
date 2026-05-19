@@ -30,6 +30,10 @@ spec:
     driver: efs.csi.aws.com
     volumeHandle: {{ include "awsStorageAccount" . }}
   {{- else if .Values.storage.nfs }}
+  nfs:
+    server: {{ .Values.storage.nfs.url }}
+    path: {{ .Values.storage.nfs.path }}
+    readOnly: false
   {{- end }}
 ---
 apiVersion: v1

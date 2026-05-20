@@ -12,6 +12,7 @@ namespaces:
 
 storage:
   capacity: 1Gi
+  mountOptions: []
   azure:
     # secretName:
     # shareName:

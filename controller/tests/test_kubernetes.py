@@ -5,6 +5,7 @@ from const import HELPER_IMAGE
 from models.crd import MAX_RETRIES
 from controller import start
 from exceptions import KubernetesException
+from helpers.kubernetes_helper import KubernetesV1Batch
 
 
 class TestKubernetesHelper:
@@ -148,3 +149,39 @@ class TestKubernetesHelper:
 
         await start(True)
         create_bare_job_mock.assert_not_called()
+
+
+class TestHelperJobVolumeMounts:
+    def _build_helper_job(self, mocker, monkeypatch, aws_enabled=False):
+        mocker.patch('helpers.kubernetes_helper.KubernetesV1.create_persistent_volume')
+        mocker.patch('helpers.kubernetes_helper.KubernetesV1.create_namespaced_persistent_volume_claim')
+        create_job_mock = mocker.patch(
+            'helpers.kubernetes_helper.KubernetesV1Batch.create_namespaced_job'
+        )
+
+        monkeypatch.delenv('AWS_STORAGE_ENABLED', raising=False)
+        if aws_enabled:
+            monkeypatch.setenv('AWS_STORAGE_ENABLED', 'true')
+            monkeypatch.setenv('AWS_STORAGE_DRIVER', 'efs.csi.aws.com')
+            monkeypatch.setenv('AWS_FILES_SYSTEM_ID', 'fs-12345678')
+
+        KubernetesV1Batch().create_helper_job(
+            name="task-89-results",
+            task_id="89",
+            crd_name="mvp-code-test",
+            user={"username": "testuser"}
+        )
+        return create_job_mock
+
+    def _results_mount(self, create_job_mock):
+        job_body = create_job_mock.call_args.kwargs['body']
+        vol_mounts = job_body.spec.template.spec.containers[0].volume_mounts
+        return next(m for m in vol_mounts if m.name == "results")
+
+    def test_aws_results_mount_uses_controller_subpath(self, mocker, monkeypatch):
+        create_job_mock = self._build_helper_job(mocker, monkeypatch, aws_enabled=True)
+        assert self._results_mount(create_job_mock).sub_path == "controller"
+
+    def test_non_aws_results_mount_has_no_subpath(self, mocker, monkeypatch):
+        create_job_mock = self._build_helper_job(mocker, monkeypatch, aws_enabled=False)
+        assert self._results_mount(create_job_mock).sub_path is None

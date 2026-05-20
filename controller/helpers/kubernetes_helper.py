@@ -280,7 +280,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),
             client.V1EnvVar(name="FULL_REPO", value=repository.replace("/", "-")),
-            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}" if create_volumes else f"/apps/{name}"),
+            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/git/{name}" if create_volumes else f"/apps/{name}"),
             client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(
                     name=f"{secret_name}",
@@ -307,11 +307,23 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
                     )
                 )
             )
+            volumes.append(
+                client.V1Volume(
+                    name="git",
+                    empty_dir=client.V1EmptyDirVolumeSource()
+                )
+            )
             vol_mounts.append(
                 client.V1VolumeMount(
                     mount_path="/mnt/results/",
                     name="results",
                     sub_path="controller" if os.getenv("AWS_STORAGE_ENABLED") else None
+                )
+            )
+            vol_mounts.append(
+                client.V1VolumeMount(
+                    mount_path="/mnt/git/",
+                    name="git"
                 )
             )
         base_job.spec.template.spec.volumes = volumes

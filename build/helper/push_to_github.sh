@@ -26,25 +26,25 @@ if [ -d "${REPO_FOLDER}" ]; then
     rm -r "${REPO_FOLDER}"
 fi
 echo "Cloning repo"
-gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
+gh repo clone "${GH_REPO}" "${REPO_FOLDER}" -- --depth 1 --no-single-branch --filter=blob:none
 (
     cd "${REPO_FOLDER}" || exit
     git remote remove origin
     git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/"${GH_REPO}".git
-    git fetch
+    git fetch --depth 1
     BRANCH="${USER_NAME}-${CRD_NAME}-results"
 
     echo "Pulling or creating the results branch"
     if git checkout "${BRANCH}"; then
         git branch --set-upstream-to=origin/"${BRANCH}" "${BRANCH}"
-        git pull
+        git pull --depth 1
     else
         git checkout -b "${BRANCH}"
     fi
 
     mkdir -p "results/${TASK_ID}"
 
-    mv ../*-"${TASK_ID}"-results.zip "results/${TASK_ID}/${TASK_ID}.zip"
+    mv /mnt/results/*-"${TASK_ID}"-results.zip "results/${TASK_ID}/${TASK_ID}.zip"
 
     git add .
     git commit -am "${TASK_ID} Results"

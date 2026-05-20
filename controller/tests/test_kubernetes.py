@@ -178,6 +178,16 @@ class TestHelperJobVolumeMounts:
         vol_mounts = job_body.spec.template.spec.containers[0].volume_mounts
         return next(m for m in vol_mounts if m.name == "results")
 
+    def _git_volume(self, create_job_mock):
+        job_body = create_job_mock.call_args.kwargs['body']
+        volumes = job_body.spec.template.spec.volumes
+        return next(v for v in volumes if v.name == "git")
+
+    def _git_mount(self, create_job_mock):
+        job_body = create_job_mock.call_args.kwargs['body']
+        vol_mounts = job_body.spec.template.spec.containers[0].volume_mounts
+        return next(m for m in vol_mounts if m.name == "git")
+
     def test_aws_results_mount_uses_controller_subpath(self, mocker, monkeypatch):
         create_job_mock = self._build_helper_job(mocker, monkeypatch, aws_enabled=True)
         assert self._results_mount(create_job_mock).sub_path == "controller"
@@ -185,3 +195,19 @@ class TestHelperJobVolumeMounts:
     def test_non_aws_results_mount_has_no_subpath(self, mocker, monkeypatch):
         create_job_mock = self._build_helper_job(mocker, monkeypatch, aws_enabled=False)
         assert self._results_mount(create_job_mock).sub_path is None
+
+    def test_git_volume_is_empty_dir(self, mocker, monkeypatch):
+        create_job_mock = self._build_helper_job(mocker, monkeypatch)
+        git_vol = self._git_volume(create_job_mock)
+        assert git_vol.empty_dir is not None
+
+    def test_git_mount_path_is_mnt_git(self, mocker, monkeypatch):
+        create_job_mock = self._build_helper_job(mocker, monkeypatch)
+        assert self._git_mount(create_job_mock).mount_path == "/mnt/git/"
+
+    def test_repo_folder_env_uses_git_mount(self, mocker, monkeypatch):
+        create_job_mock = self._build_helper_job(mocker, monkeypatch)
+        job_body = create_job_mock.call_args.kwargs['body']
+        env = job_body.spec.template.spec.containers[0].env
+        repo_folder = next(e for e in env if e.name == "REPO_FOLDER")
+        assert repo_folder.value.startswith("/mnt/git/")

@@ -17,7 +17,8 @@ from kubernetes.client.exceptions import ApiException
 from exceptions import CRDException, KubernetesException
 from const import (
     HELPER_IMAGE, NAMESPACE, MOUNT_PATH,
-    PULL_POLICY, STORAGE_CLASS, KC_USER, KC_HOST, TASK_NAMESPACE
+    PULL_POLICY, STORAGE_CLASS, KC_USER, 
+    KC_HOST, TASK_NAMESPACE, MOUNT_OPTIONS
 )
 from models.crd import Analytics
 
@@ -103,7 +104,8 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
         pv_spec = client.V1PersistentVolumeSpec(
             access_modes=['ReadWriteMany'],
             capacity={"storage": "100Mi"},
-            storage_class_name=STORAGE_CLASS
+            storage_class_name=STORAGE_CLASS,
+            mount_options=MOUNT_OPTIONS.split(",") if MOUNT_OPTIONS else None
         )
         if os.getenv("AZURE_STORAGE_ENABLED"):
             pv_spec.azure_file = client.V1AzureFilePersistentVolumeSource(

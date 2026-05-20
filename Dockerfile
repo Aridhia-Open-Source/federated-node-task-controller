@@ -41,4 +41,5 @@ COPY controller /app/controller
 
 ENV PYTHONPATH=/app/controller
 ENV PATH="/app/.venv/bin:$PATH"
+USER ${USER_UID}
 CMD ["python3", "-m", "controller"]

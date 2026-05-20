@@ -205,7 +205,13 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         specs = client.V1PodSpec(
             containers=[container],
             restart_policy="OnFailure",
-            service_account_name="analytics-operator"
+            service_account_name="analytics-operator",
+            security_context=client.V1PodSecurityContext(
+                run_as_non_root=True,
+                run_as_user=1001,
+                run_as_group=1001,
+                fs_group=1001
+            )
         )
         template = client.V1JobTemplateSpec(
             metadata=metadata,

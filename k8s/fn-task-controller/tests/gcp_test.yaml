@@ -1,4 +1,4 @@
-suite: Storage testing for Azure
+suite: Storage testing for GCP
 release:
   namespace: federatednode
   name: federatednode
@@ -6,12 +6,11 @@ values:
   - values/base-values.yaml
 set:
   storage:
-    azure:
-      secretName: azure-secret
-      storageAccountName: account
-      storageAccountKey: keysecret
-      shareName: files
     local:
+    gcp:
+      volumeHandle: projects/my-project/locations/us-central1-a/instances/my-instance/volumes/vol1
+      ip: 10.0.0.1
+      shareName: vol1
 kubernetesProvider:
   scheme:
     v1/Secret:
@@ -43,13 +42,6 @@ kubernetesProvider:
         KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
         KEYCLOAK_SECRET: dGVzdA==
     - apiVersion: v1
-      kind: Secret
-      metadata:
-        name: azure-secret
-        namespace: federatednode
-      data:
-        SP_SECRET: dGVzdA==
-    - apiVersion: v1
       kind: ConfigMap
       metadata:
         name: keycloak-config
@@ -59,39 +51,44 @@ kubernetesProvider:
         KC_DB_URL_HOST: testhost.com
         KC_DB_USERNAME: admin_user
 tests:
-  - it: creates Azure storage
+  - it: creates GCP storage class
     template: storageclass.yaml
     asserts:
       - equal:
           path: provisioner
-          value: disk.csi.azure.com
-      - equal:
-          path: parameters.skuname
-          value: Premium_LRS
-  - it: creates Azure PV(C)
+          value: filestore.csi.storage.gke.io
+      - notExists:
+          path: parameters
+  - it: creates GCP PV
     template: controller-volumes.yaml
     documentSelector:
       path: kind
       value: PersistentVolume
     asserts:
       - equal:
-          path: spec.azureFile.shareName
-          value: files
+          path: spec.csi.driver
+          value: filestore.csi.storage.gke.io
       - equal:
-          path: spec.azureFile.readOnly
-          value: false
+          path: spec.csi.volumeHandle
+          value: projects/my-project/locations/us-central1-a/instances/my-instance/volumes/vol1
       - equal:
-          path: spec.azureFile.secretName
-          value: azure-secret
-  - it: creates Azure configmap
+          path: spec.csi.volumeAttributes.ip
+          value: 10.0.0.1
+      - equal:
+          path: spec.csi.volumeAttributes.volume
+          value: vol1
+  - it: creates GCP configmap
     template: controller-configmap.yaml
     asserts:
       - equal:
-          path: data["AZURE_STORAGE_ENABLED"]
+          path: data["GCP_STORAGE_ENABLED"]
           value: "true"
       - equal:
-          path: data["AZURE_SHARE_NAME"]
-          value: files
+          path: data["GCP_VOLUME_HANDLE"]
+          value: projects/my-project/locations/us-central1-a/instances/my-instance/volumes/vol1
       - equal:
-          path: data["AZURE_SECRET_NAME"]
-          value: azure-secret
+          path: data["GCP_FILESTORE_IP"]
+          value: 10.0.0.1
+      - equal:
+          path: data["GCP_SHARE_NAME"]
+          value: vol1

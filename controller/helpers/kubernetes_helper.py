@@ -126,12 +126,8 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
             )
         elif os.getenv("GCP_STORAGE_ENABLED"):
             pv_spec.csi = client.V1CSIPersistentVolumeSource(
-                driver="filestore.csi.storage.gke.io",
-                volume_handle=os.getenv("GCP_VOLUME_HANDLE"),
-                volume_attributes={
-                    "ip": os.getenv("GCP_FILESTORE_IP"),
-                    "volume": os.getenv("GCP_SHARE_NAME")
-                }
+                driver="gcsfuse.csi.storage.gke.io",
+                volume_handle=os.getenv("GCP_BUCKET_NAME")
             )
         else:
             pv_spec.host_path = client.V1HostPathVolumeSource(
@@ -212,10 +208,14 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         if command:
             container.command = command
 
+        annotations = {}
+        if os.getenv("GCP_STORAGE_ENABLED"):
+            annotations["gke-gcsfuse/volumes"] = "true"
         metadata = client.V1ObjectMeta(
             name=name,
             namespace=NAMESPACE,
-            labels=labels
+            labels=labels,
+            annotations=annotations or None
         )
         specs = client.V1PodSpec(
             containers=[container],

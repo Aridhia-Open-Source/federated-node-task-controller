@@ -49,6 +49,12 @@ kubernetesProvider:
         KC_DB_URL_HOST: testhost.com
         KC_DB_USERNAME: admin_user
 tests:
+  - it: adds GCS FUSE sidecar annotation to controller pod
+    template: controller-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
   - it: creates GCP storage class
     template: storageclass.yaml
     asserts:

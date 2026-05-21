@@ -20,6 +20,10 @@ storage:
   aws:
     # fileSystemId:
     # accessPointId:
+  gcp:
+    # volumeHandle: projects/<project>/locations/<zone>/instances/<instance>/volumes/<share>
+    # ip:
+    # shareName:
   nfs:
     # provisioner:
     # url:

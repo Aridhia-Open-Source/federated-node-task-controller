@@ -26,7 +26,7 @@ if [ -d "${REPO_FOLDER}" ]; then
     rm -r "${REPO_FOLDER}"
 fi
 echo "Cloning repo"
-gh repo clone "${GH_REPO}" "${REPO_FOLDER}"
+git clone "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" "${REPO_FOLDER}"
 (
     cd "${REPO_FOLDER}" || exit
     git remote remove origin

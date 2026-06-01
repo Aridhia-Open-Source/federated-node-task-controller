@@ -29,9 +29,6 @@ echo "Cloning repo"
 git clone "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" "${REPO_FOLDER}"
 (
     cd "${REPO_FOLDER}" || exit
-    git remote remove origin
-    git remote add origin https://"$APP_ID:$GH_TOKEN"@github.com/"${GH_REPO}".git
-    git fetch
     BRANCH="${USER_NAME}-${CRD_NAME}-results"
 
     echo "Pulling or creating the results branch"

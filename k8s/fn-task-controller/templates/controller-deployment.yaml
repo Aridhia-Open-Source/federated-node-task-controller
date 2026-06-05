@@ -21,6 +21,11 @@ spec:
         app: analytics-operator
     spec:
       serviceAccountName: analytics-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
       volumes:
         - name: git
           persistentVolumeClaim:
@@ -38,6 +43,10 @@ spec:
           args:
             - -c
             - mkdir -p /mnt/storage/controller
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: git
               mountPath: /mnt/storage
@@ -45,6 +54,10 @@ spec:
           image: "{{ include "fn-task-controller.helper-image" . }}:{{ .Values.controller.tag | default .Chart.AppVersion }}"
           command: ["python3", "-u", "create-controller-user.py"]
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           envFrom:
             - configMapRef:
                 name: controller-config
@@ -59,6 +72,10 @@ spec:
       - name: analytics-operator
         image: {{ template "fn-task-controller.image" . }}:{{ (.Values.controller).tag | default .Chart.AppVersion }}
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
         envFrom:
           - configMapRef:
               name: controller-config

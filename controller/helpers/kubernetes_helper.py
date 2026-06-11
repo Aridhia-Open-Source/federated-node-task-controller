@@ -118,6 +118,12 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
                 driver=os.getenv("AWS_STORAGE_DRIVER"),
                 volume_handle=os.getenv("AWS_FILES_SYSTEM_ID")
             )
+        elif os.getenv("NFS_STORAGE_ENABLED"):
+            pv_spec.nfs = client.V1NFSVolumeSource(
+                server=os.getenv("NFS_SERVER"),
+                path=os.getenv("NFS_PATH"),
+                read_only=False
+            )
         else:
             pv_spec.host_path = client.V1HostPathVolumeSource(
                 path=f"{MOUNT_PATH}/controller/"

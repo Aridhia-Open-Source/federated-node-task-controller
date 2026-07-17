@@ -18,9 +18,7 @@ parameters:
   fileSystemId: {{ include "awsStorageAccount" . }}
   directoryPerms: "777"
 {{- else if .Values.storage.nfs }}
-provisioner: {{ .Values.storage.nfs.provisioner -}}
-parameters:
-  server: {{ .Values.storage.nfs.url -}}
-  path: {{ .Values.storage.nfs.path -}}
-  readOnly: "false"
+provisioner: {{ .Values.storage.nfs.provisioner | default "kubernetes.io/no-provisioner" }}
+mountOptions:
+  - hard
 {{- end }}

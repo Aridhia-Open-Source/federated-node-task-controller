@@ -118,6 +118,12 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
                 driver=os.getenv("AWS_STORAGE_DRIVER"),
                 volume_handle=os.getenv("AWS_FILES_SYSTEM_ID")
             )
+        elif os.getenv("NFS_STORAGE_ENABLED"):
+            pv_spec.nfs = client.V1NFSVolumeSource(
+                server=os.getenv("NFS_SERVER"),
+                path=os.getenv("NFS_PATH"),
+                read_only=False
+            )
         else:
             pv_spec.host_path = client.V1HostPathVolumeSource(
                 path=f"{MOUNT_PATH}/controller/"
@@ -205,7 +211,13 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         specs = client.V1PodSpec(
             containers=[container],
             restart_policy="OnFailure",
-            service_account_name="analytics-operator"
+            service_account_name="analytics-operator",
+            security_context=client.V1PodSecurityContext(
+                run_as_non_root=True,
+                run_as_user=1001,
+                run_as_group=1001,
+                fs_group=1001
+            )
         )
         template = client.V1JobTemplateSpec(
             metadata=metadata,
@@ -280,7 +292,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
             client.V1EnvVar(name="KEY_FILE", value="/mnt/key/key.pem"),
             client.V1EnvVar(name="GH_REPO", value=repository),
             client.V1EnvVar(name="FULL_REPO", value=repository.replace("/", "-")),
-            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/results/{name}" if create_volumes else f"/apps/{name}"),
+            client.V1EnvVar(name="REPO_FOLDER", value=f"/mnt/git/{name}" if create_volumes else f"/apps/{name}"),
             client.V1EnvVar(name="GH_CLIENT_ID", value_from=client.V1EnvVarSource(
                 secret_key_ref=client.V1SecretKeySelector(
                     name=f"{secret_name}",
@@ -307,11 +319,23 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
                     )
                 )
             )
+            volumes.append(
+                client.V1Volume(
+                    name="git",
+                    empty_dir=client.V1EmptyDirVolumeSource()
+                )
+            )
             vol_mounts.append(
                 client.V1VolumeMount(
                     mount_path="/mnt/results/",
                     name="results",
                     sub_path="controller" if os.getenv("AWS_STORAGE_ENABLED") else None
+                )
+            )
+            vol_mounts.append(
+                client.V1VolumeMount(
+                    mount_path="/mnt/git/",
+                    name="git"
                 )
             )
         base_job.spec.template.spec.volumes = volumes

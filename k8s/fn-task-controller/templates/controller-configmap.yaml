@@ -33,3 +33,8 @@ data:
   AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/controller
   AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
 {{- end }}
+{{- if .Values.storage.nfs }}
+  NFS_STORAGE_ENABLED: "true"
+  NFS_SERVER: {{ .Values.storage.nfs.url }}
+  NFS_PATH: {{ .Values.storage.nfs.path }}/controller
+{{- end }}

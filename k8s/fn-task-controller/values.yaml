@@ -20,6 +20,8 @@ storage:
   aws:
     # fileSystemId:
     # accessPointId:
+  gcp:
+    # bucketName:  # GCS bucket name to mount via GCS FUSE
   nfs:
     # provisioner:
     # url:

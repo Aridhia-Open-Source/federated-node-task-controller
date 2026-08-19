@@ -17,6 +17,10 @@ spec:
       app: analytics-operator
   template:
     metadata:
+      {{- if .Values.storage.gcp }}
+      annotations:
+        gke-gcsfuse/volumes: "true"
+      {{- end }}
       labels:
         app: analytics-operator
     spec:

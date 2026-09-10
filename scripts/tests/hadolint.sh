@@ -11,13 +11,16 @@ if [ ! -x "$(which xmlstarlet)" ]; then
 fi
 
 set +e
+
+HADOLINT_IMAGE="hadolint/hadolint:v2.15.1-alpine"
+
 #shellcheck disable=2046
 result=$(docker run \
   --volume "$(pwd)":/mnt:ro \
   --workdir /mnt \
   --init \
   --rm \
-  hadolint/hadolint:latest-alpine hadolint -f checkstyle $(find . -type f -name "*Dockerfile"))
+  "$HADOLINT_IMAGE" hadolint -f checkstyle $(find . -type f -name "*Dockerfile"))
 exit_status=$?
 set -e
 echo "$result" \

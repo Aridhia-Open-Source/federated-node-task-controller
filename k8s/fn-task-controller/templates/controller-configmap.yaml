@@ -30,11 +30,15 @@ data:
 {{- end }}
 {{- if .Values.storage.azure }}
   AZURE_STORAGE_ENABLED: "true"
-  AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/controller
+  AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}
   AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
 {{- end }}
 {{- if .Values.storage.nfs }}
   NFS_STORAGE_ENABLED: "true"
   NFS_SERVER: {{ .Values.storage.nfs.url }}
-  NFS_PATH: {{ .Values.storage.nfs.path }}/controller
+  NFS_PATH: {{ .Values.storage.nfs.path }}
+{{- end }}
+{{- if .Values.storage.gcp }}
+  GCP_STORAGE_ENABLED: "true"
+  GCP_BUCKET_NAME: {{ .Values.storage.gcp.bucketName }}
 {{- end }}

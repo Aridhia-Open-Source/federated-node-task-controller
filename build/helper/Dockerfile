@@ -1,11 +1,11 @@
 FROM alpine/k8s:1.33.2
 
-ARG USERNAME=fednode
+ARG APP_USER=fednode
 ARG USER_UID=1001
 ARG USER_GID=1001
 
-RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
-    && adduser -S "${USERNAME}" -G "${USERNAME}" -u "${USER_UID}"
+RUN addgroup -S "${APP_USER}" --gid "${USER_GID}" \
+    && adduser -S "${APP_USER}" -G "${APP_USER}" -u "${USER_UID}"
 
 WORKDIR /apps
 # Can't find venv-related files

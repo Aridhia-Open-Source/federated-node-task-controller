@@ -124,6 +124,11 @@ class KubernetesV1(BaseK8s, client.CoreV1Api):
                 path=os.getenv("NFS_PATH"),
                 read_only=False
             )
+        elif os.getenv("GCP_STORAGE_ENABLED"):
+            pv_spec.csi = client.V1CSIPersistentVolumeSource(
+                driver="gcsfuse.csi.storage.gke.io",
+                volume_handle=os.getenv("GCP_BUCKET_NAME")
+            )
         else:
             pv_spec.host_path = client.V1HostPathVolumeSource(
                 path=f"{MOUNT_PATH}/controller/"
@@ -203,10 +208,14 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
         if command:
             container.command = command
 
+        annotations = {}
+        if os.getenv("GCP_STORAGE_ENABLED"):
+            annotations["gke-gcsfuse/volumes"] = "true"
         metadata = client.V1ObjectMeta(
             name=name,
             namespace=NAMESPACE,
-            labels=labels
+            labels=labels,
+            annotations=annotations or None
         )
         specs = client.V1PodSpec(
             containers=[container],
@@ -329,7 +338,7 @@ class KubernetesV1Batch(BaseK8s, client.BatchV1Api):
                 client.V1VolumeMount(
                     mount_path="/mnt/results/",
                     name="results",
-                    sub_path="controller" if os.getenv("AWS_STORAGE_ENABLED") else None
+                    sub_path="controller"
                 )
             )
             vol_mounts.append(

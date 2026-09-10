@@ -188,13 +188,13 @@ class TestHelperJobVolumeMounts:
         vol_mounts = job_body.spec.template.spec.containers[0].volume_mounts
         return next(m for m in vol_mounts if m.name == "git")
 
+    def test_results_mount_always_uses_controller_subpath(self, mocker, monkeypatch):
+        create_job_mock = self._build_helper_job(mocker, monkeypatch)
+        assert self._results_mount(create_job_mock).sub_path == "controller"
+
     def test_aws_results_mount_uses_controller_subpath(self, mocker, monkeypatch):
         create_job_mock = self._build_helper_job(mocker, monkeypatch, aws_enabled=True)
         assert self._results_mount(create_job_mock).sub_path == "controller"
-
-    def test_non_aws_results_mount_has_no_subpath(self, mocker, monkeypatch):
-        create_job_mock = self._build_helper_job(mocker, monkeypatch, aws_enabled=False)
-        assert self._results_mount(create_job_mock).sub_path is None
 
     def test_git_volume_is_empty_dir(self, mocker, monkeypatch):
         create_job_mock = self._build_helper_job(mocker, monkeypatch)

@@ -197,6 +197,25 @@
                         }
                     }
                 },
+                "gcp": {
+                    "type": "object",
+                    "description": "If running a cluster on GCP/GKE, use Google Cloud Filestore as the storage backend",
+                    "required": ["volumeHandle", "ip", "shareName"],
+                    "properties": {
+                        "volumeHandle": {
+                            "type": "string",
+                            "description": "Filestore CSI volume handle: projects/<project>/locations/<zone>/instances/<instance>/volumes/<share>"
+                        },
+                        "ip": {
+                            "type": "string",
+                            "description": "Filestore instance IP address"
+                        },
+                        "shareName": {
+                            "type": "string",
+                            "description": "Share name within the Filestore instance"
+                        }
+                    }
+                },
                 "nfs": {
                     "type": "object",
                     "description": "If running a cluster off the cloud, this will be the suggested config",

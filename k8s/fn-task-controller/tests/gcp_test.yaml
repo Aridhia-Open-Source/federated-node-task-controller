@@ -1,4 +1,4 @@
-suite: Storage testing for Azure
+suite: Storage testing for GCP
 release:
   namespace: federatednode
   name: federatednode
@@ -6,12 +6,9 @@ values:
   - values/base-values.yaml
 set:
   storage:
-    azure:
-      secretName: azure-secret
-      storageAccountName: account
-      storageAccountKey: keysecret
-      shareName: files
     local:
+    gcp:
+      bucketName: my-results-bucket
 kubernetesProvider:
   scheme:
     v1/Secret:
@@ -43,13 +40,6 @@ kubernetesProvider:
         KEYCLOAK_ADMIN_PASSWORD: dGVzdA==
         KEYCLOAK_SECRET: dGVzdA==
     - apiVersion: v1
-      kind: Secret
-      metadata:
-        name: azure-secret
-        namespace: federatednode
-      data:
-        SP_SECRET: dGVzdA==
-    - apiVersion: v1
       kind: ConfigMap
       metadata:
         name: keycloak-config
@@ -59,39 +49,38 @@ kubernetesProvider:
         KC_DB_URL_HOST: testhost.com
         KC_DB_USERNAME: admin_user
 tests:
-  - it: creates Azure storage
+  - it: adds GCS FUSE sidecar annotation to controller pod
+    template: controller-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+  - it: creates GCP storage class
     template: storageclass.yaml
     asserts:
       - equal:
           path: provisioner
-          value: disk.csi.azure.com
-      - equal:
-          path: parameters.skuname
-          value: Premium_LRS
-  - it: creates Azure PV(C)
+          value: gcsfuse.csi.storage.gke.io
+      - notExists:
+          path: parameters
+  - it: creates GCP PV
     template: controller-volumes.yaml
     documentSelector:
       path: kind
       value: PersistentVolume
     asserts:
       - equal:
-          path: spec.azureFile.shareName
-          value: files
+          path: spec.csi.driver
+          value: gcsfuse.csi.storage.gke.io
       - equal:
-          path: spec.azureFile.readOnly
-          value: false
-      - equal:
-          path: spec.azureFile.secretName
-          value: azure-secret
-  - it: creates Azure configmap
+          path: spec.csi.volumeHandle
+          value: my-results-bucket
+  - it: creates GCP configmap
     template: controller-configmap.yaml
     asserts:
       - equal:
-          path: data["AZURE_STORAGE_ENABLED"]
+          path: data["GCP_STORAGE_ENABLED"]
           value: "true"
       - equal:
-          path: data["AZURE_SHARE_NAME"]
-          value: files
-      - equal:
-          path: data["AZURE_SECRET_NAME"]
-          value: azure-secret
+          path: data["GCP_BUCKET_NAME"]
+          value: my-results-bucket

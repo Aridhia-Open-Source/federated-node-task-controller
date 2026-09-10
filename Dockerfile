@@ -1,6 +1,6 @@
 FROM python:3.13.5-slim
 
-ARG USERNAME=fednode
+ARG APP_USER=fednode
 ARG USER_UID=1001
 ARG USER_GID=1001
 
@@ -33,9 +33,9 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/"$(grep VERSION_ID
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g "$USER_GID" "$USERNAME" \
-    && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" \
-    && chown -R "$USERNAME":"$USERNAME" /app
+RUN groupadd -g "$USER_GID" "$APP_USER" \
+    && useradd --uid "$USER_UID" --gid "$USER_GID" "$APP_USER" \
+    && chown -R "$APP_USER":"$APP_USER" /app
 
 COPY controller /app/controller
 

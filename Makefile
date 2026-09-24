@@ -39,6 +39,9 @@ tests_local:
 
 tests_ci: build_test_container run_test_container cleanup_test_container
 
+azcopy_integration_test: build_controller
+	IMAGE="${IMAGE}" TAG="${TAG}" ./scripts/tests/integration/azcopy.sh
+
 pylint_ci:
 	./scripts/linting/pylint.sh
 

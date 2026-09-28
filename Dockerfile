@@ -22,11 +22,10 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# hadolint ignore=DL3013,DL3008
 RUN curl -sSL -O https://packages.microsoft.com/config/debian/"$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)"/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
-    && apt-get install --no-install-recommends -y azcopy \
+    && apt-get install --no-install-recommends -y azcopy=10.32.8 \
     && echo "Checking installed azcopy version:" \
     && azcopy --version \
     && rm packages-microsoft-prod.deb \
@@ -41,5 +40,7 @@ COPY controller /app/controller
 
 ENV PYTHONPATH=/app/controller
 ENV PATH="/app/.venv/bin:$PATH"
+ENV AZCOPY_LOG_LOCATION=/tmp/azcopy
+ENV AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy
 USER ${USER_UID}
 CMD ["python3", "-m", "controller"]
